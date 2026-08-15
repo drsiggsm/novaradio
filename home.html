@@ -86,28 +86,93 @@ header{
 }
 
 .field{
-  margin-bottom:25px;
+  margin-bottom:30px;
 }
 
 label{
   display:block;
   font-weight:700;
-  margin-bottom:9px;
+  margin-bottom:13px;
+  font-size:18px;
 }
 
-select{
-  width:100%;
-  padding:17px;
-  border-radius:15px;
+/* 選択ボタン */
+.options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.option{
+  padding:12px 18px;
+  border-radius:999px;
   border:1px solid #353b67;
   background:#080b1d;
-  color:#fff;
-  font-size:16px;
+  color:#bfc2d8;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.15s;
 }
 
+.option:hover{
+  border-color:#7b25ff;
+  color:#fff;
+}
+
+.option.selected{
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  border-color:transparent;
+  color:#fff;
+  box-shadow:0 5px 20px #6425ff55;
+}
+
+/* 選択条件 */
+.conditions{
+  margin-top:8px;
+  padding:16px 18px;
+  border-radius:16px;
+  background:#080b1d;
+  border:1px solid #30355e;
+  color:#aeb0c8;
+  font-size:14px;
+  line-height:1.7;
+}
+
+.conditions strong{
+  color:#fff;
+}
+
+/* 再生ボタン */
+.play{
+  width:100%;
+  margin-top:25px;
+  padding:19px;
+  border:0;
+  border-radius:18px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  color:#fff;
+  font-size:19px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.play:hover{
+  opacity:.9;
+  transform:translateY(-1px);
+}
+
+.play:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  transform:none;
+}
+
+/* Now Playing */
 .now{
-  margin-top:32px;
-  padding:25px;
+  margin-top:30px;
+  padding:28px;
   border-radius:22px;
   background:#080b1d;
   border:1px solid #30355e;
@@ -122,24 +187,19 @@ select{
 }
 
 .now-title{
-  font-size:26px;
+  font-size:27px;
   font-weight:800;
-  margin-bottom:6px;
+  margin-bottom:7px;
 }
 
 .now-artist{
   color:#aeb0c8;
 }
 
-.player{
-  margin-top:20px;
-  width:100%;
-}
-
 .empty{
   text-align:center;
   color:#8f93ad;
-  padding:28px 10px;
+  padding:25px 10px;
 }
 
 .menu{
@@ -197,11 +257,15 @@ select{
   <div class="logo">NovaRadio</div>
 
   <div class="header-right">
-    <div class="account" id="account">確認中...</div>
+
+    <div class="account" id="account">
+      確認中...
+    </div>
 
     <button class="settings" id="settings" type="button">
       ⚙️
     </button>
+
   </div>
 
 </header>
@@ -218,98 +282,111 @@ select{
 
 </div>
 
+
 <section class="hero">
 
   <h1>🎧 今日は何を聴く？</h1>
 
   <p>
-    ジャンルと気分を選ぶだけ。<br>
+    ジャンルと気分を選んで、<br>
     あとはNovaRadioにおまかせ。
   </p>
 
 </section>
 
+
 <section class="card">
 
+  <!-- ジャンル -->
+
   <div class="field">
 
-    <label for="genre">
-      🎵 ジャンル
-    </label>
+    <label>🎵 ジャンル</label>
 
-    <select id="genre">
+    <div class="options" id="genreOptions">
 
-      <option value="">ジャンルを選択</option>
-
-      <option value="Hip Hop">
+      <button class="option" data-value="Hip Hop">
         Hip Hop
-      </option>
+      </button>
 
-      <option value="R&B">
+      <button class="option" data-value="R&B">
         R&B
-      </option>
+      </button>
 
-      <option value="Pop">
+      <button class="option" data-value="Pop">
         Pop
-      </option>
+      </button>
 
-      <option value="Trap">
+      <button class="option" data-value="Trap">
         Trap
-      </option>
+      </button>
 
-      <option value="Rock">
+      <button class="option" data-value="Rock">
         Rock
-      </option>
+      </button>
 
-      <option value="Lo-Fi">
+      <button class="option" data-value="Lo-Fi">
         Lo-Fi
-      </option>
+      </button>
 
-      <option value="Electronic">
+      <button class="option" data-value="Electronic">
         Electronic
-      </option>
+      </button>
 
-    </select>
+    </div>
 
   </div>
 
+
+  <!-- Mood -->
 
   <div class="field">
 
-    <label for="mood">
-      🌙 Mood
-    </label>
+    <label>🌙 Mood</label>
 
-    <select id="mood">
+    <div class="options" id="moodOptions">
 
-      <option value="">
-        Moodを選択
-      </option>
-
-      <option value="Chill">
+      <button class="option" data-value="Chill">
         Chill
-      </option>
+      </button>
 
-      <option value="Dark">
+      <button class="option" data-value="Dark">
         Dark
-      </option>
+      </button>
 
-      <option value="Happy">
+      <button class="option" data-value="Happy">
         Happy
-      </option>
+      </button>
 
-      <option value="Emotional">
+      <button class="option" data-value="Emotional">
         Emotional
-      </option>
+      </button>
 
-      <option value="Energetic">
+      <button class="option" data-value="Energetic">
         Energetic
-      </option>
+      </button>
 
-    </select>
+    </div>
 
   </div>
 
+
+  <!-- 選択条件 -->
+
+  <div class="conditions" id="conditions">
+    <strong>選択中：</strong>
+    まだ条件が選択されていません
+  </div>
+
+
+  <!-- 再生ボタン -->
+
+  <button class="play" id="play" disabled>
+    ▶️ この条件で再生
+  </button>
+
+
+  <!-- Now Playing -->
 
   <div class="now" id="now">
 
@@ -318,8 +395,8 @@ select{
     </div>
 
     <div class="empty">
-      ジャンルとMoodを選ぶと<br>
-      NovaRadioが曲を選びます 🎧
+      ジャンルとMoodを選んで<br>
+      「この条件で再生」を押してね 🎧
     </div>
 
   </div>
@@ -344,6 +421,8 @@ const sb =
   );
 
 
+/* ログイン確認 */
+
 async function checkLogin(){
 
   const {
@@ -362,93 +441,207 @@ async function checkLogin(){
 
 }
 
-
 checkLogin();
 
 
-const genre =
-  document.getElementById("genre");
+/* 選択状態 */
 
-const mood =
-  document.getElementById("mood");
+const selectedGenres = [];
 
-const now =
-  document.getElementById("now");
+const selectedMoods = [];
 
 
-function updateRadio(){
+/* 条件表示 */
 
-  const selectedGenre =
-    genre.value;
+function updateConditions(){
 
-  const selectedMood =
-    mood.value;
+  const conditions =
+    document.getElementById("conditions");
 
-
-  if(!selectedGenre && !selectedMood){
-
-    now.innerHTML = `
-      <div class="now-label">
-        NOVARADIO
-      </div>
-
-      <div class="empty">
-        ジャンルとMoodを選ぶと<br>
-        NovaRadioが曲を選びます 🎧
-      </div>
-    `;
-
-    return;
-  }
+  const play =
+    document.getElementById("play");
 
 
-  now.innerHTML = `
+  const genreText =
+    selectedGenres.length
+      ? selectedGenres.join(" / ")
+      : "指定なし";
 
-    <div class="now-label">
-      NOW PLAYING
-    </div>
 
-    <div class="now-title">
-      曲を探しています…
-    </div>
+  const moodText =
+    selectedMoods.length
+      ? selectedMoods.join(" / ")
+      : "指定なし";
 
-    <div class="now-artist">
-      ${selectedGenre || "All"} ·
-      ${selectedMood || "All"}
-    </div>
 
-    <div class="empty">
-      🎧 音源を読み込んでいます…
-    </div>
-
+  conditions.innerHTML = `
+    <strong>選択中：</strong>
+    ${genreText}
+    ×
+    ${moodText}
   `;
 
 
-  /*
-    ここに次のステップで
+  if(
+    selectedGenres.length ||
+    selectedMoods.length
+  ){
 
-    Supabaseから条件に合う曲を取得
-    ↓
-    音源URLを取得
-    ↓
-    audio.play()
+    play.disabled = false;
 
-    を追加する。
-  */
+  }else{
+
+    play.disabled = true;
+
+  }
 
 }
 
 
-genre.addEventListener(
-  "change",
-  updateRadio
-);
+/* ジャンル選択 */
 
-mood.addEventListener(
-  "change",
-  updateRadio
-);
+document
+  .querySelectorAll("#genreOptions .option")
+  .forEach(button => {
 
+    button.addEventListener(
+      "click",
+      ()=>{
+
+        const value =
+          button.dataset.value;
+
+        const index =
+          selectedGenres.indexOf(value);
+
+
+        if(index === -1){
+
+          selectedGenres.push(value);
+
+          button.classList.add("selected");
+
+        }else{
+
+          selectedGenres.splice(index,1);
+
+          button.classList.remove("selected");
+
+        }
+
+
+        updateConditions();
+
+      }
+    );
+
+  });
+
+
+/* Mood選択 */
+
+document
+  .querySelectorAll("#moodOptions .option")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      ()=>{
+
+        const value =
+          button.dataset.value;
+
+        const index =
+          selectedMoods.indexOf(value);
+
+
+        if(index === -1){
+
+          selectedMoods.push(value);
+
+          button.classList.add("selected");
+
+        }else{
+
+          selectedMoods.splice(index,1);
+
+          button.classList.remove("selected");
+
+        }
+
+
+        updateConditions();
+
+      }
+    );
+
+  });
+
+
+/* 再生 */
+
+document
+  .getElementById("play")
+  .addEventListener(
+    "click",
+    ()=>{
+
+      const now =
+        document.getElementById("now");
+
+
+      const genreText =
+        selectedGenres.length
+          ? selectedGenres.join(" / ")
+          : "すべて";
+
+
+      const moodText =
+        selectedMoods.length
+          ? selectedMoods.join(" / ")
+          : "すべて";
+
+
+      now.innerHTML = `
+
+        <div class="now-label">
+          NOW PLAYING
+        </div>
+
+        <div class="now-title">
+          曲を探しています…
+        </div>
+
+        <div class="now-artist">
+          ${genreText}
+          ·
+          ${moodText}
+        </div>
+
+        <div class="empty">
+          🎧 音源を読み込んでいます…
+        </div>
+
+      `;
+
+
+      /*
+        次のステップでここに
+
+        Supabaseから曲を取得
+        ↓
+        音源URLを取得
+        ↓
+        audio.play()
+
+        を追加する。
+      */
+
+    }
+  );
+
+
+/* 設定メニュー */
 
 const settings =
   document.getElementById("settings");
@@ -460,22 +653,27 @@ const menu =
 settings.addEventListener(
   "click",
   ()=>{
+
     menu.classList.toggle("show");
-  }
-);
-
-
-document.getElementById("logout")
-.addEventListener(
-  "click",
-  async ()=>{
-
-    await sb.auth.signOut();
-
-    location.href="index.html";
 
   }
 );
+
+
+/* ログアウト */
+
+document
+  .getElementById("logout")
+  .addEventListener(
+    "click",
+    async ()=>{
+
+      await sb.auth.signOut();
+
+      location.href="index.html";
+
+    }
+  );
 
 </script>
 
