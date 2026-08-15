@@ -4,164 +4,702 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NovaRadio</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial;color:#fff;background:radial-gradient(circle at 50% 0,#211b50,#090b1b 55%,#050611);display:flex;justify-content:center}
-.wrap{width:min(900px,94vw);padding:42px 0 80px}
-.brand{text-align:center;font-size:46px;font-weight:800}
-.sub{text-align:center;color:#aeb0c8;margin:8px 0 28px}
-.card{background:#101228d9;border:1px solid #30355e;border-radius:28px;padding:32px}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
-.tab{border:1px solid #384066;background:#090c20;color:#dfe1ef;border-radius:18px;padding:16px;font-size:17px;cursor:pointer}
-.active,.submit{background:linear-gradient(90deg,#7b25ff,#159df5)!important;color:#fff}
-.field{margin:18px 0}
-.field label{display:block;font-weight:700;margin-bottom:8px}
-.field input{width:100%;padding:17px;border-radius:15px;border:1px solid #353b67;background:#080b1d;color:#fff;font-size:17px}
-.terms{border:1px solid #353b67;border-radius:16px;padding:18px;color:#b9bdd3;line-height:1.7}
-.terms label{display:flex;gap:10px;align-items:center;color:#eee;margin-top:12px}
-.submit{width:100%;margin-top:20px;padding:18px;border:0;border-radius:18px;font-weight:800;font-size:18px;cursor:pointer}
-.submit:disabled{opacity:.6;cursor:wait}
-.status{display:none;margin-top:18px;padding:16px;border-radius:14px;background:#10152b;border:1px solid #39755d}
-.show{display:block}
-.error{border-color:#8d4050;color:#ffd6dc}
-.login{display:none}
-.login.show{display:block}
-.hide{display:none}
-</style>
-</head>
-<body>
-<main class="wrap">
-<div class="brand">NovaRadioへ。</div>
-<div class="sub">登録は3項目だけ。曲の設定はログイン後に。</div>
 
-<section class="card">
-<div class="tabs">
-<button type="button" class="tab active" id="rt">無料登録</button>
-<button type="button" class="tab" id="lt">ログイン</button>
-</div>
-
-<div id="rp">
-<div class="field"><label>アーティスト名</label><input id="artist" placeholder="例：Dr.SIG"></div>
-<div class="field"><label>メールアドレス</label><input id="email" type="email" placeholder="you@example.com"></div>
-<div class="field"><label>パスワード</label><input id="pw" type="password" placeholder="8文字以上"></div>
-<div class="terms">
-<b>利用規約への同意</b><br>
-自分が配信する権利を持つ、または必要な許諾を得た音源のみアップロードできます。他人の楽曲の無断転載や権利関係が不明な音源は禁止です。
-<label><input id="agree" type="checkbox">利用規約を確認し、同意します。</label>
-</div>
-<button type="button" class="submit" id="signup">無料で登録</button>
-</div>
-
-<div id="lp" class="login">
-<div class="field"><label>メールアドレス</label><input id="le" type="email" placeholder="you@example.com"></div>
-<div class="field"><label>パスワード</label><input id="lpw" type="password" placeholder="パスワード"></div>
-<button type="button" class="submit" id="login">ログイン</button>
-</div>
-
-<div id="status" class="status"></div>
-<p style="text-align:center;color:#8f93ad;font-size:13px">登録後、確認メールのリンクをクリックしてください。</p>
-</section>
-</main>
-
-<script>
-const SUPABASE_URL="https://melsoikvhwzvzswlimsi.supabase.co";
-const SUPABASE_KEY="sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
-const rt=document.getElementById("rt");
-const lt=document.getElementById("lt");
-const rp=document.getElementById("rp");
-const lp=document.getElementById("lp");
-const status=document.getElementById("status");
-
-const artist=document.getElementById("artist");
-const email=document.getElementById("email");
-const pw=document.getElementById("pw");
-const agree=document.getElementById("agree");
-const signup=document.getElementById("signup");
-
-const le=document.getElementById("le");
-const lpw=document.getElementById("lpw");
-const login=document.getElementById("login");
-
-function msg(text,error=false){
-  status.textContent=text;
-  status.className="status show"+(error?" error":"");
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial;
+  color:#fff;
+  background:radial-gradient(circle at 50% 0,#211b50,#090b1b 55%,#050611);
+  display:flex;
+  justify-content:center;
 }
 
-rt.addEventListener("click",()=>{
-  rt.classList.add("active");
-  lt.classList.remove("active");
-  rp.classList.remove("hide");
-  lp.classList.remove("show");
-  status.className="status";
-});
+.wrap{
+  width:min(900px,94vw);
+  padding:42px 0 80px;
+}
 
-lt.addEventListener("click",()=>{
-  lt.classList.add("active");
-  rt.classList.remove("active");
-  rp.classList.add("hide");
-  lp.classList.add("show");
-  status.className="status";
-});
+.brand{
+  text-align:center;
+  font-size:46px;
+  font-weight:800;
+}
 
-signup.addEventListener("click",async()=>{
-  const a=artist.value.trim();
-  const e=email.value.trim();
-  const p=pw.value;
+.sub{
+  text-align:center;
+  color:#aeb0c8;
+  margin:8px 0 28px;
+}
 
-  if(!a||!e||!p)return msg("3項目を入力してください。",true);
-  if(p.length<8)return msg("パスワードは8文字以上にしてください。",true);
-  if(!agree.checked)return msg("利用規約への同意にチェックしてください。",true);
+.card{
+  background:#101228d9;
+  border:1px solid #30355e;
+  border-radius:28px;
+  padding:32px;
+}
 
-  signup.disabled=true;
-  signup.textContent="登録中…";
-  msg("登録処理を開始しています…");
+.tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:28px;
+}
 
-  try{
-    const r=await sb.auth.signUp({
-      email:e,
-      password:p,
-      options:{
-        emailRedirectTo:location.origin+location.pathname,
-        data:{artist_name:a}
+.tab{
+  border:1px solid #384066;
+  background:#090c20;
+  color:#dfe1ef;
+  border-radius:18px;
+  padding:16px;
+  font-size:17px;
+  cursor:pointer;
+}
+
+.active,
+.submit{
+  background:linear-gradient(90deg,#7b25ff,#159df5)!important;
+  color:#fff;
+}
+
+.field{
+  margin:18px 0;
+}
+
+.field label{
+  display:block;
+  font-weight:700;
+  margin-bottom:8px;
+}
+
+.field input{
+  width:100%;
+  padding:17px;
+  border-radius:15px;
+  border:1px solid #353b67;
+  background:#080b1d;
+  color:#fff;
+  font-size:17px;
+}
+
+.terms{
+  border:1px solid #353b67;
+  border-radius:16px;
+  padding:18px;
+  color:#b9bdd3;
+  line-height:1.7;
+}
+
+.terms label{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  color:#eee;
+  margin-top:12px;
+}
+
+.submit{
+  width:100%;
+  margin-top:20px;
+  padding:18px;
+  border:0;
+  border-radius:18px;
+  font-weight:800;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.submit:disabled{
+  opacity:.6;
+  cursor:wait;
+}
+
+.status{
+  display:none;
+  margin-top:18px;
+  padding:16px;
+  border-radius:14px;
+  background:#10152b;
+  border:1px solid #39755d;
+}
+
+.show{
+  display:block;
+}
+
+.error{
+  border-color:#8d4050;
+  color:#ffd6dc;
+}
+
+.login{
+  display:none;
+}
+
+.login.show{
+  display:block;
+}
+
+.hide{
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<main class="wrap">
+
+<div class="brand">
+  NovaRadioへ。
+</div>
+
+<div class="sub">
+  ユーザー登録は3項目だけ。
+</div>
+
+
+<section class="card">
+
+<div class="tabs">
+
+<button
+  type="button"
+  class="tab active"
+  id="rt"
+>
+  無料登録
+</button>
+
+<button
+  type="button"
+  class="tab"
+  id="lt"
+>
+  ログイン
+</button>
+
+</div>
+
+
+<!-- 登録 -->
+
+<div id="rp">
+
+<div class="field">
+
+<label>
+  ユーザー名・アーティスト名
+</label>
+
+<input
+  id="artist"
+  placeholder="ユーザー名・アーティスト名"
+>
+
+</div>
+
+
+<div class="field">
+
+<label>
+  メールアドレス
+</label>
+
+<input
+  id="email"
+  type="email"
+  placeholder="you@example.com"
+>
+
+</div>
+
+
+<div class="field">
+
+<label>
+  パスワード
+</label>
+
+<input
+  id="pw"
+  type="password"
+  placeholder="8文字以上"
+>
+
+</div>
+
+
+<div class="terms">
+
+<b>
+  利用規約への同意
+</b>
+
+<br>
+
+自分が配信する権利を持つ、または必要な許諾を得た音源のみアップロードできます。
+他人の楽曲の無断転載や権利関係が不明な音源は禁止です。
+
+<label>
+
+<input
+  id="agree"
+  type="checkbox"
+>
+
+利用規約を確認し、同意します。
+
+</label>
+
+</div>
+
+
+<button
+  type="button"
+  class="submit"
+  id="signup"
+>
+  無料で登録
+</button>
+
+</div>
+
+
+<!-- ログイン -->
+
+<div
+  id="lp"
+  class="login"
+>
+
+<div class="field">
+
+<label>
+  メールアドレス
+</label>
+
+<input
+  id="le"
+  type="email"
+  placeholder="you@example.com"
+>
+
+</div>
+
+
+<div class="field">
+
+<label>
+  パスワード
+</label>
+
+<input
+  id="lpw"
+  type="password"
+  placeholder="パスワード"
+>
+
+</div>
+
+
+<button
+  type="button"
+  class="submit"
+  id="login"
+>
+  ログイン
+</button>
+
+</div>
+
+
+<div
+  id="status"
+  class="status"
+></div>
+
+
+<p
+  style="
+    text-align:center;
+    color:#8f93ad;
+    font-size:13px;
+  "
+>
+  登録後、確認メールのリンクをクリックしてください。
+</p>
+
+
+</section>
+
+</main>
+
+
+<script>
+
+const SUPABASE_URL =
+  "https://melsoikvhwzvzswlimsi.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
+
+const sb =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+const rt =
+  document.getElementById("rt");
+
+const lt =
+  document.getElementById("lt");
+
+const rp =
+  document.getElementById("rp");
+
+const lp =
+  document.getElementById("lp");
+
+const status =
+  document.getElementById("status");
+
+
+const artist =
+  document.getElementById("artist");
+
+const email =
+  document.getElementById("email");
+
+const pw =
+  document.getElementById("pw");
+
+const agree =
+  document.getElementById("agree");
+
+const signup =
+  document.getElementById("signup");
+
+
+const le =
+  document.getElementById("le");
+
+const lpw =
+  document.getElementById("lpw");
+
+const login =
+  document.getElementById("login");
+
+
+function msg(
+  text,
+  error=false
+){
+
+  status.textContent =
+    text;
+
+  status.className =
+    "status show" +
+    (error ? " error" : "");
+
+}
+
+
+/* 登録タブ */
+
+rt.addEventListener(
+  "click",
+  ()=>{
+
+    rt.classList.add(
+      "active"
+    );
+
+    lt.classList.remove(
+      "active"
+    );
+
+    rp.classList.remove(
+      "hide"
+    );
+
+    lp.classList.remove(
+      "show"
+    );
+
+    status.className =
+      "status";
+
+  }
+);
+
+
+/* ログインタブ */
+
+lt.addEventListener(
+  "click",
+  ()=>{
+
+    lt.classList.add(
+      "active"
+    );
+
+    rt.classList.remove(
+      "active"
+    );
+
+    rp.classList.add(
+      "hide"
+    );
+
+    lp.classList.add(
+      "show"
+    );
+
+    status.className =
+      "status";
+
+  }
+);
+
+
+/* 新規登録 */
+
+signup.addEventListener(
+  "click",
+  async ()=>{
+
+    const a =
+      artist.value.trim();
+
+    const e =
+      email.value.trim();
+
+    const p =
+      pw.value;
+
+
+    if(
+      !a ||
+      !e ||
+      !p
+    ){
+
+      return msg(
+        "3項目を入力してください。",
+        true
+      );
+
+    }
+
+
+    if(
+      p.length < 8
+    ){
+
+      return msg(
+        "パスワードは8文字以上にしてください。",
+        true
+      );
+
+    }
+
+
+    if(
+      !agree.checked
+    ){
+
+      return msg(
+        "利用規約への同意にチェックしてください。",
+        true
+      );
+
+    }
+
+
+    signup.disabled =
+      true;
+
+    signup.textContent =
+      "登録中…";
+
+
+    msg(
+      "登録処理を開始しています…"
+    );
+
+
+    try{
+
+
+      const r =
+        await sb.auth.signUp({
+
+          email:e,
+
+          password:p,
+
+          options:{
+
+            emailRedirectTo:
+              location.origin +
+              location.pathname,
+
+            data:{
+
+              artist_name:a
+
+            }
+
+          }
+
+        });
+
+
+      if(r.error){
+
+        throw r.error;
+
       }
-    });
 
-    if(r.error)throw r.error;
 
-    msg("登録リクエストを受け付けました。確認メールを受信箱（迷惑メールも含む）から開いてください。");
-    pw.value="";
-  }catch(x){
-    msg("登録に失敗しました："+(x.message||x),true);
-  }finally{
-    signup.disabled=false;
-    signup.textContent="無料で登録";
+      msg(
+        "登録リクエストを受け付けました。確認メールを受信箱（迷惑メールも含む）から開いてください。"
+      );
+
+
+      pw.value = "";
+
+
+    }
+    catch(x){
+
+
+      msg(
+        "登録に失敗しました：" +
+        (x.message || x),
+        true
+      );
+
+
+    }
+    finally{
+
+
+      signup.disabled =
+        false;
+
+
+      signup.textContent =
+        "無料で登録";
+
+
+    }
+
   }
-});
+);
 
-login.addEventListener("click",async()=>{
-  const e=le.value.trim();
-  const p=lpw.value;
 
-  if(!e||!p)return msg("メールアドレスとパスワードを入力してください。",true);
+/* ログイン */
 
-  login.disabled=true;
-  login.textContent="ログイン中…";
+login.addEventListener(
+  "click",
+  async ()=>{
 
-  try{
-    const r=await sb.auth.signInWithPassword({email:e,password:p});
-    if(r.error)throw r.error;
-    msg("ログインしました。");
-    location.href = "home.html";
-  }catch(x){
-    msg("ログインに失敗しました："+(x.message||x),true);
-  }finally{
-    login.disabled=false;
-    login.textContent="ログイン";
+    const e =
+      le.value.trim();
+
+    const p =
+      lpw.value;
+
+
+    if(
+      !e ||
+      !p
+    ){
+
+      return msg(
+        "メールアドレスとパスワードを入力してください。",
+        true
+      );
+
+    }
+
+
+    login.disabled =
+      true;
+
+
+    login.textContent =
+      "ログイン中…";
+
+
+    try{
+
+
+      const r =
+        await sb.auth.signInWithPassword({
+
+          email:e,
+
+          password:p
+
+        });
+
+
+      if(r.error){
+
+        throw r.error;
+
+      }
+
+
+      msg(
+        "ログインしました。"
+      );
+
+
+      location.href =
+        "home.html";
+
+
+    }
+    catch(x){
+
+
+      msg(
+        "ログインに失敗しました：" +
+        (x.message || x),
+        true
+      );
+
+
+    }
+    finally{
+
+
+      login.disabled =
+        false;
+
+
+      login.textContent =
+        "ログイン";
+
+
+    }
+
   }
-});
+);
+
 </script>
+
 </body>
 </html>
