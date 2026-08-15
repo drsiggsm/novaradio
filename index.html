@@ -154,6 +154,7 @@ login.addEventListener("click",async()=>{
     const r=await sb.auth.signInWithPassword({email:e,password:p});
     if(r.error)throw r.error;
     msg("ログインしました。");
+    location.href = "dashboard.html";
   }catch(x){
     msg("ログインに失敗しました："+(x.message||x),true);
   }finally{
