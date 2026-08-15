@@ -1,13 +1,22 @@
 <!doctype html>
 <html lang="ja">
+
 <head>
+
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
 <title>NovaRadio</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
 <style>
+
 *{
   box-sizing:border-box;
 }
@@ -15,16 +24,31 @@
 body{
   margin:0;
   min-height:100vh;
-  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  background:radial-gradient(circle at 50% 0,#211b50,#07091a 55%,#050611);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+
+  background:
+    radial-gradient(
+      circle at 50% 0,
+      #211b50,
+      #07091a 55%,
+      #050611
+    );
+
   color:#fff;
 }
+
 
 .wrap{
   width:min(1000px,92vw);
   margin:auto;
   padding:30px 0 80px;
 }
+
 
 header{
   display:flex;
@@ -33,16 +57,19 @@ header{
   margin-bottom:60px;
 }
 
+
 .logo{
   font-size:34px;
   font-weight:800;
 }
+
 
 .header-right{
   display:flex;
   gap:10px;
   align-items:center;
 }
+
 
 .account{
   padding:10px 14px;
@@ -52,6 +79,7 @@ header{
   color:#ddd;
   font-size:13px;
 }
+
 
 .settings{
   width:44px;
@@ -64,21 +92,25 @@ header{
   cursor:pointer;
 }
 
+
 .hero{
   text-align:center;
   margin-bottom:38px;
 }
+
 
 .hero h1{
   font-size:44px;
   margin:0 0 10px;
 }
 
+
 .hero p{
   color:#aeb0c8;
   margin:0;
   font-size:17px;
 }
+
 
 .card{
   background:#101228e8;
@@ -88,9 +120,11 @@ header{
   margin-bottom:25px;
 }
 
+
 .field{
   margin-bottom:30px;
 }
+
 
 label{
   display:block;
@@ -99,11 +133,13 @@ label{
   font-size:18px;
 }
 
+
 .options{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
 }
+
 
 .option{
   padding:12px 18px;
@@ -117,17 +153,28 @@ label{
   transition:.15s;
 }
 
+
 .option:hover{
   border-color:#7b25ff;
   color:#fff;
 }
 
+
 .option.selected{
-  background:linear-gradient(90deg,#7b25ff,#159df5);
+  background:
+    linear-gradient(
+      90deg,
+      #7b25ff,
+      #159df5
+    );
+
   border-color:transparent;
   color:#fff;
-  box-shadow:0 5px 20px #6425ff55;
+
+  box-shadow:
+    0 5px 20px #6425ff55;
 }
+
 
 .conditions{
   margin-top:8px;
@@ -140,9 +187,11 @@ label{
   line-height:1.7;
 }
 
+
 .conditions strong{
   color:#fff;
 }
+
 
 .play{
   width:100%;
@@ -150,22 +199,32 @@ label{
   padding:19px;
   border:0;
   border-radius:18px;
-  background:linear-gradient(90deg,#7b25ff,#159df5);
+
+  background:
+    linear-gradient(
+      90deg,
+      #7b25ff,
+      #159df5
+    );
+
   color:#fff;
   font-size:19px;
   font-weight:800;
   cursor:pointer;
 }
 
+
 .play:disabled{
   opacity:.45;
   cursor:not-allowed;
 }
 
+
 .artist-search{
   display:flex;
   gap:10px;
 }
+
 
 .artist-search input{
   flex:1;
@@ -178,19 +237,29 @@ label{
   font-size:16px;
 }
 
+
 .artist-search button{
   padding:0 22px;
   border:0;
   border-radius:15px;
-  background:linear-gradient(90deg,#7b25ff,#159df5);
+
+  background:
+    linear-gradient(
+      90deg,
+      #7b25ff,
+      #159df5
+    );
+
   color:#fff;
   font-weight:800;
   cursor:pointer;
 }
 
+
 .artist-results{
   margin-top:20px;
 }
+
 
 .artist-result{
   padding:18px;
@@ -201,20 +270,24 @@ label{
   cursor:pointer;
 }
 
+
 .artist-result:hover{
   border-color:#7b25ff;
 }
+
 
 .artist-name{
   font-size:19px;
   font-weight:800;
 }
 
+
 .artist-meta{
   margin-top:5px;
   color:#9da2c0;
   font-size:13px;
 }
+
 
 .now{
   margin-top:30px;
@@ -225,6 +298,7 @@ label{
   text-align:center;
 }
 
+
 .now-label{
   color:#9da2c0;
   font-size:13px;
@@ -232,21 +306,25 @@ label{
   margin-bottom:12px;
 }
 
+
 .now-title{
   font-size:27px;
   font-weight:800;
   margin-bottom:7px;
 }
 
+
 .now-artist{
   color:#aeb0c8;
 }
+
 
 .empty{
   text-align:center;
   color:#8f93ad;
   padding:25px 10px;
 }
+
 
 .menu{
   display:none;
@@ -262,9 +340,11 @@ label{
   box-shadow:0 20px 60px #0008;
 }
 
+
 .menu.show{
   display:block;
 }
+
 
 .menu a,
 .menu button{
@@ -281,17 +361,21 @@ label{
   cursor:pointer;
 }
 
+
 .menu a:hover,
 .menu button:hover{
   background:#1c2040;
 }
+
 
 audio{
   width:100%;
   margin-top:22px;
 }
 
+
 @media(max-width:600px){
+
   .hero h1{
     font-size:34px;
   }
@@ -311,25 +395,42 @@ audio{
   .artist-search button{
     padding:16px;
   }
+
 }
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <main class="wrap">
+
 
 <header>
 
-  <div class="logo">NovaRadio</div>
+  <div class="logo">
+    NovaRadio
+  </div>
+
 
   <div class="header-right">
 
-    <div class="account" id="account">
+    <div
+      class="account"
+      id="account"
+    >
       確認中...
     </div>
 
-    <button class="settings" id="settings" type="button">
+
+    <button
+      class="settings"
+      id="settings"
+      type="button"
+    >
       ⚙️
     </button>
 
@@ -338,11 +439,16 @@ audio{
 </header>
 
 
-<div class="menu" id="menu">
+
+<div
+  class="menu"
+  id="menu"
+>
 
   <a href="dashboard.html">
     🎵 曲をアップロード・管理
   </a>
+
 
   <button id="logout">
     🚪 ログアウト
@@ -351,9 +457,12 @@ audio{
 </div>
 
 
+
 <section class="hero">
 
-  <h1>🎧 今日は何を聴く？</h1>
+  <h1>
+    🎧 今日は何を聴く？
+  </h1>
 
   <p>
     ジャンルと気分を選んで、<br>
@@ -363,91 +472,102 @@ audio{
 </section>
 
 
-<!-- ジャンル・Mood -->
+
+<!-- ジャンル / Mood -->
 
 <section class="card">
 
-  <div class="field">
-
-    <label>🎵 ジャンル</label>
-
-    <div class="options" id="genreOptions">
-
-      <button class="option" data-value="Hip Hop">Hip Hop</button>
-      <button class="option" data-value="R&B">R&B</button>
-      <button class="option" data-value="Pop">Pop</button>
-      <button class="option" data-value="Trap">Trap</button>
-      <button class="option" data-value="Rock">Rock</button>
-      <button class="option" data-value="Lo-Fi">Lo-Fi</button>
-      <button class="option" data-value="Electronic">Electronic</button>
-
-    </div>
-
-  </div>
-
 
   <div class="field">
 
-    <label>🌙 Mood</label>
-
-    <div class="options" id="moodOptions">
-
-      <button class="option" data-value="Chill">Chill</button>
-      <button class="option" data-value="Dark">Dark</button>
-      <button class="option" data-value="Happy">Happy</button>
-      <button class="option" data-value="Emotional">Emotional</button>
-      <button class="option" data-value="Energetic">Energetic</button>
-
-    </div>
-
-  </div>
+    <label>
+      🎵 ジャンル
+    </label>
 
 
-  <div class="conditions" id="conditions">
-    <strong>選択中：</strong>
-    まだ条件が選択されていません
-  </div>
+    <div
+      class="options"
+      id="genreOptions"
+    >
 
-
-  <button class="play" id="play" disabled>
-    ▶️ この条件で再生
-  </button>
-
-
-  <div class="now" id="now">
-
-    <div class="now-label">
-      NOVARADIO
-    </div>
-
-    <div class="empty">
-      ジャンルとMoodを選んで<br>
-      「この条件で再生」を押してね 🎧
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- アーティスト検索 -->
-
-<section class="card">
-
-  <div class="field">
-
-    <label>🔎 アーティストを探す</label>
-
-    <div class="artist-search">
-
-      <input
-        id="artistSearch"
-        type="text"
-        placeholder="アーティスト名を入力"
+      <button
+        type="button"
+        class="option"
+        data-value="Hip Hop"
       >
+        Hip Hop
+      </button>
 
-      <button id="artistSearchButton">
-        探す
+
+      <button
+        type="button"
+        class="option"
+        data-value="R&B"
+      >
+        R&B
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Pop"
+      >
+        Pop
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Trap"
+      >
+        Trap
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Rock"
+      >
+        Rock
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Lo-Fi"
+      >
+        Lo-Fi
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Electronic"
+      >
+        Electronic
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Pluggnb"
+      >
+        Pluggnb
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Other"
+      >
+        Other
       </button>
 
     </div>
@@ -455,7 +575,159 @@ audio{
   </div>
 
 
-  <div class="artist-results" id="artistResults">
+
+  <div class="field">
+
+    <label>
+      🌙 Mood
+    </label>
+
+
+    <div
+      class="options"
+      id="moodOptions"
+    >
+
+      <button
+        type="button"
+        class="option"
+        data-value="Chill"
+      >
+        Chill
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Dark"
+      >
+        Dark
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Happy"
+      >
+        Happy
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Emotional"
+      >
+        Emotional
+      </button>
+
+
+      <button
+        type="button"
+        class="option"
+        data-value="Energetic"
+      >
+        Energetic
+      </button>
+
+    </div>
+
+  </div>
+
+
+
+  <div
+    class="conditions"
+    id="conditions"
+  >
+
+    <strong>
+      選択中：
+    </strong>
+
+    まだ条件が選択されていません
+
+  </div>
+
+
+
+  <button
+    class="play"
+    id="play"
+    disabled
+  >
+    ▶️ この条件で再生
+  </button>
+
+
+
+  <div
+    class="now"
+    id="now"
+  >
+
+    <div class="now-label">
+      NOVARADIO
+    </div>
+
+
+    <div class="empty">
+
+      ジャンルとMoodを選んで<br>
+
+      「この条件で再生」を押してね 🎧
+
+    </div>
+
+  </div>
+
+
+</section>
+
+
+
+<!-- アーティスト検索 -->
+
+<section class="card">
+
+
+  <div class="field">
+
+    <label>
+      🔎 アーティストを探す
+    </label>
+
+
+    <div class="artist-search">
+
+
+      <input
+        id="artistSearch"
+        type="text"
+        placeholder="アーティスト名を入力"
+      >
+
+
+      <button
+        id="artistSearchButton"
+        type="button"
+      >
+        探す
+      </button>
+
+
+    </div>
+
+  </div>
+
+
+
+  <div
+    class="artist-results"
+    id="artistResults"
+  >
 
     <div class="empty">
       アーティスト名を入力して探してみよう。
@@ -463,165 +735,380 @@ audio{
 
   </div>
 
+
 </section>
+
 
 </main>
 
 
+
 <script>
 
-/* ========================================
+
+/* =====================================
    SUPABASE
-======================================== */
+===================================== */
+
 
 const SUPABASE_URL =
   "https://melsoikvhwzvzswlimsi.supabase.co";
 
+
 const SUPABASE_KEY =
   "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
 
-const sb = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+
+const sb =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 
-/* ========================================
+
+/* =====================================
    LOGIN
-======================================== */
+===================================== */
+
 
 async function checkLogin(){
 
+
   const {
     data:{session}
-  } = await sb.auth.getSession();
+  } =
+  await sb.auth.getSession();
+
 
   if(!session){
-    location.href="index.html";
+
+    location.href =
+      "index.html";
+
     return;
+
   }
 
-  document.getElementById("account").textContent =
+
+  document
+  .getElementById("account")
+  .textContent =
     session.user.email;
+
 }
+
 
 checkLogin();
 
 
-/* ========================================
+
+/* =====================================
    GENRE / MOOD
-======================================== */
+===================================== */
+
 
 const selectedGenres = [];
+
 const selectedMoods = [];
 
 
+
 function updateConditions(){
+
 
   const genreText =
     selectedGenres.length
       ? selectedGenres.join(" / ")
       : "指定なし";
 
+
   const moodText =
     selectedMoods.length
       ? selectedMoods.join(" / ")
       : "指定なし";
 
-  document.getElementById("conditions").innerHTML = `
-    <strong>選択中：</strong>
+
+  document
+  .getElementById("conditions")
+  .innerHTML = `
+
+    <strong>
+      選択中：
+    </strong>
+
     ${genreText} × ${moodText}
+
   `;
 
-  document.getElementById("play").disabled =
+
+  document
+  .getElementById("play")
+  .disabled =
     !selectedGenres.length &&
     !selectedMoods.length;
+
 }
 
 
+
+/* Genre */
+
 document
-.querySelectorAll("#genreOptions .option")
-.forEach(button => {
+.querySelectorAll(
+  "#genreOptions .option"
+)
+.forEach(button=>{
 
-  button.addEventListener("click", () => {
 
-    const value = button.dataset.value;
+  button.addEventListener(
+    "click",
+    ()=>{
 
-    const index =
-      selectedGenres.indexOf(value);
 
-    if(index === -1){
+      const value =
+        button.dataset.value;
 
-      selectedGenres.push(value);
-      button.classList.add("selected");
 
-    }else{
+      const index =
+        selectedGenres
+        .indexOf(value);
 
-      selectedGenres.splice(index,1);
-      button.classList.remove("selected");
+
+      if(index === -1){
+
+        selectedGenres
+        .push(value);
+
+        button
+        .classList
+        .add("selected");
+
+      }
+      else{
+
+        selectedGenres
+        .splice(index,1);
+
+        button
+        .classList
+        .remove("selected");
+
+      }
+
+
+      updateConditions();
 
     }
-
-    updateConditions();
-
-  });
+  );
 
 });
 
 
+
+/* Mood */
+
 document
-.querySelectorAll("#moodOptions .option")
-.forEach(button => {
+.querySelectorAll(
+  "#moodOptions .option"
+)
+.forEach(button=>{
 
-  button.addEventListener("click", () => {
 
-    const value = button.dataset.value;
+  button.addEventListener(
+    "click",
+    ()=>{
 
-    const index =
-      selectedMoods.indexOf(value);
 
-    if(index === -1){
+      const value =
+        button.dataset.value;
 
-      selectedMoods.push(value);
-      button.classList.add("selected");
 
-    }else{
+      const index =
+        selectedMoods
+        .indexOf(value);
 
-      selectedMoods.splice(index,1);
-      button.classList.remove("selected");
+
+      if(index === -1){
+
+        selectedMoods
+        .push(value);
+
+        button
+        .classList
+        .add("selected");
+
+      }
+      else{
+
+        selectedMoods
+        .splice(index,1);
+
+        button
+        .classList
+        .remove("selected");
+
+      }
+
+
+      updateConditions();
 
     }
-
-    updateConditions();
-
-  });
+  );
 
 });
 
 
-/* ========================================
+
+/* =====================================
+   複数タグ処理
+===================================== */
+
+
+function splitTags(value){
+
+
+  if(!value){
+    return [];
+  }
+
+
+  return value
+
+    .split(",")
+
+    .map(tag =>
+      tag.trim()
+    )
+
+    .filter(Boolean);
+
+}
+
+
+
+/* =====================================
+   条件マッチ
+===================================== */
+
+
+function songMatches(song){
+
+
+  const songGenres =
+    splitTags(
+      song.genre
+    );
+
+
+  const songMoods =
+    splitTags(
+      song.mood
+    );
+
+
+
+  /*
+    選択ジャンルのうち
+    1つでも曲側に含まれていればOK
+  */
+
+  const genreMatches =
+
+    !selectedGenres.length ||
+
+    selectedGenres.some(
+      genre =>
+        songGenres.includes(
+          genre
+        )
+    );
+
+
+
+  /*
+    選択Moodのうち
+    1つでも曲側に含まれていればOK
+  */
+
+  const moodMatches =
+
+    !selectedMoods.length ||
+
+    selectedMoods.some(
+      mood =>
+        songMoods.includes(
+          mood
+        )
+    );
+
+
+
+  /*
+    Genreを指定していたらGenre一致
+    Moodを指定していたらMood一致
+
+    両方指定した場合は
+    両方満たす曲だけ
+  */
+
+  return (
+    genreMatches &&
+    moodMatches
+  );
+
+}
+
+
+
+/* =====================================
    SONG PLAYER
-======================================== */
+===================================== */
+
 
 function playSong(song){
 
+
   const now =
-    document.getElementById("now");
+    document
+    .getElementById("now");
+
 
   if(!song.audio_url){
 
+
     now.innerHTML = `
+
       <div class="now-label">
         ERROR
       </div>
 
       <div class="empty">
-        この曲にはaudio_urlが登録されていません。
+        この曲には音源が登録されていません。
       </div>
+
     `;
 
+
     return;
+
   }
+
+
+
+  const genres =
+    splitTags(
+      song.genre
+    )
+    .join(" / ");
+
+
+  const moods =
+    splitTags(
+      song.mood
+    )
+    .join(" / ");
+
 
 
   now.innerHTML = `
@@ -630,134 +1117,90 @@ function playSong(song){
       NOW PLAYING
     </div>
 
+
     <div class="now-title">
+
       ${song.title || "Untitled"}
+
     </div>
+
 
     <div class="now-artist">
+
       ${song.artist || "Unknown Artist"}
+
     </div>
 
-    <div class="artist-meta" style="margin-top:8px;">
-      ${song.genre || ""}
-      ${song.mood ? " · " + song.mood : ""}
+
+    <div
+      class="artist-meta"
+      style="margin-top:8px;"
+    >
+
+      ${genres || ""}
+
+      ${
+        moods
+          ? " · " + moods
+          : ""
+      }
+
     </div>
+
 
     <audio
       id="audioPlayer"
       controls
       autoplay
       preload="metadata"
+      src="${song.audio_url}"
     >
-      <source
-        src="${song.audio_url}"
-        type="audio/wav"
-      >
       このブラウザでは音源を再生できません。
     </audio>
 
   `;
 
 
-  const audio =
-    document.getElementById("audioPlayer");
 
-  audio.play().catch(error => {
+  const audio =
+    document
+    .getElementById(
+      "audioPlayer"
+    );
+
+
+  audio
+  .play()
+  .catch(error=>{
+
     console.log(
       "再生開始エラー:",
       error
     );
+
   });
 
 }
 
 
-/* ========================================
-   条件から曲を探す
-======================================== */
+
+/* =====================================
+   条件から再生
+===================================== */
+
 
 document
 .getElementById("play")
-.addEventListener("click", async () => {
-
-  const now =
-    document.getElementById("now");
-
-
-  now.innerHTML = `
-
-    <div class="now-label">
-      NOVARADIO
-    </div>
-
-    <div class="empty">
-      曲を選んでいます… 🎧
-    </div>
-
-  `;
+.addEventListener(
+  "click",
+  async ()=>{
 
 
-  const {
-    data,
-    error
-  } = await sb
-    .from("songs")
-    .select("*");
+    const now =
+      document
+      .getElementById("now");
 
 
-  if(error){
-
-    console.error(
-      "Supabase error:",
-      error
-    );
-
-    now.innerHTML = `
-
-      <div class="now-label">
-        ERROR
-      </div>
-
-      <div class="empty">
-        曲の取得に失敗しました。<br><br>
-        ${error.message}
-      </div>
-
-    `;
-
-    return;
-  }
-
-
-  let songs =
-    data || [];
-
-
-  /* Genre */
-
-  if(selectedGenres.length){
-
-    songs =
-      songs.filter(song =>
-        selectedGenres.includes(song.genre)
-      );
-
-  }
-
-
-  /* Mood */
-
-  if(selectedMoods.length){
-
-    songs =
-      songs.filter(song =>
-        selectedMoods.includes(song.mood)
-      );
-
-  }
-
-
-  if(!songs.length){
 
     now.innerHTML = `
 
@@ -766,73 +1209,188 @@ document
       </div>
 
       <div class="empty">
-        この条件に合う曲は<br>
-        まだありません 🎧
+        曲を選んでいます… 🎧
       </div>
 
     `;
 
-    return;
+
+
+    const {
+      data,
+      error
+    } =
+    await sb
+
+      .from("songs")
+
+      .select("*");
+
+
+
+    if(error){
+
+
+      console.error(
+        "Supabase error:",
+        error
+      );
+
+
+      now.innerHTML = `
+
+        <div class="now-label">
+          ERROR
+        </div>
+
+        <div class="empty">
+
+          曲の取得に失敗しました。<br><br>
+
+          ${error.message}
+
+        </div>
+
+      `;
+
+
+      return;
+
+    }
+
+
+
+    let songs =
+      data || [];
+
+
+
+    /*
+      複数ジャンル / Mood対応
+    */
+
+    songs =
+      songs.filter(
+        songMatches
+      );
+
+
+
+    if(!songs.length){
+
+
+      now.innerHTML = `
+
+        <div class="now-label">
+          NOVARADIO
+        </div>
+
+        <div class="empty">
+
+          この条件に合う曲は<br>
+
+          まだありません 🎧
+
+        </div>
+
+      `;
+
+
+      return;
+
+    }
+
+
+
+    /*
+      候補からランダムで1曲
+    */
+
+    const randomSong =
+
+      songs[
+        Math.floor(
+          Math.random() *
+          songs.length
+        )
+      ];
+
+
+
+    playSong(
+      randomSong
+    );
+
+
   }
+);
 
 
-  /* ランダム */
 
-  const randomSong =
-    songs[
-      Math.floor(
-        Math.random() *
-        songs.length
-      )
-    ];
-
-
-  playSong(randomSong);
-
-});
-
-
-/* ========================================
+/* =====================================
    ARTIST SEARCH
-======================================== */
+===================================== */
+
 
 document
-.getElementById("artistSearchButton")
+.getElementById(
+  "artistSearchButton"
+)
 .addEventListener(
   "click",
   searchArtist
 );
 
 
+
 document
-.getElementById("artistSearch")
+.getElementById(
+  "artistSearch"
+)
 .addEventListener(
   "keydown",
-  event => {
+  event=>{
 
-    if(event.key === "Enter"){
+
+    if(
+      event.key === "Enter"
+    ){
+
       searchArtist();
+
     }
+
 
   }
 );
 
 
+
 async function searchArtist(){
 
+
   const query =
+
     document
-    .getElementById("artistSearch")
+    .getElementById(
+      "artistSearch"
+    )
     .value
     .trim();
 
 
+
   const results =
+
     document
-    .getElementById("artistResults");
+    .getElementById(
+      "artistResults"
+    );
+
 
 
   if(!query){
+
 
     results.innerHTML = `
 
@@ -842,8 +1400,11 @@ async function searchArtist(){
 
     `;
 
+
     return;
+
   }
+
 
 
   results.innerHTML = `
@@ -855,160 +1416,257 @@ async function searchArtist(){
   `;
 
 
+
   const {
     data,
     error
-  } = await sb
+  } =
+  await sb
+
     .from("songs")
+
     .select("*")
+
     .ilike(
       "artist",
       `%${query}%`
     );
 
 
+
   if(error){
+
 
     console.error(
       "Artist search error:",
       error
     );
 
+
     results.innerHTML = `
 
       <div class="empty">
+
         検索に失敗しました。<br><br>
+
         ${error.message}
+
       </div>
 
     `;
 
+
     return;
+
   }
 
 
-  if(!data || !data.length){
+
+  if(
+    !data ||
+    !data.length
+  ){
+
 
     results.innerHTML = `
 
       <div class="empty">
+
         「${query}」の曲は<br>
+
         見つかりませんでした。
+
       </div>
 
     `;
 
+
     return;
+
   }
 
 
-  results.innerHTML = "";
+
+  results.innerHTML =
+    "";
 
 
-  data.forEach(song => {
 
-    const item =
-      document.createElement("div");
-
-
-    item.className =
-      "artist-result";
+  data.forEach(
+    song=>{
 
 
-    item.innerHTML = `
-
-      <div class="artist-name">
-        ${song.title || "Untitled"}
-      </div>
-
-      <div class="artist-meta">
-
-        ${song.artist || "Unknown Artist"}
-
-        ${song.genre
-          ? " · " + song.genre
-          : ""
-        }
-
-        ${song.mood
-          ? " · " + song.mood
-          : ""
-        }
-
-      </div>
-
-      <div
-        style="
-          margin-top:12px;
-          font-weight:700;
-        "
-      >
-        ▶️ この曲を再生
-      </div>
-
-    `;
-
-
-    item.addEventListener(
-      "click",
-      () => {
-
-        playSong(song);
-
+      const item =
         document
-        .getElementById("now")
-        .scrollIntoView({
-          behavior:"smooth",
-          block:"center"
-        });
-
-      }
-    );
+        .createElement(
+          "div"
+        );
 
 
-    results.appendChild(item);
+      item.className =
+        "artist-result";
 
-  });
+
+
+      const genres =
+
+        splitTags(
+          song.genre
+        )
+        .join(" / ");
+
+
+
+      const moods =
+
+        splitTags(
+          song.mood
+        )
+        .join(" / ");
+
+
+
+      item.innerHTML = `
+
+        <div class="artist-name">
+
+          ${song.title || "Untitled"}
+
+        </div>
+
+
+        <div class="artist-meta">
+
+          ${song.artist || "Unknown Artist"}
+
+          ${
+            genres
+              ? " · " + genres
+              : ""
+          }
+
+          ${
+            moods
+              ? " · " + moods
+              : ""
+          }
+
+        </div>
+
+
+        <div
+          style="
+            margin-top:12px;
+            font-weight:700;
+          "
+        >
+
+          ▶️ この曲を再生
+
+        </div>
+
+      `;
+
+
+
+      item.addEventListener(
+        "click",
+        ()=>{
+
+
+          playSong(
+            song
+          );
+
+
+          document
+          .getElementById(
+            "now"
+          )
+          .scrollIntoView({
+
+            behavior:"smooth",
+
+            block:"center"
+
+          });
+
+
+        }
+      );
+
+
+
+      results
+      .appendChild(
+        item
+      );
+
+
+    }
+  );
 
 }
 
 
-/* ========================================
+
+/* =====================================
    SETTINGS MENU
-======================================== */
+===================================== */
+
 
 document
-.getElementById("settings")
+.getElementById(
+  "settings"
+)
 .addEventListener(
   "click",
-  () => {
+  ()=>{
+
 
     document
-    .getElementById("menu")
-    .classList.toggle("show");
+    .getElementById(
+      "menu"
+    )
+    .classList
+    .toggle(
+      "show"
+    );
+
 
   }
 );
 
 
-/* ========================================
+
+/* =====================================
    LOGOUT
-======================================== */
+===================================== */
+
 
 document
-.getElementById("logout")
+.getElementById(
+  "logout"
+)
 .addEventListener(
   "click",
-  async () => {
+  async ()=>{
+
 
     await sb.auth.signOut();
 
-    location.href="index.html";
+
+    location.href =
+      "index.html";
+
 
   }
 );
 
+
 </script>
 
+
 </body>
+
 </html>
