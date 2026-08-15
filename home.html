@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NovaRadio</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  background:#07091a;
+  color:#fff;
+}
+
+.wrap{
+  width:min(1000px,92vw);
+  margin:auto;
+  padding:35px 0 80px;
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:45px;
+}
+
+.logo{
+  font-size:34px;
+  font-weight:800;
+}
+
+.account{
+  padding:12px 18px;
+  border:1px solid #343b67;
+  border-radius:14px;
+  background:#101228;
+  color:#ddd;
+}
+
+.hero{
+  text-align:center;
+  margin-bottom:35px;
+}
+
+.hero h1{
+  font-size:42px;
+  margin:0 0 10px;
+}
+
+.hero p{
+  color:#aeb0c8;
+  margin:0;
+  font-size:17px;
+}
+
+.card{
+  background:#101228;
+  border:1px solid #30355e;
+  border-radius:28px;
+  padding:30px;
+}
+
+label{
+  display:block;
+  font-weight:700;
+  margin-bottom:9px;
+}
+
+.field{
+  margin-bottom:22px;
+}
+
+select,
+input{
+  width:100%;
+  padding:16px;
+  border-radius:15px;
+  border:1px solid #353b67;
+  background:#080b1d;
+  color:#fff;
+  font-size:16px;
+}
+
+.search{
+  width:100%;
+  margin-top:8px;
+  padding:18px;
+  border:0;
+  border-radius:18px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  color:#fff;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.search:hover{
+  opacity:.9;
+}
+
+.results{
+  margin-top:30px;
+}
+
+.result{
+  background:#080b1d;
+  border:1px solid #30355e;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:12px;
+}
+
+.result h3{
+  margin:0 0 8px;
+}
+
+.meta{
+  color:#aeb0c8;
+  font-size:14px;
+}
+
+.empty{
+  text-align:center;
+  color:#aeb0c8;
+  padding:35px 10px;
+}
+
+.settings{
+  display:block;
+  margin-top:25px;
+  text-align:center;
+  color:#aeb0c8;
+  text-decoration:none;
+}
+
+.settings:hover{
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<main class="wrap">
+
+<header>
+  <div class="logo">NovaRadioへ。</div>
+  <div class="account" id="account">確認中...</div>
+</header>
+
+<section class="hero">
+  <h1>🎧 今日は何を聴く？</h1>
+  <p>気分やジャンルを選んで、あなたに合う音源を探そう。</p>
+</section>
+
+<section class="card">
+
+  <div class="field">
+    <label for="genre">🎵 ジャンル</label>
+    <select id="genre">
+      <option value="">指定なし</option>
+      <option>Hip Hop</option>
+      <option>R&B</option>
+      <option>Pop</option>
+      <option>Trap</option>
+      <option>Rock</option>
+      <option>Lo-Fi</option>
+      <option>Electronic</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="bpm">⚡ BPM</label>
+    <select id="bpm">
+      <option value="">指定なし</option>
+      <option value="60-80">60〜80</option>
+      <option value="80-100">80〜100</option>
+      <option value="100-120">100〜120</option>
+      <option value="120-140">120〜140</option>
+      <option value="140-180">140〜180</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="key">🎹 Key</label>
+    <select id="key">
+      <option value="">指定なし</option>
+      <option>C Major</option>
+      <option>D Major</option>
+      <option>E Major</option>
+      <option>F Major</option>
+      <option>G Major</option>
+      <option>A Major</option>
+      <option>B Major</option>
+      <option>C Minor</option>
+      <option>D Minor</option>
+      <option>E Minor</option>
+      <option>F Minor</option>
+      <option>G Minor</option>
+      <option>A Minor</option>
+      <option>B Minor</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="mood">🌙 Mood</label>
+    <select id="mood">
+      <option value="">指定なし</option>
+      <option>Chill</option>
+      <option>Dark</option>
+      <option>Happy</option>
+      <option>Emotional</option>
+      <option>Energetic</option>
+    </select>
+  </div>
+
+  <button class="search" id="search">
+    🔎 この条件で探す
+  </button>
+
+  <div class="results" id="results">
+    <div class="empty">
+      条件を選んで「この条件で探す」を押してね。
+    </div>
+  </div>
+
+</section>
+
+<a class="settings" href="dashboard.html">
+  ⚙️ 曲をアップロード・管理する
+</a>
+
+</main>
+
+<script>
+
+const SUPABASE_URL="https://melsoikvhwzvzswlimsi.supabase.co";
+
+const SUPABASE_KEY="ここに今使っているsb_publishableキーを入れる";
+
+const sb=supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+async function checkLogin(){
+
+  const {
+    data:{session}
+  }=await sb.auth.getSession();
+
+  if(!session){
+    location.href="index.html";
+    return;
+  }
+
+  document.getElementById("account").textContent =
+    session.user.email;
+
+}
+
+checkLogin();
+
+document.getElementById("search").addEventListener("click",function(){
+
+  const genre=document.getElementById("genre").value;
+  const bpm=document.getElementById("bpm").value;
+  const key=document.getElementById("key").value;
+  const mood=document.getElementById("mood").value;
+
+  const results=document.getElementById("results");
+
+  results.innerHTML=`
+    <div class="result">
+      <h3>🔎 検索条件</h3>
+      <div class="meta">
+        ジャンル：${genre || "指定なし"}<br>
+        BPM：${bpm || "指定なし"}<br>
+        Key：${key || "指定なし"}<br>
+        Mood：${mood || "指定なし"}
+      </div>
+    </div>
+
+    <div class="empty">
+      曲を検索中……🎧
+    </div>
+  `;
+
+});
+
+</script>
+
+</body>
+</html>
