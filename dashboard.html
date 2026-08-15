@@ -3,25 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NovaRadio - Dashboard</title>
+<title>NovaRadio - Artist Studio</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
   min-height:100vh;
   font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  background:#080a18;
+  background:
+    radial-gradient(circle at 50% 0,#211b50,#080a18 55%,#050611);
   color:#fff;
 }
 
 .wrap{
   width:min(900px,94vw);
   margin:auto;
-  padding:50px 0 80px;
+  padding:45px 0 80px;
 }
 
 .brand{
@@ -38,7 +41,7 @@ body{
 }
 
 .card{
-  background:#101228;
+  background:#101228e8;
   border:1px solid #30355e;
   border-radius:28px;
   padding:32px;
@@ -52,7 +55,7 @@ h2{
 
 .user{
   color:#aeb0c8;
-  margin-bottom:25px;
+  margin-bottom:20px;
 }
 
 .field{
@@ -65,7 +68,8 @@ h2{
   margin-bottom:8px;
 }
 
-input,select{
+input,
+select{
   width:100%;
   padding:16px;
   border-radius:15px;
@@ -73,6 +77,10 @@ input,select{
   background:#080b1d;
   color:#fff;
   font-size:16px;
+}
+
+input[type="file"]{
+  padding:14px;
 }
 
 button{
@@ -88,8 +96,18 @@ button{
   background:linear-gradient(90deg,#7b25ff,#159df5);
 }
 
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
 .logout{
   background:#242842;
+}
+
+.back{
+  background:#171a31;
+  border:1px solid #343b67;
 }
 
 .status{
@@ -100,9 +118,10 @@ button{
   border:1px solid #385d55;
   color:#bfffe8;
   background:#101b2b;
+  line-height:1.6;
 }
 
-.error{
+.status.error{
   border-color:#8d4050;
   color:#ffd6dc;
 }
@@ -112,6 +131,31 @@ button{
   color:#aaa;
   padding:60px 0;
 }
+
+.file-info{
+  color:#9da2c0;
+  font-size:13px;
+  margin-top:8px;
+}
+
+.progress{
+  display:none;
+  margin-top:18px;
+  color:#aeb0c8;
+  text-align:center;
+}
+
+@media(max-width:600px){
+
+  .brand{
+    font-size:34px;
+  }
+
+  .card{
+    padding:23px;
+  }
+
+}
 </style>
 </head>
 
@@ -119,192 +163,710 @@ button{
 
 <div class="wrap">
 
-  <div class="brand">NovaRadioへ。</div>
-  <div class="sub">あなたの音源を設定してください。</div>
+  <div class="brand">NovaRadio Artist Studio</div>
+
+  <div class="sub">
+    あなたの音楽をNovaRadioへ。
+  </div>
+
 
   <div id="loading" class="loading">
     ログイン状態を確認しています…
   </div>
 
+
   <main id="dashboard" style="display:none">
 
+
+    <!-- アカウント -->
+
     <section class="card">
+
       <h2>🎧 アカウント</h2>
+
       <div class="user">
-        ログイン中：<span id="userEmail"></span>
+        ログイン中：
+        <span id="userEmail"></span>
       </div>
+
+      <button class="back" id="backHome">
+        ← NovaRadioに戻る
+      </button>
 
       <button class="logout" id="logout">
         ログアウト
       </button>
+
     </section>
 
+
+    <!-- 曲アップロード -->
+
     <section class="card">
-      <h2>🎵 曲の設定</h2>
+
+      <h2>🎵 曲をアップロード</h2>
+
 
       <div class="field">
-        <label>曲名</label>
-        <input id="songTitle" type="text" placeholder="曲名を入力">
+
+        <label>曲名 *</label>
+
+        <input
+          id="songTitle"
+          type="text"
+          placeholder="例：world feat.BOY MELO WORLD"
+        >
+
       </div>
 
-      <div class="field">
-        <label>アーティスト名</label>
-        <input id="artistName" type="text" value="Dr.SIG">
-      </div>
 
       <div class="field">
-        <label>BPM</label>
-        <input id="bpm" type="number" placeholder="例：90">
+
+        <label>アーティスト名 *</label>
+
+        <input
+          id="artistName"
+          type="text"
+          value="Dr.SIG"
+          placeholder="アーティスト名"
+        >
+
       </div>
 
-      <div class="field">
-        <label>キー</label>
-        <input id="songKey" type="text" placeholder="例：B Major">
-      </div>
 
       <div class="field">
-        <label>ジャンル</label>
+
+        <label>ジャンル *</label>
+
         <select id="genre">
-          <option value="">選択してください</option>
-          <option>Hip Hop</option>
-          <option>R&B</option>
-          <option>Pluggnb</option>
-          <option>Trap</option>
-          <option>Pop</option>
-          <option>Other</option>
+
+          <option value="">
+            選択してください
+          </option>
+
+          <option value="Hip Hop">
+            Hip Hop
+          </option>
+
+          <option value="R&B">
+            R&B
+          </option>
+
+          <option value="Pop">
+            Pop
+          </option>
+
+          <option value="Trap">
+            Trap
+          </option>
+
+          <option value="Rock">
+            Rock
+          </option>
+
+          <option value="Lo-Fi">
+            Lo-Fi
+          </option>
+
+          <option value="Electronic">
+            Electronic
+          </option>
+
+          <option value="Pluggnb">
+            Pluggnb
+          </option>
+
+          <option value="Other">
+            Other
+          </option>
+
         </select>
+
       </div>
 
-      <button id="save">
-        曲の設定を保存
+
+      <div class="field">
+
+        <label>Mood</label>
+
+        <select id="mood">
+
+          <option value="">
+            指定なし
+          </option>
+
+          <option value="Chill">
+            Chill
+          </option>
+
+          <option value="Dark">
+            Dark
+          </option>
+
+          <option value="Happy">
+            Happy
+          </option>
+
+          <option value="Emotional">
+            Emotional
+          </option>
+
+          <option value="Energetic">
+            Energetic
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>BPM</label>
+
+        <input
+          id="bpm"
+          type="number"
+          placeholder="例：90"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Key</label>
+
+        <input
+          id="songKey"
+          type="text"
+          placeholder="例：B Major"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>音源ファイル *</label>
+
+        <input
+          id="audioFile"
+          type="file"
+          accept=".wav,.mp3,audio/wav,audio/mpeg"
+        >
+
+        <div class="file-info">
+          WAV / MP3
+        </div>
+
+      </div>
+
+
+      <button id="upload">
+        🚀 NovaRadioにアップロード
       </button>
 
-      <div id="status" class="status"></div>
+
+      <div
+        id="progress"
+        class="progress"
+      >
+        アップロードしています… 🎧
+      </div>
+
+
+      <div
+        id="status"
+        class="status"
+      ></div>
+
     </section>
 
   </main>
 
 </div>
 
+
 <script>
+
+/* =========================
+   Supabase
+========================= */
 
 const SUPABASE_URL =
   "https://melsoikvhwzvzswlimsi.supabase.co";
 
 const SUPABASE_KEY =
-  "sb_publishable_IOPT_ffm1Hp2bS3n3s1D8w_31mBaUdm";
+  "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
+
 
 const sb = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
 
-const loading = document.getElementById("loading");
-const dashboard = document.getElementById("dashboard");
-const userEmail = document.getElementById("userEmail");
+
+/* =========================
+   Elements
+========================= */
+
+const loading =
+  document.getElementById("loading");
+
+const dashboard =
+  document.getElementById("dashboard");
+
+const userEmail =
+  document.getElementById("userEmail");
+
+const uploadButton =
+  document.getElementById("upload");
+
+const progress =
+  document.getElementById("progress");
+
+
+/* =========================
+   Login
+========================= */
 
 async function init(){
 
   const {
-    data: { session },
+    data:{session},
     error
   } = await sb.auth.getSession();
 
+
   if(error){
+
     loading.textContent =
       "ログイン状態の確認に失敗しました。";
+
     console.error(error);
+
     return;
   }
 
+
   if(!session){
+
     loading.textContent =
       "ログインしていません。ログイン画面へ戻ります…";
 
     setTimeout(()=>{
-      location.href = "index.html";
-    },1500);
+
+      location.href="index.html";
+
+    },1200);
 
     return;
   }
 
+
   userEmail.textContent =
     session.user.email || "";
 
-  loading.style.display = "none";
-  dashboard.style.display = "block";
+
+  loading.style.display="none";
+
+  dashboard.style.display="block";
+
 }
 
-document.getElementById("logout").addEventListener(
+init();
+
+
+/* =========================
+   Upload
+========================= */
+
+uploadButton.addEventListener(
+  "click",
+  async ()=>{
+
+
+    const title =
+      document
+      .getElementById("songTitle")
+      .value
+      .trim();
+
+
+    const artist =
+      document
+      .getElementById("artistName")
+      .value
+      .trim();
+
+
+    const genre =
+      document
+      .getElementById("genre")
+      .value;
+
+
+    const mood =
+      document
+      .getElementById("mood")
+      .value;
+
+
+    const bpmValue =
+      document
+      .getElementById("bpm")
+      .value;
+
+
+    const key =
+      document
+      .getElementById("songKey")
+      .value
+      .trim();
+
+
+    const file =
+      document
+      .getElementById("audioFile")
+      .files[0];
+
+
+    /* Validation */
+
+    if(!title){
+
+      showStatus(
+        "曲名を入力してください。",
+        true
+      );
+
+      return;
+    }
+
+
+    if(!artist){
+
+      showStatus(
+        "アーティスト名を入力してください。",
+        true
+      );
+
+      return;
+    }
+
+
+    if(!genre){
+
+      showStatus(
+        "ジャンルを選択してください。",
+        true
+      );
+
+      return;
+    }
+
+
+    if(!file){
+
+      showStatus(
+        "音源ファイルを選択してください。",
+        true
+      );
+
+      return;
+    }
+
+
+    /* Login check */
+
+    const {
+      data:{session}
+    } = await sb.auth.getSession();
+
+
+    if(!session){
+
+      showStatus(
+        "ログイン情報が確認できません。",
+        true
+      );
+
+      return;
+    }
+
+
+    uploadButton.disabled=true;
+
+    progress.style.display="block";
+
+    hideStatus();
+
+
+    try{
+
+
+      /* =========================
+         Safe filename
+      ========================= */
+
+      const extension =
+        file.name
+        .split(".")
+        .pop()
+        .toLowerCase();
+
+
+      const safeFileName =
+        `${session.user.id}_${Date.now()}.${extension}`;
+
+
+      /* =========================
+         Storage Upload
+      ========================= */
+
+      const {
+        data:uploadData,
+        error:uploadError
+      } =
+      await sb
+      .storage
+      .from("songs")
+      .upload(
+        safeFileName,
+        file,
+        {
+          cacheControl:"3600",
+          upsert:false,
+          contentType:file.type
+        }
+      );
+
+
+      if(uploadError){
+
+        throw new Error(
+          "音源アップロード失敗："+
+          uploadError.message
+        );
+
+      }
+
+
+      /* =========================
+         Public URL
+      ========================= */
+
+      const {
+        data:publicUrlData
+      } =
+      sb
+      .storage
+      .from("songs")
+      .getPublicUrl(
+        uploadData.path
+      );
+
+
+      const audioUrl =
+        publicUrlData.publicUrl;
+
+
+      /* =========================
+         Database
+      ========================= */
+
+      const songData = {
+
+        title:title,
+
+        artist:artist,
+
+        genre:genre,
+
+        mood:
+          mood || null,
+
+        bpm:
+          bpmValue
+            ? Number(bpmValue)
+            : null,
+
+        key:
+          key || null,
+
+        audio_url:
+          audioUrl
+
+      };
+
+
+      const {
+        error:databaseError
+      } =
+      await sb
+      .from("songs")
+      .insert(songData);
+
+
+      if(databaseError){
+
+        /*
+        DB登録に失敗した場合、
+        Storageに残ったファイルを削除する
+        */
+
+        await sb
+        .storage
+        .from("songs")
+        .remove([
+          uploadData.path
+        ]);
+
+
+        throw new Error(
+          "曲情報の登録失敗："+
+          databaseError.message
+        );
+
+      }
+
+
+      /* =========================
+         Success
+      ========================= */
+
+      showStatus(
+        "アップロード完了！🔥 NovaRadioに曲が登録されました。",
+        false
+      );
+
+
+      document
+      .getElementById("songTitle")
+      .value="";
+
+
+      document
+      .getElementById("bpm")
+      .value="";
+
+
+      document
+      .getElementById("songKey")
+      .value="";
+
+
+      document
+      .getElementById("audioFile")
+      .value="";
+
+
+    }
+    catch(error){
+
+      console.error(error);
+
+      showStatus(
+        error.message ||
+        "アップロード中にエラーが発生しました。",
+        true
+      );
+
+    }
+    finally{
+
+      uploadButton.disabled=false;
+
+      progress.style.display="none";
+
+    }
+
+  }
+);
+
+
+/* =========================
+   Status
+========================= */
+
+function showStatus(
+  message,
+  isError
+){
+
+  const status =
+    document.getElementById("status");
+
+
+  status.textContent =
+    message;
+
+
+  status.style.display =
+    "block";
+
+
+  if(isError){
+
+    status
+    .classList
+    .add("error");
+
+  }
+  else{
+
+    status
+    .classList
+    .remove("error");
+
+  }
+
+}
+
+
+function hideStatus(){
+
+  document
+  .getElementById("status")
+  .style
+  .display="none";
+
+}
+
+
+/* =========================
+   Back
+========================= */
+
+document
+.getElementById("backHome")
+.addEventListener(
+  "click",
+  ()=>{
+
+    location.href="home.html";
+
+  }
+);
+
+
+/* =========================
+   Logout
+========================= */
+
+document
+.getElementById("logout")
+.addEventListener(
   "click",
   async ()=>{
 
     await sb.auth.signOut();
 
-    location.href = "index.html";
+    location.href="index.html";
+
   }
 );
-
-document.getElementById("save").addEventListener(
-  "click",
-  ()=>{
-
-    const title =
-      document.getElementById("songTitle").value;
-
-    const artist =
-      document.getElementById("artistName").value;
-
-    const bpm =
-      document.getElementById("bpm").value;
-
-    const key =
-      document.getElementById("songKey").value;
-
-    const genre =
-      document.getElementById("genre").value;
-
-    if(!title){
-      showStatus("曲名を入力してください。",true);
-      return;
-    }
-
-    const settings = {
-      title,
-      artist,
-      bpm,
-      key,
-      genre
-    };
-
-    localStorage.setItem(
-      "novaradio_song_settings",
-      JSON.stringify(settings)
-    );
-
-    showStatus(
-      "曲の設定を保存しました！🔥",
-      false
-    );
-  }
-);
-
-function showStatus(message,isError){
-
-  const status =
-    document.getElementById("status");
-
-  status.textContent = message;
-  status.style.display = "block";
-
-  if(isError){
-    status.classList.add("error");
-  }else{
-    status.classList.remove("error");
-  }
-}
-
-init();
 
 </script>
 
