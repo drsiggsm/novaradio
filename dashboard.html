@@ -59,17 +59,16 @@ h2{
 }
 
 .field{
-  margin:20px 0;
+  margin:24px 0;
 }
 
 .field label{
   display:block;
   font-weight:700;
-  margin-bottom:8px;
+  margin-bottom:11px;
 }
 
-input,
-select{
+input{
   width:100%;
   padding:16px;
   border-radius:15px;
@@ -83,7 +82,67 @@ input[type="file"]{
   padding:14px;
 }
 
-button{
+
+/* 複数選択ボタン */
+
+.options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.option{
+  width:auto;
+  margin:0;
+  padding:12px 18px;
+  border-radius:999px;
+  border:1px solid #353b67;
+  background:#080b1d;
+  color:#bfc2d8;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.option:hover{
+  color:#fff;
+  border-color:#7b25ff;
+}
+
+.option.selected{
+  color:#fff;
+  border-color:transparent;
+  background:
+    linear-gradient(
+      90deg,
+      #7b25ff,
+      #159df5
+    );
+
+  box-shadow:
+    0 5px 20px #6425ff55;
+}
+
+.selected-info{
+  margin-top:13px;
+  padding:13px 15px;
+  border-radius:14px;
+  border:1px solid #30355e;
+  background:#080b1d;
+  color:#9da2c0;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.selected-info strong{
+  color:#fff;
+}
+
+
+/* 通常ボタン */
+
+.main-button{
   width:100%;
   margin-top:15px;
   padding:17px;
@@ -93,10 +152,15 @@ button{
   font-weight:800;
   color:#fff;
   cursor:pointer;
-  background:linear-gradient(90deg,#7b25ff,#159df5);
+  background:
+    linear-gradient(
+      90deg,
+      #7b25ff,
+      #159df5
+    );
 }
 
-button:disabled{
+.main-button:disabled{
   opacity:.5;
   cursor:not-allowed;
 }
@@ -155,15 +219,22 @@ button:disabled{
     padding:23px;
   }
 
+  .option{
+    padding:11px 15px;
+  }
+
 }
 </style>
 </head>
+
 
 <body>
 
 <div class="wrap">
 
-  <div class="brand">NovaRadio Artist Studio</div>
+  <div class="brand">
+    NovaRadio Artist Studio
+  </div>
 
   <div class="sub">
     あなたの音楽をNovaRadioへ。
@@ -189,11 +260,19 @@ button:disabled{
         <span id="userEmail"></span>
       </div>
 
-      <button class="back" id="backHome">
+      <button
+        class="main-button back"
+        id="backHome"
+        type="button"
+      >
         ← NovaRadioに戻る
       </button>
 
-      <button class="logout" id="logout">
+      <button
+        class="main-button logout"
+        id="logout"
+        type="button"
+      >
         ログアウト
       </button>
 
@@ -207,9 +286,13 @@ button:disabled{
       <h2>🎵 曲をアップロード</h2>
 
 
+      <!-- 曲名 -->
+
       <div class="field">
 
-        <label>曲名 *</label>
+        <label>
+          曲名 *
+        </label>
 
         <input
           id="songTitle"
@@ -220,9 +303,13 @@ button:disabled{
       </div>
 
 
+      <!-- アーティスト -->
+
       <div class="field">
 
-        <label>アーティスト名 *</label>
+        <label>
+          アーティスト名 *
+        </label>
 
         <input
           id="artistName"
@@ -234,95 +321,179 @@ button:disabled{
       </div>
 
 
+      <!-- ジャンル -->
+
       <div class="field">
 
-        <label>ジャンル *</label>
+        <label>
+          🎵 ジャンル *
+        </label>
 
-        <select id="genre">
+        <div
+          class="options"
+          id="genreOptions"
+        >
 
-          <option value="">
-            選択してください
-          </option>
-
-          <option value="Hip Hop">
+          <button
+            type="button"
+            class="option"
+            data-value="Hip Hop"
+          >
             Hip Hop
-          </option>
+          </button>
 
-          <option value="R&B">
+          <button
+            type="button"
+            class="option"
+            data-value="R&B"
+          >
             R&B
-          </option>
+          </button>
 
-          <option value="Pop">
+          <button
+            type="button"
+            class="option"
+            data-value="Pop"
+          >
             Pop
-          </option>
+          </button>
 
-          <option value="Trap">
+          <button
+            type="button"
+            class="option"
+            data-value="Trap"
+          >
             Trap
-          </option>
+          </button>
 
-          <option value="Rock">
+          <button
+            type="button"
+            class="option"
+            data-value="Rock"
+          >
             Rock
-          </option>
+          </button>
 
-          <option value="Lo-Fi">
+          <button
+            type="button"
+            class="option"
+            data-value="Lo-Fi"
+          >
             Lo-Fi
-          </option>
+          </button>
 
-          <option value="Electronic">
+          <button
+            type="button"
+            class="option"
+            data-value="Electronic"
+          >
             Electronic
-          </option>
+          </button>
 
-          <option value="Pluggnb">
+          <button
+            type="button"
+            class="option"
+            data-value="Pluggnb"
+          >
             Pluggnb
-          </option>
+          </button>
 
-          <option value="Other">
+          <button
+            type="button"
+            class="option"
+            data-value="Other"
+          >
             Other
-          </option>
+          </button>
 
-        </select>
+        </div>
+
+
+        <div
+          class="selected-info"
+          id="genreSelected"
+        >
+          <strong>選択中：</strong>
+          まだ選択されていません
+        </div>
 
       </div>
 
 
+      <!-- Mood -->
+
       <div class="field">
 
-        <label>Mood</label>
+        <label>
+          🌙 Mood
+        </label>
 
-        <select id="mood">
+        <div
+          class="options"
+          id="moodOptions"
+        >
 
-          <option value="">
-            指定なし
-          </option>
-
-          <option value="Chill">
+          <button
+            type="button"
+            class="option"
+            data-value="Chill"
+          >
             Chill
-          </option>
+          </button>
 
-          <option value="Dark">
+          <button
+            type="button"
+            class="option"
+            data-value="Dark"
+          >
             Dark
-          </option>
+          </button>
 
-          <option value="Happy">
+          <button
+            type="button"
+            class="option"
+            data-value="Happy"
+          >
             Happy
-          </option>
+          </button>
 
-          <option value="Emotional">
+          <button
+            type="button"
+            class="option"
+            data-value="Emotional"
+          >
             Emotional
-          </option>
+          </button>
 
-          <option value="Energetic">
+          <button
+            type="button"
+            class="option"
+            data-value="Energetic"
+          >
             Energetic
-          </option>
+          </button>
 
-        </select>
+        </div>
+
+
+        <div
+          class="selected-info"
+          id="moodSelected"
+        >
+          <strong>選択中：</strong>
+          指定なし
+        </div>
 
       </div>
 
 
+      <!-- BPM -->
+
       <div class="field">
 
-        <label>BPM</label>
+        <label>
+          BPM
+        </label>
 
         <input
           id="bpm"
@@ -333,9 +504,13 @@ button:disabled{
       </div>
 
 
+      <!-- Key -->
+
       <div class="field">
 
-        <label>Key</label>
+        <label>
+          Key
+        </label>
 
         <input
           id="songKey"
@@ -346,9 +521,13 @@ button:disabled{
       </div>
 
 
+      <!-- 音源 -->
+
       <div class="field">
 
-        <label>音源ファイル *</label>
+        <label>
+          音源ファイル *
+        </label>
 
         <input
           id="audioFile"
@@ -363,7 +542,11 @@ button:disabled{
       </div>
 
 
-      <button id="upload">
+      <button
+        class="main-button"
+        id="upload"
+        type="button"
+      >
         🚀 NovaRadioにアップロード
       </button>
 
@@ -391,7 +574,7 @@ button:disabled{
 <script>
 
 /* =========================
-   Supabase
+   SUPABASE
 ========================= */
 
 const SUPABASE_URL =
@@ -401,14 +584,15 @@ const SUPABASE_KEY =
   "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
 
 
-const sb = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const sb =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 
 /* =========================
-   Elements
+   ELEMENTS
 ========================= */
 
 const loading =
@@ -428,7 +612,145 @@ const progress =
 
 
 /* =========================
-   Login
+   MULTI SELECT
+========================= */
+
+const selectedGenres = [];
+const selectedMoods = [];
+
+
+/* ジャンル */
+
+document
+.querySelectorAll(
+  "#genreOptions .option"
+)
+.forEach(button=>{
+
+  button.addEventListener(
+    "click",
+    ()=>{
+
+      toggleSelection(
+        button,
+        selectedGenres
+      );
+
+      updateSelectedText();
+
+    }
+  );
+
+});
+
+
+/* Mood */
+
+document
+.querySelectorAll(
+  "#moodOptions .option"
+)
+.forEach(button=>{
+
+  button.addEventListener(
+    "click",
+    ()=>{
+
+      toggleSelection(
+        button,
+        selectedMoods
+      );
+
+      updateSelectedText();
+
+    }
+  );
+
+});
+
+
+function toggleSelection(
+  button,
+  array
+){
+
+  const value =
+    button.dataset.value;
+
+
+  const index =
+    array.indexOf(value);
+
+
+  if(index === -1){
+
+    array.push(value);
+
+    button.classList.add(
+      "selected"
+    );
+
+  }
+  else{
+
+    array.splice(
+      index,
+      1
+    );
+
+    button.classList.remove(
+      "selected"
+    );
+
+  }
+
+}
+
+
+function updateSelectedText(){
+
+  const genreBox =
+    document.getElementById(
+      "genreSelected"
+    );
+
+
+  const moodBox =
+    document.getElementById(
+      "moodSelected"
+    );
+
+
+  genreBox.innerHTML = `
+
+    <strong>選択中：</strong>
+
+    ${
+      selectedGenres.length
+        ? selectedGenres.join(" / ")
+        : "まだ選択されていません"
+    }
+
+  `;
+
+
+  moodBox.innerHTML = `
+
+    <strong>選択中：</strong>
+
+    ${
+      selectedMoods.length
+        ? selectedMoods.join(" / ")
+        : "指定なし"
+    }
+
+  `;
+
+}
+
+
+/* =========================
+   LOGIN
 ========================= */
 
 async function init(){
@@ -436,7 +758,8 @@ async function init(){
   const {
     data:{session},
     error
-  } = await sb.auth.getSession();
+  } =
+  await sb.auth.getSession();
 
 
   if(error){
@@ -447,6 +770,7 @@ async function init(){
     console.error(error);
 
     return;
+
   }
 
 
@@ -455,13 +779,17 @@ async function init(){
     loading.textContent =
       "ログインしていません。ログイン画面へ戻ります…";
 
+
     setTimeout(()=>{
 
-      location.href="index.html";
+      location.href =
+        "index.html";
 
     },1200);
 
+
     return;
+
   }
 
 
@@ -469,9 +797,12 @@ async function init(){
     session.user.email || "";
 
 
-  loading.style.display="none";
+  loading.style.display =
+    "none";
 
-  dashboard.style.display="block";
+
+  dashboard.style.display =
+    "block";
 
 }
 
@@ -479,7 +810,7 @@ init();
 
 
 /* =========================
-   Upload
+   UPLOAD
 ========================= */
 
 uploadButton.addEventListener(
@@ -501,18 +832,6 @@ uploadButton.addEventListener(
       .trim();
 
 
-    const genre =
-      document
-      .getElementById("genre")
-      .value;
-
-
-    const mood =
-      document
-      .getElementById("mood")
-      .value;
-
-
     const bpmValue =
       document
       .getElementById("bpm")
@@ -532,7 +851,9 @@ uploadButton.addEventListener(
       .files[0];
 
 
-    /* Validation */
+    /* =========================
+       VALIDATION
+    ========================= */
 
     if(!title){
 
@@ -542,6 +863,7 @@ uploadButton.addEventListener(
       );
 
       return;
+
     }
 
 
@@ -553,17 +875,19 @@ uploadButton.addEventListener(
       );
 
       return;
+
     }
 
 
-    if(!genre){
+    if(!selectedGenres.length){
 
       showStatus(
-        "ジャンルを選択してください。",
+        "ジャンルを1つ以上選択してください。",
         true
       );
 
       return;
+
     }
 
 
@@ -575,14 +899,18 @@ uploadButton.addEventListener(
       );
 
       return;
+
     }
 
 
-    /* Login check */
+    /* =========================
+       SESSION
+    ========================= */
 
     const {
       data:{session}
-    } = await sb.auth.getSession();
+    } =
+    await sb.auth.getSession();
 
 
     if(!session){
@@ -593,12 +921,17 @@ uploadButton.addEventListener(
       );
 
       return;
+
     }
 
 
-    uploadButton.disabled=true;
+    uploadButton.disabled =
+      true;
 
-    progress.style.display="block";
+
+    progress.style.display =
+      "block";
+
 
     hideStatus();
 
@@ -607,7 +940,7 @@ uploadButton.addEventListener(
 
 
       /* =========================
-         Safe filename
+         FILE NAME
       ========================= */
 
       const extension =
@@ -617,12 +950,24 @@ uploadButton.addEventListener(
         .toLowerCase();
 
 
+      if(
+        extension !== "wav" &&
+        extension !== "mp3"
+      ){
+
+        throw new Error(
+          "WAVまたはMP3を選択してください。"
+        );
+
+      }
+
+
       const safeFileName =
         `${session.user.id}_${Date.now()}.${extension}`;
 
 
       /* =========================
-         Storage Upload
+         STORAGE
       ========================= */
 
       const {
@@ -638,7 +983,13 @@ uploadButton.addEventListener(
         {
           cacheControl:"3600",
           upsert:false,
-          contentType:file.type
+          contentType:
+            file.type ||
+            (
+              extension === "mp3"
+                ? "audio/mpeg"
+                : "audio/wav"
+            )
         }
       );
 
@@ -646,7 +997,7 @@ uploadButton.addEventListener(
       if(uploadError){
 
         throw new Error(
-          "音源アップロード失敗："+
+          "音源アップロード失敗：" +
           uploadError.message
         );
 
@@ -654,7 +1005,7 @@ uploadButton.addEventListener(
 
 
       /* =========================
-         Public URL
+         PUBLIC URL
       ========================= */
 
       const {
@@ -673,7 +1024,21 @@ uploadButton.addEventListener(
 
 
       /* =========================
-         Database
+         複数ジャンル/Moodを保存
+      ========================= */
+
+      const genreValue =
+        selectedGenres.join(",");
+
+
+      const moodValue =
+        selectedMoods.length
+          ? selectedMoods.join(",")
+          : null;
+
+
+      /* =========================
+         DATABASE
       ========================= */
 
       const songData = {
@@ -682,10 +1047,11 @@ uploadButton.addEventListener(
 
         artist:artist,
 
-        genre:genre,
+        genre:
+          genreValue,
 
         mood:
-          mood || null,
+          moodValue,
 
         bpm:
           bpmValue
@@ -711,21 +1077,8 @@ uploadButton.addEventListener(
 
       if(databaseError){
 
-        /*
-        DB登録に失敗した場合、
-        Storageに残ったファイルを削除する
-        */
-
-        await sb
-        .storage
-        .from("songs")
-        .remove([
-          uploadData.path
-        ]);
-
-
         throw new Error(
-          "曲情報の登録失敗："+
+          "曲情報の登録失敗：" +
           databaseError.message
         );
 
@@ -733,7 +1086,7 @@ uploadButton.addEventListener(
 
 
       /* =========================
-         Success
+         SUCCESS
       ========================= */
 
       showStatus(
@@ -742,30 +1095,14 @@ uploadButton.addEventListener(
       );
 
 
-      document
-      .getElementById("songTitle")
-      .value="";
-
-
-      document
-      .getElementById("bpm")
-      .value="";
-
-
-      document
-      .getElementById("songKey")
-      .value="";
-
-
-      document
-      .getElementById("audioFile")
-      .value="";
+      resetForm();
 
 
     }
     catch(error){
 
       console.error(error);
+
 
       showStatus(
         error.message ||
@@ -776,9 +1113,12 @@ uploadButton.addEventListener(
     }
     finally{
 
-      uploadButton.disabled=false;
+      uploadButton.disabled =
+        false;
 
-      progress.style.display="none";
+
+      progress.style.display =
+        "none";
 
     }
 
@@ -787,7 +1127,53 @@ uploadButton.addEventListener(
 
 
 /* =========================
-   Status
+   RESET
+========================= */
+
+function resetForm(){
+
+  document
+  .getElementById("songTitle")
+  .value = "";
+
+
+  document
+  .getElementById("bpm")
+  .value = "";
+
+
+  document
+  .getElementById("songKey")
+  .value = "";
+
+
+  document
+  .getElementById("audioFile")
+  .value = "";
+
+
+  selectedGenres.length = 0;
+  selectedMoods.length = 0;
+
+
+  document
+  .querySelectorAll(".option")
+  .forEach(button=>{
+
+    button.classList.remove(
+      "selected"
+    );
+
+  });
+
+
+  updateSelectedText();
+
+}
+
+
+/* =========================
+   STATUS
 ========================= */
 
 function showStatus(
@@ -796,7 +1182,9 @@ function showStatus(
 ){
 
   const status =
-    document.getElementById("status");
+    document.getElementById(
+      "status"
+    );
 
 
   status.textContent =
@@ -830,13 +1218,13 @@ function hideStatus(){
   document
   .getElementById("status")
   .style
-  .display="none";
+  .display = "none";
 
 }
 
 
 /* =========================
-   Back
+   BACK
 ========================= */
 
 document
@@ -845,14 +1233,15 @@ document
   "click",
   ()=>{
 
-    location.href="home.html";
+    location.href =
+      "home.html";
 
   }
 );
 
 
 /* =========================
-   Logout
+   LOGOUT
 ========================= */
 
 document
@@ -863,7 +1252,8 @@ document
 
     await sb.auth.signOut();
 
-    location.href="index.html";
+    location.href =
+      "index.html";
 
   }
 );
