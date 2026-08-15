@@ -8,7 +8,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -284,12 +286,31 @@ label{
   background:#1c2040;
 }
 
+audio{
+  width:100%;
+  margin-top:22px;
+}
+
 @media(max-width:600px){
-  .hero h1{font-size:34px}
-  .logo{font-size:28px}
-  .account{display:none}
-  .artist-search{flex-direction:column}
-  .artist-search button{padding:16px}
+  .hero h1{
+    font-size:34px;
+  }
+
+  .logo{
+    font-size:28px;
+  }
+
+  .account{
+    display:none;
+  }
+
+  .artist-search{
+    flex-direction:column;
+  }
+
+  .artist-search button{
+    padding:16px;
+  }
 }
 </style>
 </head>
@@ -315,6 +336,7 @@ label{
   </div>
 
 </header>
+
 
 <div class="menu" id="menu">
 
@@ -448,20 +470,25 @@ label{
 
 <script>
 
+/* ========================================
+   SUPABASE
+======================================== */
+
 const SUPABASE_URL =
   "https://melsoikvhwzvzswlimsi.supabase.co";
 
 const SUPABASE_KEY =
   "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
 
-const sb =
-  supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+const sb = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 
-/* ログイン確認 */
+/* ========================================
+   LOGIN
+======================================== */
 
 async function checkLogin(){
 
@@ -470,24 +497,23 @@ async function checkLogin(){
   } = await sb.auth.getSession();
 
   if(!session){
-
     location.href="index.html";
-
     return;
   }
 
   document.getElementById("account").textContent =
     session.user.email;
-
 }
 
 checkLogin();
 
 
-/* ジャンル・Mood */
+/* ========================================
+   GENRE / MOOD
+======================================== */
 
-const selectedGenres=[];
-const selectedMoods=[];
+const selectedGenres = [];
+const selectedMoods = [];
 
 
 function updateConditions(){
@@ -502,7 +528,7 @@ function updateConditions(){
       ? selectedMoods.join(" / ")
       : "指定なし";
 
-  document.getElementById("conditions").innerHTML=`
+  document.getElementById("conditions").innerHTML = `
     <strong>選択中：</strong>
     ${genreText} × ${moodText}
   `;
@@ -510,21 +536,21 @@ function updateConditions(){
   document.getElementById("play").disabled =
     !selectedGenres.length &&
     !selectedMoods.length;
-
 }
 
 
 document
 .querySelectorAll("#genreOptions .option")
-.forEach(button=>{
+.forEach(button => {
 
-  button.addEventListener("click",()=>{
+  button.addEventListener("click", () => {
 
-    const value=button.dataset.value;
+    const value = button.dataset.value;
 
-    const index=selectedGenres.indexOf(value);
+    const index =
+      selectedGenres.indexOf(value);
 
-    if(index===-1){
+    if(index === -1){
 
       selectedGenres.push(value);
       button.classList.add("selected");
@@ -545,15 +571,16 @@ document
 
 document
 .querySelectorAll("#moodOptions .option")
-.forEach(button=>{
+.forEach(button => {
 
-  button.addEventListener("click",()=>{
+  button.addEventListener("click", () => {
 
-    const value=button.dataset.value;
+    const value = button.dataset.value;
 
-    const index=selectedMoods.indexOf(value);
+    const index =
+      selectedMoods.indexOf(value);
 
-    if(index===-1){
+    if(index === -1){
 
       selectedMoods.push(value);
       button.classList.add("selected");
@@ -572,61 +599,223 @@ document
 });
 
 
-/* 再生 */
+/* ========================================
+   SONG PLAYER
+======================================== */
 
-document
-.getElementById("play")
-.addEventListener("click",()=>{
+function playSong(song){
 
-  const genreText =
-    selectedGenres.length
-      ? selectedGenres.join(" / ")
-      : "すべて";
+  const now =
+    document.getElementById("now");
 
-  const moodText =
-    selectedMoods.length
-      ? selectedMoods.join(" / ")
-      : "すべて";
+  if(!song.audio_url){
 
-  document.getElementById("now").innerHTML=`
+    now.innerHTML = `
+      <div class="now-label">
+        ERROR
+      </div>
+
+      <div class="empty">
+        この曲にはaudio_urlが登録されていません。
+      </div>
+    `;
+
+    return;
+  }
+
+
+  now.innerHTML = `
 
     <div class="now-label">
       NOW PLAYING
     </div>
 
     <div class="now-title">
-      曲を探しています…
+      ${song.title || "Untitled"}
     </div>
 
     <div class="now-artist">
-      ${genreText} · ${moodText}
+      ${song.artist || "Unknown Artist"}
+    </div>
+
+    <div class="artist-meta" style="margin-top:8px;">
+      ${song.genre || ""}
+      ${song.mood ? " · " + song.mood : ""}
+    </div>
+
+    <audio
+      id="audioPlayer"
+      controls
+      autoplay
+      preload="metadata"
+    >
+      <source
+        src="${song.audio_url}"
+        type="audio/wav"
+      >
+      このブラウザでは音源を再生できません。
+    </audio>
+
+  `;
+
+
+  const audio =
+    document.getElementById("audioPlayer");
+
+  audio.play().catch(error => {
+    console.log(
+      "再生開始エラー:",
+      error
+    );
+  });
+
+}
+
+
+/* ========================================
+   条件から曲を探す
+======================================== */
+
+document
+.getElementById("play")
+.addEventListener("click", async () => {
+
+  const now =
+    document.getElementById("now");
+
+
+  now.innerHTML = `
+
+    <div class="now-label">
+      NOVARADIO
     </div>
 
     <div class="empty">
-      🎧 音源を読み込んでいます…
+      曲を選んでいます… 🎧
     </div>
 
   `;
 
+
+  const {
+    data,
+    error
+  } = await sb
+    .from("songs")
+    .select("*");
+
+
+  if(error){
+
+    console.error(
+      "Supabase error:",
+      error
+    );
+
+    now.innerHTML = `
+
+      <div class="now-label">
+        ERROR
+      </div>
+
+      <div class="empty">
+        曲の取得に失敗しました。<br><br>
+        ${error.message}
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  let songs =
+    data || [];
+
+
+  /* Genre */
+
+  if(selectedGenres.length){
+
+    songs =
+      songs.filter(song =>
+        selectedGenres.includes(song.genre)
+      );
+
+  }
+
+
+  /* Mood */
+
+  if(selectedMoods.length){
+
+    songs =
+      songs.filter(song =>
+        selectedMoods.includes(song.mood)
+      );
+
+  }
+
+
+  if(!songs.length){
+
+    now.innerHTML = `
+
+      <div class="now-label">
+        NOVARADIO
+      </div>
+
+      <div class="empty">
+        この条件に合う曲は<br>
+        まだありません 🎧
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  /* ランダム */
+
+  const randomSong =
+    songs[
+      Math.floor(
+        Math.random() *
+        songs.length
+      )
+    ];
+
+
+  playSong(randomSong);
+
 });
 
 
-/* アーティスト検索 */
+/* ========================================
+   ARTIST SEARCH
+======================================== */
 
 document
 .getElementById("artistSearchButton")
-.addEventListener("click",searchArtist);
+.addEventListener(
+  "click",
+  searchArtist
+);
 
 
 document
 .getElementById("artistSearch")
-.addEventListener("keydown",event=>{
+.addEventListener(
+  "keydown",
+  event => {
 
-  if(event.key==="Enter"){
-    searchArtist();
+    if(event.key === "Enter"){
+      searchArtist();
+    }
+
   }
-
-});
+);
 
 
 async function searchArtist(){
@@ -637,83 +826,187 @@ async function searchArtist(){
     .value
     .trim();
 
+
   const results =
-    document.getElementById("artistResults");
+    document
+    .getElementById("artistResults");
 
 
   if(!query){
 
-    results.innerHTML=`
+    results.innerHTML = `
+
       <div class="empty">
         アーティスト名を入力してください。
       </div>
+
     `;
 
     return;
-
   }
 
 
-  /*
-    今はデータベースにアーティスト検索用の
-    テーブルをまだ作っていないので、
-    まずは検索UIだけ動かします。
+  results.innerHTML = `
 
-    次のステップで
-
-    Supabase
-    ↓
-    アーティスト
-    ↓
-    楽曲
-
-    を接続します。
-  */
-
-
-  results.innerHTML=`
-
-    <div class="artist-result">
-
-      <div class="artist-name">
-        ${query}
-      </div>
-
-      <div class="artist-meta">
-        アーティストページを準備中…
-      </div>
-
+    <div class="empty">
+      「${query}」を探しています…
     </div>
 
   `;
 
+
+  const {
+    data,
+    error
+  } = await sb
+    .from("songs")
+    .select("*")
+    .ilike(
+      "artist",
+      `%${query}%`
+    );
+
+
+  if(error){
+
+    console.error(
+      "Artist search error:",
+      error
+    );
+
+    results.innerHTML = `
+
+      <div class="empty">
+        検索に失敗しました。<br><br>
+        ${error.message}
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  if(!data || !data.length){
+
+    results.innerHTML = `
+
+      <div class="empty">
+        「${query}」の曲は<br>
+        見つかりませんでした。
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  results.innerHTML = "";
+
+
+  data.forEach(song => {
+
+    const item =
+      document.createElement("div");
+
+
+    item.className =
+      "artist-result";
+
+
+    item.innerHTML = `
+
+      <div class="artist-name">
+        ${song.title || "Untitled"}
+      </div>
+
+      <div class="artist-meta">
+
+        ${song.artist || "Unknown Artist"}
+
+        ${song.genre
+          ? " · " + song.genre
+          : ""
+        }
+
+        ${song.mood
+          ? " · " + song.mood
+          : ""
+        }
+
+      </div>
+
+      <div
+        style="
+          margin-top:12px;
+          font-weight:700;
+        "
+      >
+        ▶️ この曲を再生
+      </div>
+
+    `;
+
+
+    item.addEventListener(
+      "click",
+      () => {
+
+        playSong(song);
+
+        document
+        .getElementById("now")
+        .scrollIntoView({
+          behavior:"smooth",
+          block:"center"
+        });
+
+      }
+    );
+
+
+    results.appendChild(item);
+
+  });
+
 }
 
 
-/* 設定メニュー */
+/* ========================================
+   SETTINGS MENU
+======================================== */
 
 document
 .getElementById("settings")
-.addEventListener("click",()=>{
+.addEventListener(
+  "click",
+  () => {
 
-  document
-  .getElementById("menu")
-  .classList.toggle("show");
+    document
+    .getElementById("menu")
+    .classList.toggle("show");
 
-});
+  }
+);
 
 
-/* ログアウト */
+/* ========================================
+   LOGOUT
+======================================== */
 
 document
 .getElementById("logout")
-.addEventListener("click",async()=>{
+.addEventListener(
+  "click",
+  async () => {
 
-  await sb.auth.signOut();
+    await sb.auth.signOut();
 
-  location.href="index.html";
+    location.href="index.html";
 
-});
+  }
+);
 
 </script>
 
