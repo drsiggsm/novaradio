@@ -4,20 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NovaRadio - Artist Studio</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
   min-height:100vh;
   font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  background:
-    radial-gradient(circle at 50% 0,#211b50,#080a18 55%,#050611);
+  background:radial-gradient(circle at 50% 0,#211b50,#080a18 55%,#050611);
   color:#fff;
 }
 
@@ -192,9 +188,6 @@ input[type="file"]{
   text-align:center;
 }
 
-
-/* 自分の曲 */
-
 .song-list{
   display:grid;
   gap:14px;
@@ -258,9 +251,6 @@ input[type="file"]{
   padding:28px 10px;
 }
 
-
-/* 編集モーダル */
-
 .modal{
   display:none;
   position:fixed;
@@ -303,7 +293,6 @@ input[type="file"]{
 }
 
 @media(max-width:600px){
-
   .brand{
     font-size:34px;
   }
@@ -319,7 +308,6 @@ input[type="file"]{
   .song-actions{
     grid-template-columns:1fr;
   }
-
 }
 </style>
 </head>
@@ -341,9 +329,6 @@ input[type="file"]{
   </div>
 
   <main id="dashboard" style="display:none">
-
-
-    <!-- アカウント -->
 
     <section class="card">
 
@@ -375,93 +360,45 @@ input[type="file"]{
 
     </section>
 
-
-    <!-- アップロード -->
-
     <section class="card">
 
       <h2>🎵 曲をアップロード</h2>
 
-
       <div class="field">
-
-        <label>
-          曲名 *
-        </label>
-
+        <label>曲名 *</label>
         <input
           id="songTitle"
           type="text"
           placeholder="曲名"
         >
-
       </div>
 
-
       <div class="field">
-
-        <label>
-          アーティスト名 *
-        </label>
-
+        <label>アーティスト名 *</label>
         <input
           id="artistName"
           type="text"
           placeholder="アーティスト名"
         >
-
       </div>
-
-
-      <!-- Genre -->
 
       <div class="field">
 
-        <label>
-          🎵 ジャンル *
-        </label>
+        <label>🎵 ジャンル *</label>
 
         <div
           class="options"
           id="genreOptions"
         >
-
-          <button type="button" class="option" data-value="Hip Hop">
-            Hip Hop
-          </button>
-
-          <button type="button" class="option" data-value="R&B">
-            R&B
-          </button>
-
-          <button type="button" class="option" data-value="Pop">
-            Pop
-          </button>
-
-          <button type="button" class="option" data-value="Trap">
-            Trap
-          </button>
-
-          <button type="button" class="option" data-value="Rock">
-            Rock
-          </button>
-
-          <button type="button" class="option" data-value="Lo-Fi">
-            Lo-Fi
-          </button>
-
-          <button type="button" class="option" data-value="Electronic">
-            Electronic
-          </button>
-
-          <button type="button" class="option" data-value="Pluggnb">
-            Pluggnb
-          </button>
-
-          <button type="button" class="option" data-value="Other">
-            Other
-          </button>
-
+          <button type="button" class="option" data-value="Hip Hop">Hip Hop</button>
+          <button type="button" class="option" data-value="R&B">R&B</button>
+          <button type="button" class="option" data-value="Pop">Pop</button>
+          <button type="button" class="option" data-value="Trap">Trap</button>
+          <button type="button" class="option" data-value="Rock">Rock</button>
+          <button type="button" class="option" data-value="Lo-Fi">Lo-Fi</button>
+          <button type="button" class="option" data-value="Electronic">Electronic</button>
+          <button type="button" class="option" data-value="Pluggnb">Pluggnb</button>
+          <button type="button" class="option" data-value="Other">Other</button>
         </div>
 
         <div
@@ -474,40 +411,19 @@ input[type="file"]{
 
       </div>
 
-
-      <!-- Mood -->
-
       <div class="field">
 
-        <label>
-          🌙 Mood
-        </label>
+        <label>🌙 Mood</label>
 
         <div
           class="options"
           id="moodOptions"
         >
-
-          <button type="button" class="option" data-value="Chill">
-            Chill
-          </button>
-
-          <button type="button" class="option" data-value="Dark">
-            Dark
-          </button>
-
-          <button type="button" class="option" data-value="Happy">
-            Happy
-          </button>
-
-          <button type="button" class="option" data-value="Emotional">
-            Emotional
-          </button>
-
-          <button type="button" class="option" data-value="Energetic">
-            Energetic
-          </button>
-
+          <button type="button" class="option" data-value="Chill">Chill</button>
+          <button type="button" class="option" data-value="Dark">Dark</button>
+          <button type="button" class="option" data-value="Happy">Happy</button>
+          <button type="button" class="option" data-value="Emotional">Emotional</button>
+          <button type="button" class="option" data-value="Energetic">Energetic</button>
         </div>
 
         <div
@@ -520,51 +436,35 @@ input[type="file"]{
 
       </div>
 
-
       <div class="field">
-
         <label>BPM</label>
-
         <input
           id="bpm"
           type="number"
           placeholder="例：90"
         >
-
       </div>
 
-
       <div class="field">
-
         <label>Key</label>
-
         <input
           id="songKey"
           type="text"
           placeholder="例：B Major"
         >
-
       </div>
 
-
       <div class="field">
-
-        <label>
-          音源ファイル *
-        </label>
-
+        <label>音源ファイル *</label>
         <input
           id="audioFile"
           type="file"
           accept=".wav,.mp3,audio/wav,audio/mpeg"
         >
-
         <div class="file-info">
           WAV / MP3
         </div>
-
       </div>
-
 
       <button
         class="main-button"
@@ -574,7 +474,6 @@ input[type="file"]{
         🚀 NovaRadioにアップロード
       </button>
 
-
       <div
         id="progress"
         class="progress"
@@ -582,16 +481,12 @@ input[type="file"]{
         アップロードしています… 🎧
       </div>
 
-
       <div
         id="status"
         class="status"
       ></div>
 
     </section>
-
-
-    <!-- 自分の曲 -->
 
     <section class="card">
 
@@ -601,22 +496,16 @@ input[type="file"]{
         id="songList"
         class="song-list"
       >
-
         <div class="empty">
           曲を読み込んでいます…
         </div>
-
       </div>
 
     </section>
 
-
   </main>
 
 </div>
-
-
-<!-- 編集モーダル -->
 
 <div
   class="modal"
@@ -629,94 +518,66 @@ input[type="file"]{
       ✏️ 曲を編集
     </div>
 
-
     <input
       type="hidden"
       id="editSongId"
     >
 
-
     <div class="field">
-
       <label>曲名</label>
-
       <input
         id="editTitle"
         type="text"
       >
-
     </div>
 
-
     <div class="field">
-
       <label>アーティスト名</label>
-
       <input
         id="editArtist"
         type="text"
       >
-
     </div>
 
-
     <div class="field">
-
       <label>ジャンル</label>
-
       <input
         id="editGenre"
         type="text"
         placeholder="Hip Hop,R&B"
       >
-
       <div class="file-info">
         複数の場合はカンマ区切り
       </div>
-
     </div>
 
-
     <div class="field">
-
       <label>Mood</label>
-
       <input
         id="editMood"
         type="text"
         placeholder="Chill,Emotional"
       >
-
       <div class="file-info">
         複数の場合はカンマ区切り
       </div>
-
     </div>
 
-
     <div class="field">
-
       <label>BPM</label>
-
       <input
         id="editBpm"
         type="number"
       >
-
     </div>
 
-
     <div class="field">
-
       <label>Key</label>
-
       <input
         id="editKey"
         type="text"
       >
-
     </div>
-
 
     <div class="modal-actions">
 
@@ -742,12 +603,7 @@ input[type="file"]{
 
 </div>
 
-
 <script>
-
-/* =========================
-   SUPABASE
-========================= */
 
 const SUPABASE_URL =
   "https://melsoikvhwzvzswlimsi.supabase.co";
@@ -761,20 +617,10 @@ const sb =
     SUPABASE_KEY
   );
 
-
-/* =========================
-   STATE
-========================= */
-
 let currentSession = null;
 
 const selectedGenres = [];
 const selectedMoods = [];
-
-
-/* =========================
-   ELEMENTS
-========================= */
 
 const loading =
   document.getElementById("loading");
@@ -800,11 +646,6 @@ const songList =
 const editModal =
   document.getElementById("editModal");
 
-
-/* =========================
-   LOGIN
-========================= */
-
 async function init(){
 
   const {
@@ -813,16 +654,16 @@ async function init(){
   } =
   await sb.auth.getSession();
 
-
   if(error){
 
     loading.textContent =
       "ログイン状態の確認に失敗しました。";
 
+    console.error(error);
+
     return;
 
   }
-
 
   if(!session){
 
@@ -833,48 +674,35 @@ async function init(){
 
   }
 
-
   currentSession =
     session;
-
 
   const name =
     session.user.user_metadata?.artist_name ||
     "";
 
-
   userEmail.textContent =
     session.user.email || "";
 
-
   displayName.textContent =
     name || "未設定";
-
 
   document
   .getElementById("artistName")
   .value =
     name;
 
-
   loading.style.display =
     "none";
 
-
   dashboard.style.display =
     "block";
-
 
   await loadMySongs();
 
 }
 
 init();
-
-
-/* =========================
-   MULTI SELECT
-========================= */
 
 document
 .querySelectorAll(
@@ -898,7 +726,6 @@ document
 
 });
 
-
 document
 .querySelectorAll(
   "#moodOptions .option"
@@ -921,7 +748,6 @@ document
 
 });
 
-
 function toggleSelection(
   button,
   array
@@ -930,10 +756,8 @@ function toggleSelection(
   const value =
     button.dataset.value;
 
-
   const index =
     array.indexOf(value);
-
 
   if(index === -1){
 
@@ -959,49 +783,31 @@ function toggleSelection(
 
 }
 
-
 function updateSelectedText(){
 
   document
   .getElementById("genreSelected")
-  .innerHTML = `
-
-    <strong>選択中：</strong>
-
-    ${
+  .innerHTML =
+    `<strong>選択中：</strong>${
       selectedGenres.length
         ? selectedGenres.join(" / ")
         : "まだ選択されていません"
-    }
-
-  `;
-
+    }`;
 
   document
   .getElementById("moodSelected")
-  .innerHTML = `
-
-    <strong>選択中：</strong>
-
-    ${
+  .innerHTML =
+    `<strong>選択中：</strong>${
       selectedMoods.length
         ? selectedMoods.join(" / ")
         : "指定なし"
-    }
-
-  `;
+    }`;
 
 }
-
-
-/* =========================
-   UPLOAD
-========================= */
 
 uploadButton.addEventListener(
   "click",
   async ()=>{
-
 
     const title =
       document
@@ -1009,19 +815,16 @@ uploadButton.addEventListener(
       .value
       .trim();
 
-
     const artist =
       document
       .getElementById("artistName")
       .value
       .trim();
 
-
     const bpmValue =
       document
       .getElementById("bpm")
       .value;
-
 
     const key =
       document
@@ -1029,93 +832,71 @@ uploadButton.addEventListener(
       .value
       .trim();
 
-
     const file =
       document
       .getElementById("audioFile")
       .files[0];
 
-
     if(!title){
 
-      showStatus(
+      return showStatus(
         "曲名を入力してください。",
         true
       );
 
-      return;
-
     }
-
 
     if(!artist){
 
-      showStatus(
+      return showStatus(
         "アーティスト名を入力してください。",
         true
       );
 
-      return;
-
     }
-
 
     if(!selectedGenres.length){
 
-      showStatus(
+      return showStatus(
         "ジャンルを1つ以上選択してください。",
         true
       );
 
-      return;
-
     }
-
 
     if(!file){
 
-      showStatus(
+      return showStatus(
         "音源ファイルを選択してください。",
         true
       );
 
-      return;
-
     }
-
 
     if(!currentSession){
 
-      showStatus(
+      return showStatus(
         "ログイン情報を確認できません。",
         true
       );
 
-      return;
-
     }
-
 
     uploadButton.disabled =
       true;
 
-
     progress.style.display =
       "block";
 
-
     hideStatus();
 
-
     try{
-
 
       const extension =
         file.name
         .split(".")
         .pop()
         .toLowerCase();
-
 
       if(
         extension !== "wav" &&
@@ -1128,10 +909,8 @@ uploadButton.addEventListener(
 
       }
 
-
       const safeFileName =
         `${currentSession.user.id}_${Date.now()}.${extension}`;
-
 
       const {
         data:uploadData,
@@ -1156,7 +935,6 @@ uploadButton.addEventListener(
         }
       );
 
-
       if(uploadError){
 
         throw new Error(
@@ -1165,7 +943,6 @@ uploadButton.addEventListener(
         );
 
       }
-
 
       const {
         data:publicUrlData
@@ -1177,10 +954,8 @@ uploadButton.addEventListener(
         uploadData.path
       );
 
-
       const audioUrl =
         publicUrlData.publicUrl;
-
 
       const songData = {
 
@@ -1212,14 +987,12 @@ uploadButton.addEventListener(
 
       };
 
-
       const {
         error:databaseError
       } =
       await sb
       .from("songs")
       .insert(songData);
-
 
       if(databaseError){
 
@@ -1230,24 +1003,19 @@ uploadButton.addEventListener(
 
       }
 
-
       showStatus(
         "アップロード完了！🔥 NovaRadioに曲が登録されました。",
         false
       );
 
-
       resetUploadForm();
 
-
       await loadMySongs();
-
 
     }
     catch(error){
 
       console.error(error);
-
 
       showStatus(
         error.message ||
@@ -1261,7 +1029,6 @@ uploadButton.addEventListener(
       uploadButton.disabled =
         false;
 
-
       progress.style.display =
         "none";
 
@@ -1270,26 +1037,14 @@ uploadButton.addEventListener(
   }
 );
 
-
-/* =========================
-   自分の曲一覧
-========================= */
-
 async function loadMySongs(){
 
   if(!currentSession){
     return;
   }
 
-
-  songList.innerHTML = `
-
-    <div class="empty">
-      曲を読み込んでいます…
-    </div>
-
-  `;
-
+  songList.innerHTML =
+    '<div class="empty">曲を読み込んでいます…</div>';
 
   const {
     data,
@@ -1309,44 +1064,32 @@ async function loadMySongs(){
     }
   );
 
-
   if(error){
 
-    songList.innerHTML = `
-
-      <div class="empty">
+    songList.innerHTML =
+      `<div class="empty">
         曲一覧を取得できませんでした。<br>
-        ${error.message}
-      </div>
-
-    `;
+        ${escapeHtml(error.message)}
+      </div>`;
 
     return;
 
   }
-
 
   if(
     !data ||
     !data.length
   ){
 
-    songList.innerHTML = `
-
-      <div class="empty">
-        まだあなたがアップロードした曲はありません。
-      </div>
-
-    `;
+    songList.innerHTML =
+      '<div class="empty">まだあなたがアップロードした曲はありません。</div>';
 
     return;
 
   }
 
-
   songList.innerHTML =
     "";
-
 
   data.forEach(song=>{
 
@@ -1355,14 +1098,11 @@ async function loadMySongs(){
         "div"
       );
 
-
     item.className =
       "song-item";
 
-
-    item.innerHTML = `
-
-      <div class="song-title">
+    item.innerHTML =
+      `<div class="song-title">
         ${escapeHtml(song.title || "Untitled")}
       </div>
 
@@ -1371,22 +1111,13 @@ async function loadMySongs(){
       </div>
 
       <div class="song-meta">
-
-        ${
-          escapeHtml(
-            formatTags(song.genre)
-          )
-        }
-
+        ${escapeHtml(formatTags(song.genre))}
         ${
           song.mood
             ? " · " +
-              escapeHtml(
-                formatTags(song.mood)
-              )
+              escapeHtml(formatTags(song.mood))
             : ""
         }
-
         ${
           song.bpm
             ? " · " +
@@ -1394,44 +1125,27 @@ async function loadMySongs(){
               " BPM"
             : ""
         }
-
         ${
           song.key
             ? " · " +
               escapeHtml(song.key)
             : ""
         }
-
       </div>
 
-
       <div class="song-actions">
-
-        <button
-          type="button"
-          class="play-small"
-        >
+        <button type="button" class="play-small">
           ▶️ 再生
         </button>
 
-        <button
-          type="button"
-          class="edit-small"
-        >
+        <button type="button" class="edit-small">
           ✏️ 編集
         </button>
 
-        <button
-          type="button"
-          class="delete-small"
-        >
+        <button type="button" class="delete-small">
           🗑️ 削除
         </button>
-
-      </div>
-
-    `;
-
+      </div>`;
 
     item
     .querySelector(
@@ -1449,7 +1163,6 @@ async function loadMySongs(){
       }
     );
 
-
     item
     .querySelector(
       ".edit-small"
@@ -1464,7 +1177,6 @@ async function loadMySongs(){
 
       }
     );
-
 
     item
     .querySelector(
@@ -1481,7 +1193,6 @@ async function loadMySongs(){
       }
     );
 
-
     songList.appendChild(
       item
     );
@@ -1489,11 +1200,6 @@ async function loadMySongs(){
   });
 
 }
-
-
-/* =========================
-   管理画面から再生
-========================= */
 
 function playManagedSong(
   song,
@@ -1505,7 +1211,6 @@ function playManagedSong(
       "audio"
     );
 
-
   if(old){
 
     old.remove();
@@ -1514,48 +1219,45 @@ function playManagedSong(
 
   }
 
+  if(!song.audio_url){
+
+    alert(
+      "この曲には音源URLが登録されていません。"
+    );
+
+    return;
+
+  }
 
   const audio =
     document.createElement(
       "audio"
     );
 
-
   audio.controls =
     true;
-
 
   audio.autoplay =
     true;
 
-
   audio.src =
     song.audio_url;
-
 
   audio.style.width =
     "100%";
 
-
   audio.style.marginTop =
     "15px";
-
 
   item.appendChild(
     audio
   );
-
 
   audio.play().catch(
     ()=>{}
   );
 
 }
-
-
-/* =========================
-   EDIT
-========================= */
 
 function openEditModal(
   song
@@ -1566,49 +1268,41 @@ function openEditModal(
   .value =
     song.id;
 
-
   document
   .getElementById("editTitle")
   .value =
     song.title || "";
-
 
   document
   .getElementById("editArtist")
   .value =
     song.artist || "";
 
-
   document
   .getElementById("editGenre")
   .value =
     song.genre || "";
-
 
   document
   .getElementById("editMood")
   .value =
     song.mood || "";
 
-
   document
   .getElementById("editBpm")
   .value =
     song.bpm || "";
-
 
   document
   .getElementById("editKey")
   .value =
     song.key || "";
 
-
   editModal.classList.add(
     "show"
   );
 
 }
-
 
 document
 .getElementById("cancelEdit")
@@ -1623,19 +1317,26 @@ document
   }
 );
 
-
 document
 .getElementById("saveEdit")
 .addEventListener(
   "click",
   async ()=>{
 
+    if(!currentSession){
+
+      alert(
+        "ログイン情報を確認できません。"
+      );
+
+      return;
+
+    }
 
     const id =
       document
       .getElementById("editSongId")
       .value;
-
 
     const title =
       document
@@ -1643,13 +1344,11 @@ document
       .value
       .trim();
 
-
     const artist =
       document
       .getElementById("editArtist")
       .value
       .trim();
-
 
     const genre =
       document
@@ -1657,26 +1356,22 @@ document
       .value
       .trim();
 
-
     const mood =
       document
       .getElementById("editMood")
       .value
       .trim();
 
-
     const bpm =
       document
       .getElementById("editBpm")
       .value;
-
 
     const key =
       document
       .getElementById("editKey")
       .value
       .trim();
-
 
     if(
       !title ||
@@ -1691,7 +1386,6 @@ document
       return;
 
     }
-
 
     const {
       error
@@ -1727,7 +1421,6 @@ document
       currentSession.user.id
     );
 
-
     if(error){
 
       alert(
@@ -1739,35 +1432,37 @@ document
 
     }
 
-
     editModal.classList.remove(
       "show"
     );
 
-
     await loadMySongs();
 
-}
-
-
-/* =========================
-   DELETE
-========================= */
+  }
+);
 
 async function deleteSong(
   song
 ){
+
+  if(!currentSession){
+
+    alert(
+      "ログイン情報を確認できません。"
+    );
+
+    return;
+
+  }
 
   const ok =
     confirm(
       `「${song.title}」を削除しますか？`
     );
 
-
   if(!ok){
     return;
   }
-
 
   const {
     error
@@ -1784,7 +1479,6 @@ async function deleteSong(
     currentSession.user.id
   );
 
-
   if(error){
 
     alert(
@@ -1796,15 +1490,9 @@ async function deleteSong(
 
   }
 
-
   await loadMySongs();
 
 }
-
-
-/* =========================
-   RESET
-========================= */
 
 function resetUploadForm(){
 
@@ -1813,32 +1501,26 @@ function resetUploadForm(){
   .value =
     "";
 
-
   document
   .getElementById("bpm")
   .value =
     "";
-
 
   document
   .getElementById("songKey")
   .value =
     "";
 
-
   document
   .getElementById("audioFile")
   .value =
     "";
 
-
   selectedGenres.length =
     0;
 
-
   selectedMoods.length =
     0;
-
 
   document
   .querySelectorAll(
@@ -1852,15 +1534,9 @@ function resetUploadForm(){
 
   });
 
-
   updateSelectedText();
 
 }
-
-
-/* =========================
-   STATUS
-========================= */
 
 function showStatus(
   message,
@@ -1872,14 +1548,11 @@ function showStatus(
       "status"
     );
 
-
   status.textContent =
     message;
 
-
   status.style.display =
     "block";
-
 
   if(isError){
 
@@ -1898,7 +1571,6 @@ function showStatus(
 
 }
 
-
 function hideStatus(){
 
   document
@@ -1908,11 +1580,6 @@ function hideStatus(){
 
 }
 
-
-/* =========================
-   HELPERS
-========================= */
-
 function formatTags(
   value
 ){
@@ -1921,7 +1588,6 @@ function formatTags(
     return "";
   }
 
-
   return value
     .split(",")
     .map(v=>v.trim())
@@ -1929,7 +1595,6 @@ function formatTags(
     .join(" / ");
 
 }
-
 
 function escapeHtml(
   value
@@ -1944,11 +1609,6 @@ function escapeHtml(
 
 }
 
-
-/* =========================
-   BACK
-========================= */
-
 document
 .getElementById("backHome")
 .addEventListener(
@@ -1960,11 +1620,6 @@ document
 
   }
 );
-
-
-/* =========================
-   LOGOUT
-========================= */
 
 document
 .getElementById("logout")
