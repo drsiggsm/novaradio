@@ -8,7 +8,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -315,7 +317,7 @@ audio{
   margin-top:22px;
 }
 
-/* プレイリストモーダル */
+/* モーダル */
 
 .modal{
   display:none;
@@ -368,9 +370,22 @@ audio{
   border-color:#7b25ff;
 }
 
-.modal-close{
+.new-playlist-button{
   width:100%;
   margin-top:15px;
+  padding:15px;
+  border:0;
+  border-radius:14px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  color:#fff;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.modal-close{
+  width:100%;
+  margin-top:12px;
   padding:14px;
   border:1px solid #343b67;
   border-radius:14px;
@@ -380,12 +395,71 @@ audio{
   cursor:pointer;
 }
 
+.create-area{
+  display:none;
+  margin-top:18px;
+  padding-top:18px;
+  border-top:1px solid #30355e;
+}
+
+.create-area.show{
+  display:block;
+}
+
+.create-input{
+  width:100%;
+  padding:15px;
+  border-radius:14px;
+  border:1px solid #353b67;
+  background:#080b1d;
+  color:#fff;
+  font-size:16px;
+}
+
+.create-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.create-buttons button{
+  padding:13px;
+  border:0;
+  border-radius:13px;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.cancel-create{
+  background:#242842;
+}
+
+.save-create{
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+}
+
 @media(max-width:600px){
-  .hero h1{font-size:34px}
-  .logo{font-size:28px}
-  .account{display:none}
-  .artist-search{flex-direction:column}
-  .artist-search button{padding:16px}
+  .hero h1{
+    font-size:34px;
+  }
+
+  .logo{
+    font-size:28px;
+  }
+
+  .account{
+    display:none;
+  }
+
+  .artist-search{
+    flex-direction:column;
+  }
+
+  .artist-search button{
+    padding:16px;
+  }
 }
 </style>
 </head>
@@ -396,15 +470,24 @@ audio{
 
 <header>
 
-  <div class="logo">NovaRadio</div>
+  <div class="logo">
+    NovaRadio
+  </div>
 
   <div class="header-right">
 
-    <div class="account" id="account">
+    <div
+      class="account"
+      id="account"
+    >
       確認中...
     </div>
 
-    <button class="settings" id="settings" type="button">
+    <button
+      class="settings"
+      id="settings"
+      type="button"
+    >
       ⚙️
     </button>
 
@@ -413,7 +496,10 @@ audio{
 </header>
 
 
-<div class="menu" id="menu">
+<div
+  class="menu"
+  id="menu"
+>
 
   <a href="mypage.html">
     👤 マイページ
@@ -432,7 +518,9 @@ audio{
 
 <section class="hero">
 
-  <h1>🎧 今日は何を聴く？</h1>
+  <h1>
+    🎧 今日は何を聴く？
+  </h1>
 
   <p>
     ジャンルと気分を選んで、<br>
@@ -446,18 +534,51 @@ audio{
 
   <div class="field">
 
-    <label>🎵 ジャンル</label>
+    <label>
+      🎵 ジャンル
+    </label>
 
-    <div class="options" id="genreOptions">
-      <button type="button" class="option" data-value="Hip Hop">Hip Hop</button>
-      <button type="button" class="option" data-value="R&B">R&B</button>
-      <button type="button" class="option" data-value="Pop">Pop</button>
-      <button type="button" class="option" data-value="Trap">Trap</button>
-      <button type="button" class="option" data-value="Rock">Rock</button>
-      <button type="button" class="option" data-value="Lo-Fi">Lo-Fi</button>
-      <button type="button" class="option" data-value="Electronic">Electronic</button>
-      <button type="button" class="option" data-value="Pluggnb">Pluggnb</button>
-      <button type="button" class="option" data-value="Other">Other</button>
+    <div
+      class="options"
+      id="genreOptions"
+    >
+
+      <button type="button" class="option" data-value="Hip Hop">
+        Hip Hop
+      </button>
+
+      <button type="button" class="option" data-value="R&B">
+        R&B
+      </button>
+
+      <button type="button" class="option" data-value="Pop">
+        Pop
+      </button>
+
+      <button type="button" class="option" data-value="Trap">
+        Trap
+      </button>
+
+      <button type="button" class="option" data-value="Rock">
+        Rock
+      </button>
+
+      <button type="button" class="option" data-value="Lo-Fi">
+        Lo-Fi
+      </button>
+
+      <button type="button" class="option" data-value="Electronic">
+        Electronic
+      </button>
+
+      <button type="button" class="option" data-value="Pluggnb">
+        Pluggnb
+      </button>
+
+      <button type="button" class="option" data-value="Other">
+        Other
+      </button>
+
     </div>
 
   </div>
@@ -465,31 +586,62 @@ audio{
 
   <div class="field">
 
-    <label>🌙 Mood</label>
+    <label>
+      🌙 Mood
+    </label>
 
-    <div class="options" id="moodOptions">
-      <button type="button" class="option" data-value="Chill">Chill</button>
-      <button type="button" class="option" data-value="Dark">Dark</button>
-      <button type="button" class="option" data-value="Happy">Happy</button>
-      <button type="button" class="option" data-value="Emotional">Emotional</button>
-      <button type="button" class="option" data-value="Energetic">Energetic</button>
+    <div
+      class="options"
+      id="moodOptions"
+    >
+
+      <button type="button" class="option" data-value="Chill">
+        Chill
+      </button>
+
+      <button type="button" class="option" data-value="Dark">
+        Dark
+      </button>
+
+      <button type="button" class="option" data-value="Happy">
+        Happy
+      </button>
+
+      <button type="button" class="option" data-value="Emotional">
+        Emotional
+      </button>
+
+      <button type="button" class="option" data-value="Energetic">
+        Energetic
+      </button>
+
     </div>
 
   </div>
 
 
-  <div class="conditions" id="conditions">
+  <div
+    class="conditions"
+    id="conditions"
+  >
     <strong>選択中：</strong>
     まだ条件が選択されていません
   </div>
 
 
-  <button class="play" id="play" disabled>
+  <button
+    class="play"
+    id="play"
+    disabled
+  >
     ▶️ この条件で再生
   </button>
 
 
-  <div class="now" id="now">
+  <div
+    class="now"
+    id="now"
+  >
 
     <div class="now-label">
       NOVARADIO
@@ -533,7 +685,10 @@ audio{
   </div>
 
 
-  <div class="artist-results" id="artistResults">
+  <div
+    class="artist-results"
+    id="artistResults"
+  >
 
     <div class="empty">
       アーティスト名を入力して探してみよう。
@@ -546,7 +701,12 @@ audio{
 </main>
 
 
-<div class="modal" id="playlistModal">
+<!-- プレイリスト追加モーダル -->
+
+<div
+  class="modal"
+  id="playlistModal"
+>
 
   <div class="modal-box">
 
@@ -562,6 +722,51 @@ audio{
         読み込んでいます…
       </div>
     </div>
+
+    <button
+      class="new-playlist-button"
+      id="showCreatePlaylist"
+      type="button"
+    >
+      ＋ 新しいプレイリストを作る
+    </button>
+
+
+    <div
+      class="create-area"
+      id="createPlaylistArea"
+    >
+
+      <input
+        class="create-input"
+        id="newPlaylistName"
+        type="text"
+        maxlength="50"
+        placeholder="プレイリスト名"
+      >
+
+      <div class="create-buttons">
+
+        <button
+          class="cancel-create"
+          id="cancelCreatePlaylist"
+          type="button"
+        >
+          キャンセル
+        </button>
+
+        <button
+          class="save-create"
+          id="saveNewPlaylist"
+          type="button"
+        >
+          作成して追加
+        </button>
+
+      </div>
+
+    </div>
+
 
     <button
       class="modal-close"
@@ -590,18 +795,45 @@ const sb =
     SUPABASE_KEY
   );
 
-let currentSession = null;
-let currentSong = null;
 
-const selectedGenres = [];
-const selectedMoods = [];
+let currentSession =
+  null;
+
+let currentSong =
+  null;
+
+
+const selectedGenres =
+  [];
+
+const selectedMoods =
+  [];
+
 
 const playlistModal =
-  document.getElementById("playlistModal");
+  document.getElementById(
+    "playlistModal"
+  );
 
 const playlistList =
-  document.getElementById("playlistList");
+  document.getElementById(
+    "playlistList"
+  );
 
+const createPlaylistArea =
+  document.getElementById(
+    "createPlaylistArea"
+  );
+
+const newPlaylistName =
+  document.getElementById(
+    "newPlaylistName"
+  );
+
+
+/* =========================
+   LOGIN
+========================= */
 
 async function checkLogin(){
 
@@ -611,12 +843,16 @@ async function checkLogin(){
   } =
   await sb.auth.getSession();
 
+
   if(error){
 
-    console.error(error);
+    console.error(
+      error
+    );
 
     return;
   }
+
 
   if(!session){
 
@@ -626,21 +862,32 @@ async function checkLogin(){
     return;
   }
 
+
   currentSession =
     session;
+
 
   const username =
     session.user.user_metadata?.artist_name ||
     "ユーザー";
 
+
   document
-  .getElementById("account")
+  .getElementById(
+    "account"
+  )
   .textContent =
     username;
+
 }
+
 
 checkLogin();
 
+
+/* =========================
+   GENRE / MOOD
+========================= */
 
 function updateConditions(){
 
@@ -649,137 +896,232 @@ function updateConditions(){
       ? selectedGenres.join(" / ")
       : "指定なし";
 
+
   const moodText =
     selectedMoods.length
       ? selectedMoods.join(" / ")
       : "指定なし";
 
+
   document
-  .getElementById("conditions")
+  .getElementById(
+    "conditions"
+  )
   .innerHTML =
     `<strong>選択中：</strong>
     ${genreText} × ${moodText}`;
 
+
   document
-  .getElementById("play")
+  .getElementById(
+    "play"
+  )
   .disabled =
     !selectedGenres.length &&
     !selectedMoods.length;
+
 }
 
 
 document
-.querySelectorAll("#genreOptions .option")
-.forEach(button=>{
+.querySelectorAll(
+  "#genreOptions .option"
+)
+.forEach(
+  button=>{
 
-  button.addEventListener(
-    "click",
-    ()=>{
+    button.addEventListener(
+      "click",
+      ()=>{
 
-      const value =
-        button.dataset.value;
+        const value =
+          button.dataset.value;
 
-      const index =
-        selectedGenres.indexOf(value);
 
-      if(index === -1){
+        const index =
+          selectedGenres.indexOf(
+            value
+          );
 
-        selectedGenres.push(value);
-        button.classList.add("selected");
 
-      }else{
+        if(
+          index === -1
+        ){
 
-        selectedGenres.splice(index,1);
-        button.classList.remove("selected");
+          selectedGenres.push(
+            value
+          );
+
+          button.classList.add(
+            "selected"
+          );
+
+        }
+        else{
+
+          selectedGenres.splice(
+            index,
+            1
+          );
+
+          button.classList.remove(
+            "selected"
+          );
+
+        }
+
+
+        updateConditions();
 
       }
+    );
 
-      updateConditions();
-
-    }
-  );
-
-});
+  }
+);
 
 
 document
-.querySelectorAll("#moodOptions .option")
-.forEach(button=>{
+.querySelectorAll(
+  "#moodOptions .option"
+)
+.forEach(
+  button=>{
 
-  button.addEventListener(
-    "click",
-    ()=>{
+    button.addEventListener(
+      "click",
+      ()=>{
 
-      const value =
-        button.dataset.value;
+        const value =
+          button.dataset.value;
 
-      const index =
-        selectedMoods.indexOf(value);
 
-      if(index === -1){
+        const index =
+          selectedMoods.indexOf(
+            value
+          );
 
-        selectedMoods.push(value);
-        button.classList.add("selected");
 
-      }else{
+        if(
+          index === -1
+        ){
 
-        selectedMoods.splice(index,1);
-        button.classList.remove("selected");
+          selectedMoods.push(
+            value
+          );
+
+          button.classList.add(
+            "selected"
+          );
+
+        }
+        else{
+
+          selectedMoods.splice(
+            index,
+            1
+          );
+
+          button.classList.remove(
+            "selected"
+          );
+
+        }
+
+
+        updateConditions();
 
       }
+    );
 
-      updateConditions();
-
-    }
-  );
-
-});
+  }
+);
 
 
-function splitTags(value){
+/* =========================
+   TAG
+========================= */
+
+function splitTags(
+  value
+){
 
   if(!value){
     return [];
   }
 
-  return value
+
+  return String(value)
     .split(",")
-    .map(tag=>tag.trim())
+    .map(
+      tag=>tag.trim()
+    )
     .filter(Boolean);
+
 }
 
 
-function songMatches(song){
+/* =========================
+   MATCH
+========================= */
+
+function songMatches(
+  song
+){
 
   const songGenres =
-    splitTags(song.genre);
+    splitTags(
+      song.genre
+    );
+
 
   const songMoods =
-    splitTags(song.mood);
+    splitTags(
+      song.mood
+    );
+
 
   const genreMatches =
     !selectedGenres.length ||
     selectedGenres.some(
-      genre =>
-        songGenres.includes(genre)
+      genre=>
+        songGenres.includes(
+          genre
+        )
     );
+
 
   const moodMatches =
     !selectedMoods.length ||
     selectedMoods.some(
-      mood =>
-        songMoods.includes(mood)
+      mood=>
+        songMoods.includes(
+          mood
+        )
     );
 
-  return genreMatches && moodMatches;
+
+  return (
+    genreMatches &&
+    moodMatches
+  );
+
 }
 
 
-async function isSongLiked(songId){
+/* =========================
+   LIKE
+========================= */
 
-  if(!currentSession){
+async function isSongLiked(
+  songId
+){
+
+  if(
+    !currentSession
+  ){
     return false;
   }
+
 
   const {
     data,
@@ -798,6 +1140,7 @@ async function isSongLiked(songId){
   )
   .limit(1);
 
+
   if(error){
 
     console.error(
@@ -808,10 +1151,12 @@ async function isSongLiked(songId){
     return false;
   }
 
+
   return !!(
     data &&
     data.length
   );
+
 }
 
 
@@ -824,19 +1169,23 @@ async function updateLikeButton(){
     return;
   }
 
+
   const button =
     document.getElementById(
       "likeButton"
     );
 
+
   if(!button){
     return;
   }
+
 
   const liked =
     await isSongLiked(
       currentSong.id
     );
+
 
   if(liked){
 
@@ -847,7 +1196,8 @@ async function updateLikeButton(){
       "liked"
     );
 
-  }else{
+  }
+  else{
 
     button.textContent =
       "🤍 いいね";
@@ -857,6 +1207,7 @@ async function updateLikeButton(){
     );
 
   }
+
 }
 
 
@@ -868,6 +1219,7 @@ async function toggleLike(){
   ){
     return;
   }
+
 
   const liked =
     await isSongLiked(
@@ -892,6 +1244,7 @@ async function toggleLike(){
       currentSong.id
     );
 
+
     if(error){
 
       alert(
@@ -902,7 +1255,8 @@ async function toggleLike(){
       return;
     }
 
-  }else{
+  }
+  else{
 
     const {
       error
@@ -919,6 +1273,7 @@ async function toggleLike(){
 
     });
 
+
     if(error){
 
       alert(
@@ -931,36 +1286,60 @@ async function toggleLike(){
 
   }
 
+
   await updateLikeButton();
+
 }
 
 
-async function playSong(song){
+/* =========================
+   PLAYER
+========================= */
+
+async function playSong(
+  song
+){
 
   currentSong =
     song;
 
-  const now =
-    document.getElementById("now");
 
-  if(!song.audio_url){
+  const now =
+    document.getElementById(
+      "now"
+    );
+
+
+  if(
+    !song.audio_url
+  ){
 
     now.innerHTML =
-      `<div class="now-label">ERROR</div>
-       <div class="empty">
-         この曲には音源が登録されていません。
-       </div>`;
+      `<div class="now-label">
+        ERROR
+      </div>
+
+      <div class="empty">
+        この曲には音源が登録されていません。
+      </div>`;
 
     return;
   }
 
+
   const genres =
-    splitTags(song.genre)
+    splitTags(
+      song.genre
+    )
     .join(" / ");
 
+
   const moods =
-    splitTags(song.mood)
+    splitTags(
+      song.mood
+    )
     .join(" / ");
+
 
   now.innerHTML =
     `<div class="now-label">
@@ -968,19 +1347,35 @@ async function playSong(song){
     </div>
 
     <div class="now-title">
-      ${escapeHtml(song.title || "Untitled")}
+      ${escapeHtml(
+        song.title ||
+        "Untitled"
+      )}
     </div>
 
     <div class="now-artist">
-      ${escapeHtml(song.artist || "Unknown Artist")}
+      ${escapeHtml(
+        song.artist ||
+        "Unknown Artist"
+      )}
     </div>
 
     <div
       class="artist-meta"
       style="margin-top:8px;"
     >
-      ${escapeHtml(genres)}
-      ${moods ? " · " + escapeHtml(moods) : ""}
+      ${escapeHtml(
+        genres
+      )}
+
+      ${
+        moods
+          ? " · " +
+            escapeHtml(
+              moods
+            )
+          : ""
+      }
     </div>
 
     <audio
@@ -1007,32 +1402,48 @@ async function playSong(song){
       ＋ プレイリストに追加
     </button>`;
 
+
   document
-  .getElementById("likeButton")
+  .getElementById(
+    "likeButton"
+  )
   .addEventListener(
     "click",
     toggleLike
   );
 
+
   document
-  .getElementById("playlistButton")
+  .getElementById(
+    "playlistButton"
+  )
   .addEventListener(
     "click",
     openPlaylistModal
   );
+
 
   const audio =
     document.getElementById(
       "audioPlayer"
     );
 
+
   audio
   .play()
-  .catch(()=>{});
+  .catch(
+    ()=>{}
+  );
+
 
   await updateLikeButton();
+
 }
 
+
+/* =========================
+   PLAYLIST MODAL
+========================= */
 
 async function openPlaylistModal(){
 
@@ -1043,14 +1454,33 @@ async function openPlaylistModal(){
     return;
   }
 
+
   playlistModal.classList.add(
     "show"
   );
+
+
+  createPlaylistArea.classList.remove(
+    "show"
+  );
+
+
+  newPlaylistName.value =
+    "";
+
+
+  await loadPlaylistChoices();
+
+}
+
+
+async function loadPlaylistChoices(){
 
   playlistList.innerHTML =
     `<div class="empty">
       プレイリストを読み込んでいます…
     </div>`;
+
 
   const {
     data,
@@ -1070,16 +1500,24 @@ async function openPlaylistModal(){
     }
   );
 
+
   if(error){
 
     playlistList.innerHTML =
       `<div class="empty">
         プレイリストを取得できませんでした。<br><br>
-        ${escapeHtml(error.message)}
+        ${escapeHtml(
+          error.message
+        )}
       </div>`;
 
     return;
   }
+
+
+  playlistList.innerHTML =
+    "";
+
 
   if(
     !data ||
@@ -1089,14 +1527,12 @@ async function openPlaylistModal(){
     playlistList.innerHTML =
       `<div class="empty">
         まだプレイリストがありません。<br>
-        マイページから作成してください。
+        下のボタンから作成できます 🎧
       </div>`;
 
     return;
   }
 
-  playlistList.innerHTML =
-    "";
 
   data.forEach(
     playlist=>{
@@ -1106,8 +1542,10 @@ async function openPlaylistModal(){
           "button"
         );
 
+
       button.className =
         "playlist-choice";
+
 
       button.textContent =
         "📚 " +
@@ -1115,6 +1553,7 @@ async function openPlaylistModal(){
           playlist.name ||
           "無題のプレイリスト"
         );
+
 
       button.addEventListener(
         "click",
@@ -1127,14 +1566,212 @@ async function openPlaylistModal(){
         }
       );
 
+
       playlistList.appendChild(
         button
       );
 
     }
   );
+
 }
 
+
+/* =========================
+   NEW PLAYLIST
+========================= */
+
+document
+.getElementById(
+  "showCreatePlaylist"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    createPlaylistArea.classList.add(
+      "show"
+    );
+
+
+    setTimeout(
+      ()=>{
+
+        newPlaylistName.focus();
+
+      },
+      100
+    );
+
+  }
+);
+
+
+document
+.getElementById(
+  "cancelCreatePlaylist"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    createPlaylistArea.classList.remove(
+      "show"
+    );
+
+
+    newPlaylistName.value =
+      "";
+
+  }
+);
+
+
+document
+.getElementById(
+  "saveNewPlaylist"
+)
+.addEventListener(
+  "click",
+  createPlaylistAndAddSong
+);
+
+
+newPlaylistName.addEventListener(
+  "keydown",
+  event=>{
+
+    if(
+      event.key ===
+      "Enter"
+    ){
+
+      createPlaylistAndAddSong();
+
+    }
+
+  }
+);
+
+
+async function createPlaylistAndAddSong(){
+
+  if(
+    !currentSong ||
+    !currentSession
+  ){
+    return;
+  }
+
+
+  const name =
+    newPlaylistName.value.trim();
+
+
+  if(!name){
+
+    alert(
+      "プレイリスト名を入力してください。"
+    );
+
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("playlists")
+  .insert({
+
+    user_id:
+      currentSession.user.id,
+
+    name:
+      name
+
+  })
+  .select("*")
+  .single();
+
+
+  if(error){
+
+    alert(
+      "プレイリスト作成に失敗しました：" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  if(!data){
+
+    alert(
+      "プレイリスト情報を取得できませんでした。"
+    );
+
+    return;
+  }
+
+
+  const {
+    error:addError
+  } =
+  await sb
+  .from("playlist_songs")
+  .insert({
+
+    playlist_id:
+      data.id,
+
+    song_id:
+      currentSong.id,
+
+    user_id:
+      currentSession.user.id
+
+  });
+
+
+  if(addError){
+
+    alert(
+      "プレイリストは作成できましたが、曲の追加に失敗しました：" +
+      addError.message
+    );
+
+    return;
+  }
+
+
+  alert(
+    `「${data.name}」を作成して「${currentSong.title}」を追加しました！`
+  );
+
+
+  playlistModal.classList.remove(
+    "show"
+  );
+
+
+  createPlaylistArea.classList.remove(
+    "show"
+  );
+
+
+  newPlaylistName.value =
+    "";
+
+}
+
+
+/* =========================
+   ADD EXISTING PLAYLIST
+========================= */
 
 async function addSongToPlaylist(
   playlist
@@ -1146,6 +1783,7 @@ async function addSongToPlaylist(
   ){
     return;
   }
+
 
   const {
     data:existing,
@@ -1168,6 +1806,7 @@ async function addSongToPlaylist(
   )
   .limit(1);
 
+
   if(checkError){
 
     alert(
@@ -1177,6 +1816,7 @@ async function addSongToPlaylist(
 
     return;
   }
+
 
   if(
     existing &&
@@ -1189,6 +1829,7 @@ async function addSongToPlaylist(
 
     return;
   }
+
 
   const {
     error
@@ -1208,6 +1849,7 @@ async function addSongToPlaylist(
 
   });
 
+
   if(error){
 
     alert(
@@ -1218,15 +1860,22 @@ async function addSongToPlaylist(
     return;
   }
 
+
   alert(
     `「${currentSong.title}」を「${playlist.name}」に追加しました！`
   );
 
+
   playlistModal.classList.remove(
     "show"
   );
+
 }
 
+
+/* =========================
+   MODAL CLOSE
+========================= */
 
 document
 .getElementById(
@@ -1263,14 +1912,23 @@ playlistModal.addEventListener(
 );
 
 
+/* =========================
+   RANDOM PLAY
+========================= */
+
 document
-.getElementById("play")
+.getElementById(
+  "play"
+)
 .addEventListener(
   "click",
   async ()=>{
 
     const now =
-      document.getElementById("now");
+      document.getElementById(
+        "now"
+      );
+
 
     now.innerHTML =
       `<div class="now-label">
@@ -1281,6 +1939,7 @@ document
         曲を選んでいます… 🎧
       </div>`;
 
+
     const {
       data,
       error
@@ -1288,6 +1947,7 @@ document
     await sb
     .from("songs")
     .select("*");
+
 
     if(error){
 
@@ -1298,21 +1958,28 @@ document
 
         <div class="empty">
           曲の取得に失敗しました。<br><br>
-          ${escapeHtml(error.message)}
+          ${escapeHtml(
+            error.message
+          )}
         </div>`;
 
       return;
     }
 
+
     let songs =
       data || [];
+
 
     songs =
       songs.filter(
         songMatches
       );
 
-    if(!songs.length){
+
+    if(
+      !songs.length
+    ){
 
       now.innerHTML =
         `<div class="now-label">
@@ -1327,6 +1994,7 @@ document
       return;
     }
 
+
     const randomSong =
       songs[
         Math.floor(
@@ -1334,6 +2002,7 @@ document
           songs.length
         )
       ];
+
 
     await playSong(
       randomSong
@@ -1343,8 +2012,14 @@ document
 );
 
 
+/* =========================
+   ARTIST SEARCH
+========================= */
+
 document
-.getElementById("artistSearchButton")
+.getElementById(
+  "artistSearchButton"
+)
 .addEventListener(
   "click",
   searchArtist
@@ -1352,13 +2027,20 @@ document
 
 
 document
-.getElementById("artistSearch")
+.getElementById(
+  "artistSearch"
+)
 .addEventListener(
   "keydown",
   event=>{
 
-    if(event.key === "Enter"){
+    if(
+      event.key ===
+      "Enter"
+    ){
+
       searchArtist();
+
     }
 
   }
@@ -1369,15 +2051,23 @@ async function searchArtist(){
 
   const query =
     document
-    .getElementById("artistSearch")
+    .getElementById(
+      "artistSearch"
+    )
     .value
     .trim();
 
+
   const results =
     document
-    .getElementById("artistResults");
+    .getElementById(
+      "artistResults"
+    );
 
-  if(!query){
+
+  if(
+    !query
+  ){
 
     results.innerHTML =
       `<div class="empty">
@@ -1387,10 +2077,14 @@ async function searchArtist(){
     return;
   }
 
+
   results.innerHTML =
     `<div class="empty">
-      「${escapeHtml(query)}」を探しています…
+      「${escapeHtml(
+        query
+      )}」を探しています…
     </div>`;
+
 
   const {
     data,
@@ -1404,16 +2098,20 @@ async function searchArtist(){
     `%${query}%`
   );
 
+
   if(error){
 
     results.innerHTML =
       `<div class="empty">
         検索に失敗しました。<br><br>
-        ${escapeHtml(error.message)}
+        ${escapeHtml(
+          error.message
+        )}
       </div>`;
 
     return;
   }
+
 
   if(
     !data ||
@@ -1422,110 +2120,196 @@ async function searchArtist(){
 
     results.innerHTML =
       `<div class="empty">
-        「${escapeHtml(query)}」の曲は<br>
+        「${escapeHtml(
+          query
+        )}」の曲は<br>
         見つかりませんでした。
       </div>`;
 
     return;
   }
 
+
   results.innerHTML =
     "";
 
-  data.forEach(song=>{
 
-    const item =
-      document.createElement(
-        "div"
+  data.forEach(
+    song=>{
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+
+      item.className =
+        "artist-result";
+
+
+      const genres =
+        splitTags(
+          song.genre
+        )
+        .join(" / ");
+
+
+      const moods =
+        splitTags(
+          song.mood
+        )
+        .join(" / ");
+
+
+      item.innerHTML =
+        `<div class="artist-name">
+          ${escapeHtml(
+            song.title ||
+            "Untitled"
+          )}
+        </div>
+
+        <div class="artist-meta">
+          ${escapeHtml(
+            song.artist ||
+            "Unknown Artist"
+          )}
+
+          ${
+            genres
+              ? " · " +
+                escapeHtml(
+                  genres
+                )
+              : ""
+          }
+
+          ${
+            moods
+              ? " · " +
+                escapeHtml(
+                  moods
+                )
+              : ""
+          }
+        </div>
+
+        <div
+          style="
+            margin-top:12px;
+            font-weight:700;
+          "
+        >
+          ▶️ この曲を再生
+        </div>`;
+
+
+      item.addEventListener(
+        "click",
+        async ()=>{
+
+          await playSong(
+            song
+          );
+
+
+          document
+          .getElementById(
+            "now"
+          )
+          .scrollIntoView({
+            behavior:"smooth",
+            block:"center"
+          });
+
+        }
       );
 
-    item.className =
-      "artist-result";
 
-    const genres =
-      splitTags(song.genre)
-      .join(" / ");
+      results.appendChild(
+        item
+      );
 
-    const moods =
-      splitTags(song.mood)
-      .join(" / ");
-
-    item.innerHTML =
-      `<div class="artist-name">
-        ${escapeHtml(song.title || "Untitled")}
-      </div>
-
-      <div class="artist-meta">
-        ${escapeHtml(song.artist || "Unknown Artist")}
-        ${genres ? " · " + escapeHtml(genres) : ""}
-        ${moods ? " · " + escapeHtml(moods) : ""}
-      </div>
-
-      <div
-        style="
-          margin-top:12px;
-          font-weight:700;
-        "
-      >
-        ▶️ この曲を再生
-      </div>`;
-
-    item.addEventListener(
-      "click",
-      async ()=>{
-
-        await playSong(song);
-
-        document
-        .getElementById("now")
-        .scrollIntoView({
-          behavior:"smooth",
-          block:"center"
-        });
-
-      }
-    );
-
-    results.appendChild(item);
-
-  });
+    }
+  );
 
 }
 
 
-function escapeHtml(value){
+/* =========================
+   HELPERS
+========================= */
 
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+function escapeHtml(
+  value
+){
+
+  return String(
+    value ?? ""
+  )
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
+
 }
 
+
+/* =========================
+   SETTINGS
+========================= */
 
 document
-.getElementById("settings")
+.getElementById(
+  "settings"
+)
 .addEventListener(
   "click",
   ()=>{
 
     document
-    .getElementById("menu")
+    .getElementById(
+      "menu"
+    )
     .classList
-    .toggle("show");
+    .toggle(
+      "show"
+    );
 
   }
 );
 
 
+/* =========================
+   LOGOUT
+========================= */
+
 document
-.getElementById("logout")
+.getElementById(
+  "logout"
+)
 .addEventListener(
   "click",
   async ()=>{
 
     await sb.auth.signOut();
+
 
     location.href =
       "index.html";
