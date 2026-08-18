@@ -239,22 +239,31 @@ label{
   color:#aeb0c8;
 }
 
-.like-button{
+.like-button,
+.playlist-button{
   width:100%;
-  margin-top:18px;
+  margin-top:14px;
   padding:15px;
   border-radius:16px;
-  border:1px solid #4a3558;
-  background:#171325;
   color:#fff;
   font-size:17px;
   font-weight:800;
   cursor:pointer;
 }
 
+.like-button{
+  border:1px solid #4a3558;
+  background:#171325;
+}
+
 .like-button.liked{
   background:#542237;
   border-color:#a34b6a;
+}
+
+.playlist-button{
+  border:1px solid #35527a;
+  background:#17223a;
 }
 
 .empty{
@@ -304,6 +313,71 @@ label{
 audio{
   width:100%;
   margin-top:22px;
+}
+
+/* プレイリストモーダル */
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#000c;
+  z-index:100;
+  padding:20px;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:min(520px,95vw);
+  background:#101228;
+  border:1px solid #30355e;
+  border-radius:24px;
+  padding:25px;
+}
+
+.modal-title{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:18px;
+}
+
+.playlist-list{
+  display:grid;
+  gap:10px;
+}
+
+.playlist-choice{
+  width:100%;
+  padding:15px;
+  border-radius:14px;
+  border:1px solid #343b67;
+  background:#080b1d;
+  color:#fff;
+  text-align:left;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.playlist-choice:hover{
+  border-color:#7b25ff;
+}
+
+.modal-close{
+  width:100%;
+  margin-top:15px;
+  padding:14px;
+  border:1px solid #343b67;
+  border-radius:14px;
+  background:#242842;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
 }
 
 @media(max-width:600px){
@@ -472,6 +546,36 @@ audio{
 </main>
 
 
+<div class="modal" id="playlistModal">
+
+  <div class="modal-box">
+
+    <div class="modal-title">
+      📚 プレイリストに追加
+    </div>
+
+    <div
+      class="playlist-list"
+      id="playlistList"
+    >
+      <div class="empty">
+        読み込んでいます…
+      </div>
+    </div>
+
+    <button
+      class="modal-close"
+      id="closePlaylistModal"
+      type="button"
+    >
+      閉じる
+    </button>
+
+  </div>
+
+</div>
+
+
 <script>
 
 const SUPABASE_URL =
@@ -491,6 +595,12 @@ let currentSong = null;
 
 const selectedGenres = [];
 const selectedMoods = [];
+
+const playlistModal =
+  document.getElementById("playlistModal");
+
+const playlistList =
+  document.getElementById("playlistList");
 
 
 async function checkLogin(){
@@ -887,6 +997,14 @@ async function playSong(song){
       type="button"
     >
       🤍 いいね
+    </button>
+
+    <button
+      class="playlist-button"
+      id="playlistButton"
+      type="button"
+    >
+      ＋ プレイリストに追加
     </button>`;
 
   document
@@ -894,6 +1012,13 @@ async function playSong(song){
   .addEventListener(
     "click",
     toggleLike
+  );
+
+  document
+  .getElementById("playlistButton")
+  .addEventListener(
+    "click",
+    openPlaylistModal
   );
 
   const audio =
@@ -907,6 +1032,235 @@ async function playSong(song){
 
   await updateLikeButton();
 }
+
+
+async function openPlaylistModal(){
+
+  if(
+    !currentSong ||
+    !currentSession
+  ){
+    return;
+  }
+
+  playlistModal.classList.add(
+    "show"
+  );
+
+  playlistList.innerHTML =
+    `<div class="empty">
+      プレイリストを読み込んでいます…
+    </div>`;
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("playlists")
+  .select("*")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .order(
+    "created_at",
+    {
+      ascending:false
+    }
+  );
+
+  if(error){
+
+    playlistList.innerHTML =
+      `<div class="empty">
+        プレイリストを取得できませんでした。<br><br>
+        ${escapeHtml(error.message)}
+      </div>`;
+
+    return;
+  }
+
+  if(
+    !data ||
+    !data.length
+  ){
+
+    playlistList.innerHTML =
+      `<div class="empty">
+        まだプレイリストがありません。<br>
+        マイページから作成してください。
+      </div>`;
+
+    return;
+  }
+
+  playlistList.innerHTML =
+    "";
+
+  data.forEach(
+    playlist=>{
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.className =
+        "playlist-choice";
+
+      button.textContent =
+        "📚 " +
+        (
+          playlist.name ||
+          "無題のプレイリスト"
+        );
+
+      button.addEventListener(
+        "click",
+        async ()=>{
+
+          await addSongToPlaylist(
+            playlist
+          );
+
+        }
+      );
+
+      playlistList.appendChild(
+        button
+      );
+
+    }
+  );
+}
+
+
+async function addSongToPlaylist(
+  playlist
+){
+
+  if(
+    !currentSong ||
+    !currentSession
+  ){
+    return;
+  }
+
+  const {
+    data:existing,
+    error:checkError
+  } =
+  await sb
+  .from("playlist_songs")
+  .select("id")
+  .eq(
+    "playlist_id",
+    playlist.id
+  )
+  .eq(
+    "song_id",
+    currentSong.id
+  )
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .limit(1);
+
+  if(checkError){
+
+    alert(
+      "確認に失敗しました：" +
+      checkError.message
+    );
+
+    return;
+  }
+
+  if(
+    existing &&
+    existing.length
+  ){
+
+    alert(
+      "この曲はすでにそのプレイリストに入っています。"
+    );
+
+    return;
+  }
+
+  const {
+    error
+  } =
+  await sb
+  .from("playlist_songs")
+  .insert({
+
+    playlist_id:
+      playlist.id,
+
+    song_id:
+      currentSong.id,
+
+    user_id:
+      currentSession.user.id
+
+  });
+
+  if(error){
+
+    alert(
+      "プレイリストへの追加に失敗しました：" +
+      error.message
+    );
+
+    return;
+  }
+
+  alert(
+    `「${currentSong.title}」を「${playlist.name}」に追加しました！`
+  );
+
+  playlistModal.classList.remove(
+    "show"
+  );
+}
+
+
+document
+.getElementById(
+  "closePlaylistModal"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    playlistModal.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+playlistModal.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      event.target ===
+      playlistModal
+    ){
+
+      playlistModal.classList.remove(
+        "show"
+      );
+
+    }
+
+  }
+);
 
 
 document
