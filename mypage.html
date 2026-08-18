@@ -8,7 +8,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -93,29 +95,38 @@ header{
   color:#8f93ad;
 }
 
-.liked-list{
+.liked-list,
+.playlist-list,
+.playlist-song-list{
   display:grid;
   gap:12px;
 }
 
-.liked-song{
+.liked-song,
+.playlist-item,
+.playlist-song{
   padding:18px;
   border-radius:18px;
   background:#080b1d;
   border:1px solid #30355e;
 }
 
-.liked-title{
+.liked-title,
+.playlist-name,
+.playlist-song-title{
   font-size:18px;
   font-weight:800;
 }
 
-.liked-artist{
+.liked-artist,
+.playlist-song-artist{
   margin-top:5px;
   color:#adb1c9;
 }
 
-.liked-meta{
+.liked-meta,
+.playlist-meta,
+.playlist-song-meta{
   margin-top:7px;
   font-size:13px;
   color:#858baa;
@@ -141,7 +152,8 @@ header{
   background:#242842;
 }
 
-.remove-like{
+.remove-like,
+.remove-playlist-song{
   background:#56283a;
 }
 
@@ -183,6 +195,135 @@ header{
   padding:80px 0;
 }
 
+/* プレイリスト */
+
+.playlist-item{
+  cursor:pointer;
+  transition:.15s;
+}
+
+.playlist-item:hover{
+  border-color:#7b25ff;
+}
+
+.playlist-top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
+
+.playlist-open{
+  flex:1;
+  min-width:0;
+}
+
+.delete-playlist{
+  border:0;
+  border-radius:12px;
+  padding:10px 13px;
+  background:#56283a;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.playlist-detail{
+  display:none;
+}
+
+.playlist-detail.show{
+  display:block;
+}
+
+.detail-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.detail-title{
+  font-size:23px;
+  font-weight:800;
+}
+
+.close-detail{
+  border:1px solid #343b67;
+  background:#171a31;
+  color:#fff;
+  padding:10px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+/* モーダル */
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#000c;
+  z-index:100;
+  padding:20px;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:min(520px,95vw);
+  background:#101228;
+  border:1px solid #30355e;
+  border-radius:24px;
+  padding:25px;
+}
+
+.modal-title{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:18px;
+}
+
+.modal-input{
+  width:100%;
+  padding:16px;
+  border-radius:14px;
+  border:1px solid #353b67;
+  background:#080b1d;
+  color:#fff;
+  font-size:16px;
+}
+
+.modal-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+
+.modal-actions button{
+  padding:14px;
+  border:0;
+  border-radius:14px;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.cancel{
+  background:#242842;
+}
+
+.save{
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+}
+
 @media(max-width:600px){
 
   .logo{
@@ -196,6 +337,11 @@ header{
   .song-buttons{
     grid-template-columns:1fr;
   }
+
+  .playlist-top{
+    align-items:flex-start;
+  }
+
 }
 </style>
 </head>
@@ -249,6 +395,8 @@ header{
   </section>
 
 
+  <!-- いいね -->
+
   <section class="card">
 
     <h2>
@@ -267,14 +415,24 @@ header{
   </section>
 
 
-  <section class="card">
+  <!-- プレイリスト -->
+
+  <section
+    class="card"
+    id="playlistSection"
+  >
 
     <h2>
       📚 マイプレイリスト
     </h2>
 
-    <div class="empty">
-      まだプレイリストはありません。
+    <div
+      id="playlistList"
+      class="playlist-list"
+    >
+      <div class="empty">
+        プレイリストを読み込んでいます…
+      </div>
     </div>
 
     <button
@@ -287,6 +445,43 @@ header{
 
   </section>
 
+
+  <!-- プレイリスト詳細 -->
+
+  <section
+    class="card playlist-detail"
+    id="playlistDetail"
+  >
+
+    <div class="detail-header">
+
+      <div
+        class="detail-title"
+        id="playlistDetailTitle"
+      >
+        プレイリスト
+      </div>
+
+      <button
+        class="close-detail"
+        id="closePlaylistDetail"
+        type="button"
+      >
+        閉じる
+      </button>
+
+    </div>
+
+    <div
+      id="playlistSongs"
+      class="playlist-song-list"
+    >
+    </div>
+
+  </section>
+
+
+  <!-- アカウント -->
 
   <section class="card">
 
@@ -317,6 +512,52 @@ header{
 </main>
 
 
+<!-- プレイリスト作成モーダル -->
+
+<div
+  class="modal"
+  id="playlistModal"
+>
+
+  <div class="modal-box">
+
+    <div class="modal-title">
+      📚 新しいプレイリスト
+    </div>
+
+    <input
+      class="modal-input"
+      id="playlistNameInput"
+      type="text"
+      maxlength="50"
+      placeholder="プレイリスト名"
+    >
+
+    <div class="modal-actions">
+
+      <button
+        class="cancel"
+        id="cancelPlaylist"
+        type="button"
+      >
+        キャンセル
+      </button>
+
+      <button
+        class="save"
+        id="savePlaylist"
+        type="button"
+      >
+        作成
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <script>
 
 const SUPABASE_URL =
@@ -331,17 +572,63 @@ const sb =
     SUPABASE_KEY
   );
 
-let currentSession = null;
+
+let currentSession =
+  null;
+
+let currentPlaylistId =
+  null;
+
 
 const loading =
-  document.getElementById("loading");
+  document.getElementById(
+    "loading"
+  );
 
 const mypage =
-  document.getElementById("mypage");
+  document.getElementById(
+    "mypage"
+  );
 
 const likedSongs =
-  document.getElementById("likedSongs");
+  document.getElementById(
+    "likedSongs"
+  );
 
+const playlistList =
+  document.getElementById(
+    "playlistList"
+  );
+
+const playlistModal =
+  document.getElementById(
+    "playlistModal"
+  );
+
+const playlistNameInput =
+  document.getElementById(
+    "playlistNameInput"
+  );
+
+const playlistDetail =
+  document.getElementById(
+    "playlistDetail"
+  );
+
+const playlistDetailTitle =
+  document.getElementById(
+    "playlistDetailTitle"
+  );
+
+const playlistSongs =
+  document.getElementById(
+    "playlistSongs"
+  );
+
+
+/* =========================
+   初期化
+========================= */
 
 async function init(){
 
@@ -350,6 +637,7 @@ async function init(){
     error
   } =
   await sb.auth.getSession();
+
 
   if(error){
 
@@ -361,6 +649,7 @@ async function init(){
     return;
   }
 
+
   if(!session){
 
     location.href =
@@ -369,27 +658,41 @@ async function init(){
     return;
   }
 
+
   currentSession =
     session;
+
 
   const name =
     session.user.user_metadata?.artist_name ||
     "ユーザー";
+
 
   document
   .getElementById("username")
   .textContent =
     name;
 
+
   loading.style.display =
     "none";
+
 
   mypage.style.display =
     "block";
 
-  await loadLikedSongs();
+
+  await Promise.all([
+    loadLikedSongs(),
+    loadPlaylists()
+  ]);
+
 }
 
+
+/* =========================
+   いいね一覧
+========================= */
 
 async function loadLikedSongs(){
 
@@ -494,66 +797,170 @@ async function loadLikedSongs(){
     "";
 
 
-  songIds.forEach(songId=>{
+  songIds.forEach(
+    songId=>{
 
-    const song =
-      songMap.get(
-        Number(songId)
+      const song =
+        songMap.get(
+          Number(songId)
+        );
+
+
+      if(!song){
+        return;
+      }
+
+
+      const item =
+        createSongItem(
+          song,
+          "like"
+        );
+
+
+      likedSongs.appendChild(
+        item
       );
 
-    if(!song){
-      return;
     }
+  );
+
+
+  if(
+    !likedSongs.children.length
+  ){
+
+    likedSongs.innerHTML =
+      `<div class="empty">
+        まだいいねした曲はありません。
+      </div>`;
+
+  }
+
+}
+
+
+/* =========================
+   プレイリスト一覧
+========================= */
+
+async function loadPlaylists(){
+
+  playlistList.innerHTML =
+    `<div class="empty">
+      プレイリストを読み込んでいます…
+    </div>`;
+
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("playlists")
+  .select("*")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .order(
+    "created_at",
+    {
+      ascending:false
+    }
+  );
+
+
+  if(error){
+
+    playlistList.innerHTML =
+      `<div class="empty">
+        プレイリストを取得できませんでした。<br><br>
+        ${escapeHtml(error.message)}
+      </div>`;
+
+    return;
+  }
+
+
+  if(
+    !data ||
+    !data.length
+  ){
+
+    playlistList.innerHTML =
+      `<div class="empty">
+        まだプレイリストはありません。
+      </div>`;
+
+    return;
+  }
+
+
+  playlistList.innerHTML =
+    "";
+
+
+  for(
+    const playlist
+    of data
+  ){
+
+    const {
+      data:songs
+    } =
+    await sb
+    .from("playlist_songs")
+    .select("id")
+    .eq(
+      "playlist_id",
+      playlist.id
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    );
+
+
+    const count =
+      songs
+        ? songs.length
+        : 0;
+
 
     const item =
       document.createElement(
         "div"
       );
 
+
     item.className =
-      "liked-song";
-
-
-    const genreText =
-      formatTags(song.genre);
-
-    const moodText =
-      formatTags(song.mood);
+      "playlist-item";
 
 
     item.innerHTML =
-      `<div class="liked-title">
-        ${escapeHtml(song.title || "Untitled")}
-      </div>
+      `<div class="playlist-top">
 
-      <div class="liked-artist">
-        ${escapeHtml(song.artist || "Unknown Artist")}
-      </div>
+        <div class="playlist-open">
 
-      <div class="liked-meta">
-        ${escapeHtml(genreText)}
-        ${
-          moodText
-            ? " · " +
-              escapeHtml(moodText)
-            : ""
-        }
-      </div>
+          <div class="playlist-name">
+            📚 ${escapeHtml(
+              playlist.name ||
+              "無題のプレイリスト"
+            )}
+          </div>
 
-      <div class="song-buttons">
+          <div class="playlist-meta">
+            ${count}曲
+          </div>
+
+        </div>
 
         <button
           type="button"
-          class="play-song"
+          class="delete-playlist"
         >
-          ▶️ 再生
-        </button>
-
-        <button
-          type="button"
-          class="remove-like"
-        >
-          💔 いいね解除
+          🗑️
         </button>
 
       </div>`;
@@ -561,20 +968,688 @@ async function loadLikedSongs(){
 
     item
     .querySelector(
-      ".play-song"
+      ".playlist-open"
     )
     .addEventListener(
       "click",
-      ()=>{
+      async event=>{
 
-        toggleAudio(
-          item,
-          song
+        event.stopPropagation();
+
+        await openPlaylist(
+          playlist
         );
 
       }
     );
 
+
+    item
+    .querySelector(
+      ".delete-playlist"
+    )
+    .addEventListener(
+      "click",
+      async event=>{
+
+        event.stopPropagation();
+
+        await deletePlaylist(
+          playlist
+        );
+
+      }
+    );
+
+
+    playlistList.appendChild(
+      item
+    );
+
+  }
+
+}
+
+
+/* =========================
+   プレイリスト作成
+========================= */
+
+document
+.getElementById(
+  "createPlaylist"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    playlistNameInput.value =
+      "";
+
+    playlistModal.classList.add(
+      "show"
+    );
+
+    setTimeout(
+      ()=>{
+        playlistNameInput.focus();
+      },
+      100
+    );
+
+  }
+);
+
+
+document
+.getElementById(
+  "cancelPlaylist"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    playlistModal.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+playlistModal.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      event.target ===
+      playlistModal
+    ){
+
+      playlistModal.classList.remove(
+        "show"
+      );
+
+    }
+
+  }
+);
+
+
+playlistNameInput.addEventListener(
+  "keydown",
+  event=>{
+
+    if(
+      event.key ===
+      "Enter"
+    ){
+
+      createPlaylist();
+
+    }
+
+  }
+);
+
+
+document
+.getElementById(
+  "savePlaylist"
+)
+.addEventListener(
+  "click",
+  createPlaylist
+);
+
+
+async function createPlaylist(){
+
+  const name =
+    playlistNameInput
+    .value
+    .trim();
+
+
+  if(!name){
+
+    alert(
+      "プレイリスト名を入力してください。"
+    );
+
+    return;
+  }
+
+
+  const {
+    error
+  } =
+  await sb
+  .from("playlists")
+  .insert({
+
+    user_id:
+      currentSession.user.id,
+
+    name:
+      name
+
+  });
+
+
+  if(error){
+
+    alert(
+      "プレイリスト作成に失敗しました：" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  playlistModal.classList.remove(
+    "show"
+  );
+
+
+  await loadPlaylists();
+
+}
+
+
+/* =========================
+   プレイリストを開く
+========================= */
+
+async function openPlaylist(
+  playlist
+){
+
+  currentPlaylistId =
+    playlist.id;
+
+
+  playlistDetailTitle.textContent =
+    "📚 " +
+    (
+      playlist.name ||
+      "無題のプレイリスト"
+    );
+
+
+  playlistSongs.innerHTML =
+    `<div class="empty">
+      曲を読み込んでいます…
+    </div>`;
+
+
+  playlistDetail.classList.add(
+    "show"
+  );
+
+
+  playlistDetail.scrollIntoView({
+    behavior:"smooth",
+    block:"start"
+  });
+
+
+  const {
+    data:relations,
+    error
+  } =
+  await sb
+  .from("playlist_songs")
+  .select("*")
+  .eq(
+    "playlist_id",
+    playlist.id
+  )
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .order(
+    "created_at",
+    {
+      ascending:true
+    }
+  );
+
+
+  if(error){
+
+    playlistSongs.innerHTML =
+      `<div class="empty">
+        プレイリストを取得できませんでした。<br><br>
+        ${escapeHtml(error.message)}
+      </div>`;
+
+    return;
+  }
+
+
+  if(
+    !relations ||
+    !relations.length
+  ){
+
+    playlistSongs.innerHTML =
+      `<div class="empty">
+        このプレイリストにはまだ曲がありません。
+      </div>`;
+
+    return;
+  }
+
+
+  const songIds =
+    relations.map(
+      row=>row.song_id
+    );
+
+
+  const {
+    data:songs,
+    error:songsError
+  } =
+  await sb
+  .from("songs")
+  .select("*")
+  .in(
+    "id",
+    songIds
+  );
+
+
+  if(songsError){
+
+    playlistSongs.innerHTML =
+      `<div class="empty">
+        曲情報を取得できませんでした。<br><br>
+        ${escapeHtml(songsError.message)}
+      </div>`;
+
+    return;
+  }
+
+
+  const songMap =
+    new Map(
+      (songs || []).map(
+        song=>[
+          Number(song.id),
+          song
+        ]
+      )
+    );
+
+
+  playlistSongs.innerHTML =
+    "";
+
+
+  relations.forEach(
+    relation=>{
+
+      const song =
+        songMap.get(
+          Number(
+            relation.song_id
+          )
+        );
+
+
+      if(!song){
+        return;
+      }
+
+
+      const item =
+        createSongItem(
+          song,
+          "playlist",
+          relation
+        );
+
+
+      playlistSongs.appendChild(
+        item
+      );
+
+    }
+  );
+
+
+  if(
+    !playlistSongs.children.length
+  ){
+
+    playlistSongs.innerHTML =
+      `<div class="empty">
+        このプレイリストにはまだ曲がありません。
+      </div>`;
+
+  }
+
+}
+
+
+/* =========================
+   プレイリストから曲削除
+========================= */
+
+async function removePlaylistSong(
+  relation
+){
+
+  const {
+    error
+  } =
+  await sb
+  .from("playlist_songs")
+  .delete()
+  .eq(
+    "id",
+    relation.id
+  )
+  .eq(
+    "user_id",
+    currentSession.user.id
+  );
+
+
+  if(error){
+
+    alert(
+      "曲の削除に失敗しました：" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  await loadPlaylists();
+
+
+  if(
+    currentPlaylistId
+  ){
+
+    const {
+      data
+    } =
+    await sb
+    .from("playlists")
+    .select("*")
+    .eq(
+      "id",
+      currentPlaylistId
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .limit(1);
+
+
+    if(
+      data &&
+      data.length
+    ){
+
+      await openPlaylist(
+        data[0]
+      );
+
+    }
+
+  }
+
+}
+
+
+/* =========================
+   プレイリスト削除
+========================= */
+
+async function deletePlaylist(
+  playlist
+){
+
+  const ok =
+    confirm(
+      `「${playlist.name}」を削除しますか？`
+    );
+
+
+  if(!ok){
+    return;
+  }
+
+
+  /* 先に中身を削除 */
+
+  const {
+    error:relationError
+  } =
+  await sb
+  .from("playlist_songs")
+  .delete()
+  .eq(
+    "playlist_id",
+    playlist.id
+  )
+  .eq(
+    "user_id",
+    currentSession.user.id
+  );
+
+
+  if(relationError){
+
+    alert(
+      "プレイリスト内の曲削除に失敗しました：" +
+      relationError.message
+    );
+
+    return;
+  }
+
+
+  /* プレイリスト本体削除 */
+
+  const {
+    error
+  } =
+  await sb
+  .from("playlists")
+  .delete()
+  .eq(
+    "id",
+    playlist.id
+  )
+  .eq(
+    "user_id",
+    currentSession.user.id
+  );
+
+
+  if(error){
+
+    alert(
+      "プレイリスト削除に失敗しました：" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  if(
+    Number(currentPlaylistId) ===
+    Number(playlist.id)
+  ){
+
+    currentPlaylistId =
+      null;
+
+    playlistDetail.classList.remove(
+      "show"
+    );
+
+  }
+
+
+  await loadPlaylists();
+
+}
+
+
+/* =========================
+   曲カード
+========================= */
+
+function createSongItem(
+  song,
+  type,
+  relation=null
+){
+
+  const item =
+    document.createElement(
+      "div"
+    );
+
+
+  item.className =
+    type === "playlist"
+      ? "playlist-song"
+      : "liked-song";
+
+
+  const genreText =
+    formatTags(
+      song.genre
+    );
+
+
+  const moodText =
+    formatTags(
+      song.mood
+    );
+
+
+  item.innerHTML =
+    `<div class="${
+      type === "playlist"
+        ? "playlist-song-title"
+        : "liked-title"
+    }">
+      ${escapeHtml(
+        song.title ||
+        "Untitled"
+      )}
+    </div>
+
+    <div class="${
+      type === "playlist"
+        ? "playlist-song-artist"
+        : "liked-artist"
+    }">
+      ${escapeHtml(
+        song.artist ||
+        "Unknown Artist"
+      )}
+    </div>
+
+    <div class="${
+      type === "playlist"
+        ? "playlist-song-meta"
+        : "liked-meta"
+    }">
+      ${escapeHtml(
+        genreText
+      )}
+
+      ${
+        moodText
+          ? " · " +
+            escapeHtml(
+              moodText
+            )
+          : ""
+      }
+    </div>
+
+    <div class="song-buttons">
+
+      <button
+        type="button"
+        class="play-song"
+      >
+        ▶️ 再生
+      </button>
+
+      <button
+        type="button"
+        class="${
+          type === "playlist"
+            ? "remove-playlist-song"
+            : "remove-like"
+        }"
+      >
+        ${
+          type === "playlist"
+            ? "🗑️ プレイリストから外す"
+            : "💔 いいね解除"
+        }
+      </button>
+
+    </div>`;
+
+
+  item
+  .querySelector(
+    ".play-song"
+  )
+  .addEventListener(
+    "click",
+    ()=>{
+
+      toggleAudio(
+        item,
+        song
+      );
+
+    }
+  );
+
+
+  if(
+    type ===
+    "playlist"
+  ){
+
+    item
+    .querySelector(
+      ".remove-playlist-song"
+    )
+    .addEventListener(
+      "click",
+      async ()=>{
+
+        await removePlaylistSong(
+          relation
+        );
+
+      }
+    );
+
+  }
+  else{
 
     item
     .querySelector(
@@ -591,26 +1666,17 @@ async function loadLikedSongs(){
       }
     );
 
-
-    likedSongs.appendChild(
-      item
-    );
-
-  });
-
-
-  if(
-    !likedSongs.children.length
-  ){
-
-    likedSongs.innerHTML =
-      `<div class="empty">
-        まだいいねした曲はありません。
-      </div>`;
-
   }
+
+
+  return item;
+
 }
 
+
+/* =========================
+   再生
+========================= */
 
 function toggleAudio(
   item,
@@ -621,6 +1687,7 @@ function toggleAudio(
     item.querySelector(
       "audio"
     );
+
 
   if(old){
 
@@ -645,12 +1712,14 @@ function toggleAudio(
   .querySelectorAll(
     ".song-audio"
   )
-  .forEach(audio=>{
+  .forEach(
+    audio=>{
 
-    audio.pause();
-    audio.remove();
+      audio.pause();
+      audio.remove();
 
-  });
+    }
+  );
 
 
   const audio =
@@ -658,34 +1727,48 @@ function toggleAudio(
       "audio"
     );
 
+
   audio.className =
     "song-audio";
+
 
   audio.controls =
     true;
 
+
   audio.autoplay =
     true;
 
+
   audio.src =
     song.audio_url;
+
 
   item.appendChild(
     audio
   );
 
+
   audio
   .play()
   .catch(()=>{});
+
 }
 
 
-async function removeLike(song){
+/* =========================
+   いいね解除
+========================= */
+
+async function removeLike(
+  song
+){
 
   const ok =
     confirm(
       `「${song.title}」のいいねを解除しますか？`
     );
+
 
   if(!ok){
     return;
@@ -720,14 +1803,46 @@ async function removeLike(song){
 
 
   await loadLikedSongs();
+
 }
 
 
-function formatTags(value){
+/* =========================
+   詳細閉じる
+========================= */
+
+document
+.getElementById(
+  "closePlaylistDetail"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    currentPlaylistId =
+      null;
+
+
+    playlistDetail.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+/* =========================
+   HELPERS
+========================= */
+
+function formatTags(
+  value
+){
 
   if(!value){
     return "";
   }
+
 
   return String(value)
     .split(",")
@@ -736,36 +1851,49 @@ function formatTags(value){
     )
     .filter(Boolean)
     .join(" / ");
+
 }
 
 
-function escapeHtml(value){
+function escapeHtml(
+  value
+){
 
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+  return String(
+    value ?? ""
+  )
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
+
 }
 
 
-document
-.getElementById("createPlaylist")
-.addEventListener(
-  "click",
-  ()=>{
-
-    alert(
-      "プレイリスト作成機能は次に追加します 🎧"
-    );
-
-  }
-);
-
+/* =========================
+   アカウント設定
+========================= */
 
 document
-.getElementById("accountSettings")
+.getElementById(
+  "accountSettings"
+)
 .addEventListener(
   "click",
   ()=>{
@@ -778,8 +1906,14 @@ document
 );
 
 
+/* =========================
+   LOGOUT
+========================= */
+
 document
-.getElementById("logout")
+.getElementById(
+  "logout"
+)
 .addEventListener(
   "click",
   async ()=>{
