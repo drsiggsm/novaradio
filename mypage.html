@@ -93,6 +93,63 @@ header{
   color:#8f93ad;
 }
 
+.liked-list{
+  display:grid;
+  gap:12px;
+}
+
+.liked-song{
+  padding:18px;
+  border-radius:18px;
+  background:#080b1d;
+  border:1px solid #30355e;
+}
+
+.liked-title{
+  font-size:18px;
+  font-weight:800;
+}
+
+.liked-artist{
+  margin-top:5px;
+  color:#adb1c9;
+}
+
+.liked-meta{
+  margin-top:7px;
+  font-size:13px;
+  color:#858baa;
+}
+
+.song-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:14px;
+}
+
+.song-buttons button{
+  padding:12px;
+  border:0;
+  border-radius:13px;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.play-song{
+  background:#242842;
+}
+
+.remove-like{
+  background:#56283a;
+}
+
+.song-audio{
+  width:100%;
+  margin-top:14px;
+}
+
 .action{
   display:block;
   width:100%;
@@ -136,6 +193,9 @@ header{
     font-size:24px;
   }
 
+  .song-buttons{
+    grid-template-columns:1fr;
+  }
 }
 </style>
 </head>
@@ -195,8 +255,13 @@ header{
       ❤️ いいねした曲
     </h2>
 
-    <div class="empty">
-      まだいいねした曲はありません。
+    <div
+      id="likedSongs"
+      class="liked-list"
+    >
+      <div class="empty">
+        読み込んでいます…
+      </div>
     </div>
 
   </section>
@@ -266,12 +331,16 @@ const sb =
     SUPABASE_KEY
   );
 
+let currentSession = null;
 
 const loading =
   document.getElementById("loading");
 
 const mypage =
   document.getElementById("mypage");
+
+const likedSongs =
+  document.getElementById("likedSongs");
 
 
 async function init(){
@@ -282,15 +351,15 @@ async function init(){
   } =
   await sb.auth.getSession();
 
-
   if(error){
 
     loading.textContent =
       "ログイン状態を確認できませんでした。";
 
+    console.error(error);
+
     return;
   }
-
 
   if(!session){
 
@@ -300,25 +369,384 @@ async function init(){
     return;
   }
 
+  currentSession =
+    session;
 
   const name =
     session.user.user_metadata?.artist_name ||
     "ユーザー";
-
 
   document
   .getElementById("username")
   .textContent =
     name;
 
-
   loading.style.display =
     "none";
-
 
   mypage.style.display =
     "block";
 
+  await loadLikedSongs();
+}
+
+
+async function loadLikedSongs(){
+
+  likedSongs.innerHTML =
+    `<div class="empty">
+      いいねした曲を読み込んでいます…
+    </div>`;
+
+
+  const {
+    data:likes,
+    error:likesError
+  } =
+  await sb
+  .from("likes")
+  .select("song_id")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .order(
+    "created_at",
+    {
+      ascending:false
+    }
+  );
+
+
+  if(likesError){
+
+    likedSongs.innerHTML =
+      `<div class="empty">
+        いいねした曲を取得できませんでした。<br><br>
+        ${escapeHtml(likesError.message)}
+      </div>`;
+
+    return;
+  }
+
+
+  if(
+    !likes ||
+    !likes.length
+  ){
+
+    likedSongs.innerHTML =
+      `<div class="empty">
+        まだいいねした曲はありません。
+      </div>`;
+
+    return;
+  }
+
+
+  const songIds =
+    [
+      ...new Set(
+        likes.map(
+          like=>like.song_id
+        )
+      )
+    ];
+
+
+  const {
+    data:songs,
+    error:songsError
+  } =
+  await sb
+  .from("songs")
+  .select("*")
+  .in(
+    "id",
+    songIds
+  );
+
+
+  if(songsError){
+
+    likedSongs.innerHTML =
+      `<div class="empty">
+        曲情報を取得できませんでした。<br><br>
+        ${escapeHtml(songsError.message)}
+      </div>`;
+
+    return;
+  }
+
+
+  const songMap =
+    new Map(
+      (songs || []).map(
+        song=>[
+          Number(song.id),
+          song
+        ]
+      )
+    );
+
+
+  likedSongs.innerHTML =
+    "";
+
+
+  songIds.forEach(songId=>{
+
+    const song =
+      songMap.get(
+        Number(songId)
+      );
+
+    if(!song){
+      return;
+    }
+
+    const item =
+      document.createElement(
+        "div"
+      );
+
+    item.className =
+      "liked-song";
+
+
+    const genreText =
+      formatTags(song.genre);
+
+    const moodText =
+      formatTags(song.mood);
+
+
+    item.innerHTML =
+      `<div class="liked-title">
+        ${escapeHtml(song.title || "Untitled")}
+      </div>
+
+      <div class="liked-artist">
+        ${escapeHtml(song.artist || "Unknown Artist")}
+      </div>
+
+      <div class="liked-meta">
+        ${escapeHtml(genreText)}
+        ${
+          moodText
+            ? " · " +
+              escapeHtml(moodText)
+            : ""
+        }
+      </div>
+
+      <div class="song-buttons">
+
+        <button
+          type="button"
+          class="play-song"
+        >
+          ▶️ 再生
+        </button>
+
+        <button
+          type="button"
+          class="remove-like"
+        >
+          💔 いいね解除
+        </button>
+
+      </div>`;
+
+
+    item
+    .querySelector(
+      ".play-song"
+    )
+    .addEventListener(
+      "click",
+      ()=>{
+
+        toggleAudio(
+          item,
+          song
+        );
+
+      }
+    );
+
+
+    item
+    .querySelector(
+      ".remove-like"
+    )
+    .addEventListener(
+      "click",
+      async ()=>{
+
+        await removeLike(
+          song
+        );
+
+      }
+    );
+
+
+    likedSongs.appendChild(
+      item
+    );
+
+  });
+
+
+  if(
+    !likedSongs.children.length
+  ){
+
+    likedSongs.innerHTML =
+      `<div class="empty">
+        まだいいねした曲はありません。
+      </div>`;
+
+  }
+}
+
+
+function toggleAudio(
+  item,
+  song
+){
+
+  const old =
+    item.querySelector(
+      "audio"
+    );
+
+  if(old){
+
+    old.pause();
+    old.remove();
+
+    return;
+  }
+
+
+  if(!song.audio_url){
+
+    alert(
+      "この曲には音源がありません。"
+    );
+
+    return;
+  }
+
+
+  document
+  .querySelectorAll(
+    ".song-audio"
+  )
+  .forEach(audio=>{
+
+    audio.pause();
+    audio.remove();
+
+  });
+
+
+  const audio =
+    document.createElement(
+      "audio"
+    );
+
+  audio.className =
+    "song-audio";
+
+  audio.controls =
+    true;
+
+  audio.autoplay =
+    true;
+
+  audio.src =
+    song.audio_url;
+
+  item.appendChild(
+    audio
+  );
+
+  audio
+  .play()
+  .catch(()=>{});
+}
+
+
+async function removeLike(song){
+
+  const ok =
+    confirm(
+      `「${song.title}」のいいねを解除しますか？`
+    );
+
+  if(!ok){
+    return;
+  }
+
+
+  const {
+    error
+  } =
+  await sb
+  .from("likes")
+  .delete()
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .eq(
+    "song_id",
+    song.id
+  );
+
+
+  if(error){
+
+    alert(
+      "いいね解除に失敗しました：" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  await loadLikedSongs();
+}
+
+
+function formatTags(value){
+
+  if(!value){
+    return "";
+  }
+
+  return String(value)
+    .split(",")
+    .map(
+      value=>value.trim()
+    )
+    .filter(Boolean)
+    .join(" / ");
+}
+
+
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 
