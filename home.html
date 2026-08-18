@@ -112,7 +112,6 @@ label{
   font-size:15px;
   font-weight:600;
   cursor:pointer;
-  transition:.15s;
 }
 
 .option:hover{
@@ -240,6 +239,24 @@ label{
   color:#aeb0c8;
 }
 
+.like-button{
+  width:100%;
+  margin-top:18px;
+  padding:15px;
+  border-radius:16px;
+  border:1px solid #4a3558;
+  background:#171325;
+  color:#fff;
+  font-size:17px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.like-button.liked{
+  background:#542237;
+  border-color:#a34b6a;
+}
+
 .empty{
   text-align:center;
   color:#8f93ad;
@@ -290,26 +307,11 @@ audio{
 }
 
 @media(max-width:600px){
-
-  .hero h1{
-    font-size:34px;
-  }
-
-  .logo{
-    font-size:28px;
-  }
-
-  .account{
-    display:none;
-  }
-
-  .artist-search{
-    flex-direction:column;
-  }
-
-  .artist-search button{
-    padding:16px;
-  }
+  .hero h1{font-size:34px}
+  .logo{font-size:28px}
+  .account{display:none}
+  .artist-search{flex-direction:column}
+  .artist-search button{padding:16px}
 }
 </style>
 </head>
@@ -320,9 +322,7 @@ audio{
 
 <header>
 
-  <div class="logo">
-    NovaRadio
-  </div>
+  <div class="logo">NovaRadio</div>
 
   <div class="header-right">
 
@@ -338,8 +338,6 @@ audio{
 
 </header>
 
-
-<!-- 設定メニュー -->
 
 <div class="menu" id="menu">
 
@@ -360,9 +358,7 @@ audio{
 
 <section class="hero">
 
-  <h1>
-    🎧 今日は何を聴く？
-  </h1>
+  <h1>🎧 今日は何を聴く？</h1>
 
   <p>
     ジャンルと気分を選んで、<br>
@@ -376,12 +372,9 @@ audio{
 
   <div class="field">
 
-    <label>
-      🎵 ジャンル
-    </label>
+    <label>🎵 ジャンル</label>
 
     <div class="options" id="genreOptions">
-
       <button type="button" class="option" data-value="Hip Hop">Hip Hop</button>
       <button type="button" class="option" data-value="R&B">R&B</button>
       <button type="button" class="option" data-value="Pop">Pop</button>
@@ -391,7 +384,6 @@ audio{
       <button type="button" class="option" data-value="Electronic">Electronic</button>
       <button type="button" class="option" data-value="Pluggnb">Pluggnb</button>
       <button type="button" class="option" data-value="Other">Other</button>
-
     </div>
 
   </div>
@@ -399,18 +391,14 @@ audio{
 
   <div class="field">
 
-    <label>
-      🌙 Mood
-    </label>
+    <label>🌙 Mood</label>
 
     <div class="options" id="moodOptions">
-
       <button type="button" class="option" data-value="Chill">Chill</button>
       <button type="button" class="option" data-value="Dark">Dark</button>
       <button type="button" class="option" data-value="Happy">Happy</button>
       <button type="button" class="option" data-value="Emotional">Emotional</button>
       <button type="button" class="option" data-value="Energetic">Energetic</button>
-
     </div>
 
   </div>
@@ -498,13 +486,27 @@ const sb =
     SUPABASE_KEY
   );
 
+let currentSession = null;
+let currentSong = null;
+
+const selectedGenres = [];
+const selectedMoods = [];
+
 
 async function checkLogin(){
 
   const {
-    data:{session}
+    data:{session},
+    error
   } =
   await sb.auth.getSession();
+
+  if(error){
+
+    console.error(error);
+
+    return;
+  }
 
   if(!session){
 
@@ -513,6 +515,9 @@ async function checkLogin(){
 
     return;
   }
+
+  currentSession =
+    session;
 
   const username =
     session.user.user_metadata?.artist_name ||
@@ -525,10 +530,6 @@ async function checkLogin(){
 }
 
 checkLogin();
-
-
-const selectedGenres = [];
-const selectedMoods = [];
 
 
 function updateConditions(){
@@ -660,14 +661,174 @@ function songMatches(song){
         songMoods.includes(mood)
     );
 
-  return (
-    genreMatches &&
-    moodMatches
+  return genreMatches && moodMatches;
+}
+
+
+async function isSongLiked(songId){
+
+  if(!currentSession){
+    return false;
+  }
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("likes")
+  .select("id")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .eq(
+    "song_id",
+    songId
+  )
+  .limit(1);
+
+  if(error){
+
+    console.error(
+      "Like check error:",
+      error
+    );
+
+    return false;
+  }
+
+  return !!(
+    data &&
+    data.length
   );
 }
 
 
-function playSong(song){
+async function updateLikeButton(){
+
+  if(
+    !currentSong ||
+    !currentSession
+  ){
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "likeButton"
+    );
+
+  if(!button){
+    return;
+  }
+
+  const liked =
+    await isSongLiked(
+      currentSong.id
+    );
+
+  if(liked){
+
+    button.textContent =
+      "❤️ いいね済み";
+
+    button.classList.add(
+      "liked"
+    );
+
+  }else{
+
+    button.textContent =
+      "🤍 いいね";
+
+    button.classList.remove(
+      "liked"
+    );
+
+  }
+}
+
+
+async function toggleLike(){
+
+  if(
+    !currentSong ||
+    !currentSession
+  ){
+    return;
+  }
+
+  const liked =
+    await isSongLiked(
+      currentSong.id
+    );
+
+
+  if(liked){
+
+    const {
+      error
+    } =
+    await sb
+    .from("likes")
+    .delete()
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .eq(
+      "song_id",
+      currentSong.id
+    );
+
+    if(error){
+
+      alert(
+        "いいね解除に失敗しました：" +
+        error.message
+      );
+
+      return;
+    }
+
+  }else{
+
+    const {
+      error
+    } =
+    await sb
+    .from("likes")
+    .insert({
+
+      user_id:
+        currentSession.user.id,
+
+      song_id:
+        currentSong.id
+
+    });
+
+    if(error){
+
+      alert(
+        "いいねに失敗しました：" +
+        error.message
+      );
+
+      return;
+    }
+
+  }
+
+  await updateLikeButton();
+}
+
+
+async function playSong(song){
+
+  currentSong =
+    song;
 
   const now =
     document.getElementById("now");
@@ -697,19 +858,19 @@ function playSong(song){
     </div>
 
     <div class="now-title">
-      ${song.title || "Untitled"}
+      ${escapeHtml(song.title || "Untitled")}
     </div>
 
     <div class="now-artist">
-      ${song.artist || "Unknown Artist"}
+      ${escapeHtml(song.artist || "Unknown Artist")}
     </div>
 
     <div
       class="artist-meta"
       style="margin-top:8px;"
     >
-      ${genres || ""}
-      ${moods ? " · " + moods : ""}
+      ${escapeHtml(genres)}
+      ${moods ? " · " + escapeHtml(moods) : ""}
     </div>
 
     <audio
@@ -718,15 +879,33 @@ function playSong(song){
       autoplay
       preload="metadata"
       src="${song.audio_url}"
+    ></audio>
+
+    <button
+      class="like-button"
+      id="likeButton"
+      type="button"
     >
-    </audio>`;
+      🤍 いいね
+    </button>`;
+
+  document
+  .getElementById("likeButton")
+  .addEventListener(
+    "click",
+    toggleLike
+  );
 
   const audio =
     document.getElementById(
       "audioPlayer"
     );
 
-  audio.play().catch(()=>{});
+  audio
+  .play()
+  .catch(()=>{});
+
+  await updateLikeButton();
 }
 
 
@@ -743,6 +922,7 @@ document
       `<div class="now-label">
         NOVARADIO
       </div>
+
       <div class="empty">
         曲を選んでいます… 🎧
       </div>`;
@@ -761,9 +941,10 @@ document
         `<div class="now-label">
           ERROR
         </div>
+
         <div class="empty">
           曲の取得に失敗しました。<br><br>
-          ${error.message}
+          ${escapeHtml(error.message)}
         </div>`;
 
       return;
@@ -783,6 +964,7 @@ document
         `<div class="now-label">
           NOVARADIO
         </div>
+
         <div class="empty">
           この条件に合う曲は<br>
           まだありません 🎧
@@ -799,7 +981,9 @@ document
         )
       ];
 
-    playSong(randomSong);
+    await playSong(
+      randomSong
+    );
 
   }
 );
@@ -851,7 +1035,7 @@ async function searchArtist(){
 
   results.innerHTML =
     `<div class="empty">
-      「${query}」を探しています…
+      「${escapeHtml(query)}」を探しています…
     </div>`;
 
   const {
@@ -871,7 +1055,7 @@ async function searchArtist(){
     results.innerHTML =
       `<div class="empty">
         検索に失敗しました。<br><br>
-        ${error.message}
+        ${escapeHtml(error.message)}
       </div>`;
 
     return;
@@ -884,7 +1068,7 @@ async function searchArtist(){
 
     results.innerHTML =
       `<div class="empty">
-        「${query}」の曲は<br>
+        「${escapeHtml(query)}」の曲は<br>
         見つかりませんでした。
       </div>`;
 
@@ -897,7 +1081,9 @@ async function searchArtist(){
   data.forEach(song=>{
 
     const item =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     item.className =
       "artist-result";
@@ -912,13 +1098,13 @@ async function searchArtist(){
 
     item.innerHTML =
       `<div class="artist-name">
-        ${song.title || "Untitled"}
+        ${escapeHtml(song.title || "Untitled")}
       </div>
 
       <div class="artist-meta">
-        ${song.artist || "Unknown Artist"}
-        ${genres ? " · " + genres : ""}
-        ${moods ? " · " + moods : ""}
+        ${escapeHtml(song.artist || "Unknown Artist")}
+        ${genres ? " · " + escapeHtml(genres) : ""}
+        ${moods ? " · " + escapeHtml(moods) : ""}
       </div>
 
       <div
@@ -932,9 +1118,9 @@ async function searchArtist(){
 
     item.addEventListener(
       "click",
-      ()=>{
+      async ()=>{
 
-        playSong(song);
+        await playSong(song);
 
         document
         .getElementById("now")
@@ -950,6 +1136,17 @@ async function searchArtist(){
 
   });
 
+}
+
+
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 
