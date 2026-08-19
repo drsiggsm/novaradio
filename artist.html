@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NovaRadio - Artist</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  background:radial-gradient(circle at 50% 0,#211b50,#080a18 55%,#050611);
+  color:#fff;
+}
+
+.wrap{
+  width:min(980px,94vw);
+  margin:auto;
+  padding:40px 0 90px;
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:34px;
+}
+
+.logo{
+  font-size:32px;
+  font-weight:800;
+}
+
+.back{
+  color:#fff;
+  text-decoration:none;
+  padding:11px 16px;
+  background:#101228;
+  border:1px solid #343b67;
+  border-radius:14px;
+}
+
+.profile{
+  text-align:center;
+  padding:42px 24px;
+  margin-bottom:24px;
+  background:#101228e8;
+  border:1px solid #30355e;
+  border-radius:28px;
+}
+
+.avatar{
+  width:120px;
+  height:120px;
+  margin:auto;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:48px;
+  overflow:hidden;
+  background:linear-gradient(135deg,#7b25ff,#159df5);
+}
+
+.avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.artist-name{
+  margin-top:18px;
+  font-size:32px;
+  font-weight:800;
+}
+
+.bio{
+  max-width:620px;
+  margin:14px auto 0;
+  color:#aeb0c8;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+
+.links{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:9px;
+  margin-top:18px;
+}
+
+.link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid #343b67;
+  background:#171a31;
+  color:#fff;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:800;
+}
+
+.link:hover{
+  border-color:#7b25ff;
+}
+
+.card{
+  background:#101228e8;
+  border:1px solid #30355e;
+  border-radius:24px;
+  padding:25px;
+  margin-bottom:18px;
+}
+
+.card h2{
+  margin:0 0 18px;
+  font-size:22px;
+}
+
+.song-list{
+  display:grid;
+  gap:12px;
+}
+
+.song{
+  padding:18px;
+  border-radius:18px;
+  background:#080b1d;
+  border:1px solid #30355e;
+}
+
+.song-title{
+  font-size:18px;
+  font-weight:800;
+}
+
+.song-meta{
+  margin-top:7px;
+  font-size:13px;
+  color:#858baa;
+}
+
+.song-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:14px;
+}
+
+.song-buttons button{
+  padding:12px;
+  border:0;
+  border-radius:13px;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.play-song{
+  background:#242842;
+}
+
+.like-song{
+  background:#171325;
+  border:1px solid #4a3558 !important;
+}
+
+.like-song.liked{
+  background:#542237;
+  border-color:#a34b6a !important;
+}
+
+.song-audio{
+  width:100%;
+  margin-top:14px;
+}
+
+.empty,
+.loading{
+  padding:28px;
+  text-align:center;
+  color:#8f93ad;
+}
+
+.error{
+  padding:20px;
+  border-radius:16px;
+  background:#351c28;
+  border:1px solid #633846;
+  color:#ffd7e5;
+  text-align:center;
+}
+
+@media(max-width:600px){
+
+  .logo{
+    font-size:27px;
+  }
+
+  .artist-name{
+    font-size:27px;
+  }
+
+  .avatar{
+    width:100px;
+    height:100px;
+  }
+
+  .song-buttons{
+    grid-template-columns:1fr;
+  }
+
+}
+</style>
+</head>
+
+<body>
+
+<main class="wrap">
+
+<header>
+
+  <div class="logo">
+    NovaRadio
+  </div>
+
+  <a
+    class="back"
+    href="home.html"
+  >
+    ← Home
+  </a>
+
+</header>
+
+
+<div
+  id="loading"
+  class="loading"
+>
+  アーティスト情報を読み込んでいます…
+</div>
+
+
+<div
+  id="content"
+  style="display:none"
+>
+
+  <section class="profile">
+
+    <div
+      class="avatar"
+      id="artistAvatar"
+    >
+      👤
+    </div>
+
+    <div
+      class="artist-name"
+      id="artistName"
+    >
+      Artist
+    </div>
+
+    <div
+      class="bio"
+      id="artistBio"
+      style="display:none"
+    ></div>
+
+    <div
+      class="links"
+      id="artistLinks"
+      style="display:none"
+    ></div>
+
+  </section>
+
+
+  <section class="card">
+
+    <h2>
+      🎵 このアーティストの曲
+    </h2>
+
+    <div
+      class="song-list"
+      id="songList"
+    >
+      <div class="empty">
+        曲を読み込んでいます…
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+</main>
+
+
+<script>
+
+const SUPABASE_URL =
+  "https://melsoikvhwzvzswlimsi.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
+
+const sb =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+let currentSession =
+  null;
+
+let artistUserId =
+  null;
+
+
+const loading =
+  document.getElementById(
+    "loading"
+  );
+
+const content =
+  document.getElementById(
+    "content"
+  );
+
+const artistAvatar =
+  document.getElementById(
+    "artistAvatar"
+  );
+
+const artistName =
+  document.getElementById(
+    "artistName"
+  );
+
+const artistBio =
+  document.getElementById(
+    "artistBio"
+  );
+
+const artistLinks =
+  document.getElementById(
+    "artistLinks"
+  );
+
+const songList =
+  document.getElementById(
+    "songList"
+  );
+
+
+async function init(){
+
+  const params =
+    new URLSearchParams(
+      location.search
+    );
+
+
+  artistUserId =
+    params.get(
+      "id"
+    );
+
+
+  if(!artistUserId){
+
+    loading.innerHTML =
+      `<div class="error">
+        アーティストIDが指定されていません。
+      </div>`;
+
+    return;
+  }
+
+
+  const {
+    data:{
+      session
+    }
+  } =
+  await sb.auth.getSession();
+
+
+  currentSession =
+    session || null;
+
+
+  const success =
+    await loadArtistProfile();
+
+
+  if(!success){
+    return;
+  }
+
+
+  await loadArtistSongs();
+
+
+  loading.style.display =
+    "none";
+
+  content.style.display =
+    "block";
+
+}
+
+
+/* =========================
+   プロフィール
+========================= */
+
+async function loadArtistProfile(){
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("profiles")
+  .select(
+    "artist_name,avatar_url,bio,instagram_url,x_url,tiktok_url,youtube_url,website_url"
+  )
+  .eq(
+    "user_id",
+    artistUserId
+  )
+  .limit(1);
+
+
+  if(error){
+
+    loading.innerHTML =
+      `<div class="error">
+        プロフィール取得に失敗しました。<br><br>
+        ${escapeHtml(error.message)}
+      </div>`;
+
+    return false;
+  }
+
+
+  if(
+    !data ||
+    !data.length
+  ){
+
+    loading.innerHTML =
+      `<div class="error">
+        このアーティストのプロフィールはまだありません。
+      </div>`;
+
+    return false;
+  }
+
+
+  const profile =
+    data[0];
+
+
+  artistName.textContent =
+    profile.artist_name ||
+    "Unknown Artist";
+
+
+  renderAvatar(
+    profile.avatar_url ||
+    null
+  );
+
+
+  const bioText =
+    String(
+      profile.bio || ""
+    )
+    .trim();
+
+
+  if(bioText){
+
+    artistBio.textContent =
+      bioText;
+
+    artistBio.style.display =
+      "block";
+
+  }
+
+
+  renderLinks(
+    profile
+  );
+
+
+  return true;
+
+}
+
+
+function renderAvatar(
+  url
+){
+
+  artistAvatar.innerHTML =
+    "";
+
+
+  if(!url){
+
+    artistAvatar.textContent =
+      "👤";
+
+    return;
+  }
+
+
+  const image =
+    document.createElement(
+      "img"
+    );
+
+
+  image.src =
+    url;
+
+
+  image.alt =
+    "プロフィール画像";
+
+
+  image.addEventListener(
+    "error",
+    ()=>{
+
+      artistAvatar.innerHTML =
+        "";
+
+      artistAvatar.textContent =
+        "👤";
+
+    }
+  );
+
+
+  artistAvatar.appendChild(
+    image
+  );
+
+}
+
+
+function renderLinks(
+  profile
+){
+
+  artistLinks.innerHTML =
+    "";
+
+
+  const links = [
+
+    {
+      label:"Instagram",
+      emoji:"📸",
+      url:profile.instagram_url
+    },
+
+    {
+      label:"X",
+      emoji:"𝕏",
+      url:profile.x_url
+    },
+
+    {
+      label:"TikTok",
+      emoji:"🎵",
+      url:profile.tiktok_url
+    },
+
+    {
+      label:"YouTube",
+      emoji:"▶️",
+      url:profile.youtube_url
+    },
+
+    {
+      label:"Website",
+      emoji:"🌐",
+      url:profile.website_url
+    }
+
+  ];
+
+
+  links.forEach(
+    link=>{
+
+      const url =
+        safeHttpUrl(
+          link.url
+        );
+
+
+      if(!url){
+        return;
+      }
+
+
+      const anchor =
+        document.createElement(
+          "a"
+        );
+
+
+      anchor.className =
+        "link";
+
+
+      anchor.href =
+        url;
+
+
+      anchor.target =
+        "_blank";
+
+
+      anchor.rel =
+        "noopener noreferrer";
+
+
+      anchor.textContent =
+        `${link.emoji} ${link.label}`;
+
+
+      artistLinks.appendChild(
+        anchor
+      );
+
+    }
+  );
+
+
+  artistLinks.style.display =
+    artistLinks.children.length
+      ? "flex"
+      : "none";
+
+}
+
+
+/* =========================
+   曲一覧
+========================= */
+
+async function loadArtistSongs(){
+
+  songList.innerHTML =
+    `<div class="empty">
+      曲を読み込んでいます…
+    </div>`;
+
+
+  const {
+    data:profileData,
+    error:profileError
+  } =
+  await sb
+  .from("profiles")
+  .select("artist_name")
+  .eq(
+    "user_id",
+    artistUserId
+  )
+  .limit(1);
+
+
+  if(profileError){
+
+    songList.innerHTML =
+      `<div class="error">
+        アーティスト情報を取得できませんでした。
+      </div>`;
+
+    return;
+  }
+
+
+  const targetArtistName =
+    profileData?.[0]?.artist_name;
+
+
+  if(!targetArtistName){
+
+    songList.innerHTML =
+      `<div class="empty">
+        まだ曲はありません。
+      </div>`;
+
+    return;
+  }
+
+
+  const {
+    data:songs,
+    error
+  } =
+  await sb
+  .from("songs")
+  .select("*")
+  .eq(
+    "artist",
+    targetArtistName
+  )
+  .order(
+    "created_at",
+    {
+      ascending:false
+    }
+  );
+
+
+  if(error){
+
+    songList.innerHTML =
+      `<div class="error">
+        曲の取得に失敗しました。<br><br>
+        ${escapeHtml(error.message)}
+      </div>`;
+
+    return;
+  }
+
+
+  if(
+    !songs ||
+    !songs.length
+  ){
+
+    songList.innerHTML =
+      `<div class="empty">
+        このアーティストの曲はまだありません。
+      </div>`;
+
+    return;
+  }
+
+
+  songList.innerHTML =
+    "";
+
+
+  for(
+    const song
+    of songs
+  ){
+
+    const item =
+      await createSongItem(
+        song
+      );
+
+
+    songList.appendChild(
+      item
+    );
+
+  }
+
+}
+
+
+/* =========================
+   曲カード
+========================= */
+
+async function createSongItem(
+  song
+){
+
+  const item =
+    document.createElement(
+      "div"
+    );
+
+
+  item.className =
+    "song";
+
+
+  const genreText =
+    formatTags(
+      song.genre
+    );
+
+
+  const moodText =
+    formatTags(
+      song.mood
+    );
+
+
+  item.innerHTML =
+    `<div class="song-title">
+      ${escapeHtml(
+        song.title ||
+        "Untitled"
+      )}
+    </div>
+
+    <div class="song-meta">
+      ${escapeHtml(
+        genreText
+      )}
+
+      ${
+        moodText
+          ? " · " +
+            escapeHtml(
+              moodText
+            )
+          : ""
+      }
+    </div>
+
+    <div class="song-buttons">
+
+      <button
+        type="button"
+        class="play-song"
+      >
+        ▶️ 再生
+      </button>
+
+      <button
+        type="button"
+        class="like-song"
+      >
+        🤍 いいね
+      </button>
+
+    </div>`;
+
+
+  item
+  .querySelector(
+    ".play-song"
+  )
+  .addEventListener(
+    "click",
+    ()=>{
+
+      toggleAudio(
+        item,
+        song
+      );
+
+    }
+  );
+
+
+  const likeButton =
+    item.querySelector(
+      ".like-song"
+    );
+
+
+  if(!currentSession){
+
+    likeButton.textContent =
+      "🔒 ログインでいいね";
+
+    likeButton.addEventListener(
+      "click",
+      ()=>{
+
+        location.href =
+          "index.html";
+
+      }
+    );
+
+
+    return item;
+
+  }
+
+
+  await updateLikeButton(
+    likeButton,
+    song.id
+  );
+
+
+  likeButton.addEventListener(
+    "click",
+    async ()=>{
+
+      await toggleLike(
+        likeButton,
+        song.id
+      );
+
+    }
+  );
+
+
+  return item;
+
+}
+
+
+/* =========================
+   いいね
+========================= */
+
+async function isLiked(
+  songId
+){
+
+  if(!currentSession){
+    return false;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("likes")
+  .select("id")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .eq(
+    "song_id",
+    songId
+  )
+  .limit(1);
+
+
+  if(error){
+
+    console.error(
+      "Like check error:",
+      error
+    );
+
+    return false;
+  }
+
+
+  return !!(
+    data &&
+    data.length
+  );
+
+}
+
+
+async function updateLikeButton(
+  button,
+  songId
+){
+
+  const liked =
+    await isLiked(
+      songId
+    );
+
+
+  if(liked){
+
+    button.textContent =
+      "❤️ いいね済み";
+
+    button.classList.add(
+      "liked"
+    );
+
+  }else{
+
+    button.textContent =
+      "🤍 いいね";
+
+    button.classList.remove(
+      "liked"
+    );
+
+  }
+
+}
+
+
+async function toggleLike(
+  button,
+  songId
+){
+
+  if(!currentSession){
+    return;
+  }
+
+
+  const liked =
+    await isLiked(
+      songId
+    );
+
+
+  if(liked){
+
+    const {
+      error
+    } =
+    await sb
+    .from("likes")
+    .delete()
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .eq(
+      "song_id",
+      songId
+    );
+
+
+    if(error){
+
+      alert(
+        "いいね解除に失敗しました：" +
+        error.message
+      );
+
+      return;
+    }
+
+  }else{
+
+    const {
+      error
+    } =
+    await sb
+    .from("likes")
+    .insert({
+
+      user_id:
+        currentSession.user.id,
+
+      song_id:
+        songId
+
+    });
+
+
+    if(error){
+
+      alert(
+        "いいねに失敗しました：" +
+        error.message
+      );
+
+      return;
+    }
+
+  }
+
+
+  await updateLikeButton(
+    button,
+    songId
+  );
+
+}
+
+
+/* =========================
+   再生
+========================= */
+
+function toggleAudio(
+  item,
+  song
+){
+
+  const old =
+    item.querySelector(
+      "audio"
+    );
+
+
+  if(old){
+
+    old.pause();
+    old.remove();
+
+    return;
+  }
+
+
+  if(!song.audio_url){
+
+    alert(
+      "この曲には音源がありません。"
+    );
+
+    return;
+  }
+
+
+  document
+  .querySelectorAll(
+    ".song-audio"
+  )
+  .forEach(
+    audio=>{
+
+      audio.pause();
+      audio.remove();
+
+    }
+  );
+
+
+  const audio =
+    document.createElement(
+      "audio"
+    );
+
+
+  audio.className =
+    "song-audio";
+
+
+  audio.controls =
+    true;
+
+
+  audio.autoplay =
+    true;
+
+
+  audio.src =
+    song.audio_url;
+
+
+  item.appendChild(
+    audio
+  );
+
+
+  audio
+  .play()
+  .catch(()=>{});
+
+}
+
+
+/* =========================
+   Helpers
+========================= */
+
+function formatTags(
+  value
+){
+
+  if(!value){
+    return "";
+  }
+
+
+  return String(
+    value
+  )
+  .split(",")
+  .map(
+    value=>value.trim()
+  )
+  .filter(Boolean)
+  .join(" / ");
+
+}
+
+
+function safeHttpUrl(
+  value
+){
+
+  const raw =
+    String(
+      value || ""
+    )
+    .trim();
+
+
+  if(!raw){
+    return null;
+  }
+
+
+  try{
+
+    const url =
+      new URL(
+        raw
+      );
+
+
+    if(
+      url.protocol !== "http:" &&
+      url.protocol !== "https:"
+    ){
+
+      return null;
+
+    }
+
+
+    return url.href;
+
+  }
+  catch{
+
+    return null;
+
+  }
+
+}
+
+
+function escapeHtml(
+  value
+){
+
+  return String(
+    value ?? ""
+  )
+  .replaceAll(
+    "&",
+    "&amp;"
+  )
+  .replaceAll(
+    "<",
+    "&lt;"
+  )
+  .replaceAll(
+    ">",
+    "&gt;"
+  )
+  .replaceAll(
+    '"',
+    "&quot;"
+  )
+  .replaceAll(
+    "'",
+    "&#039;"
+  );
+
+}
+
+
+init();
+
+</script>
+
+</body>
+</html>
