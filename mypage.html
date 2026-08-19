@@ -66,12 +66,54 @@ header{
   justify-content:center;
   font-size:38px;
   background:linear-gradient(135deg,#7b25ff,#159df5);
+  overflow:hidden;
+}
+
+.avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
 }
 
 .username{
   margin-top:18px;
   font-size:28px;
   font-weight:800;
+}
+
+.profile-bio{
+  max-width:620px;
+  margin:12px auto 0;
+  color:#aeb0c8;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+
+.profile-links{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:9px;
+  margin-top:18px;
+}
+
+.profile-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 13px;
+  border-radius:999px;
+  border:1px solid #343b67;
+  background:#171a31;
+  color:#fff;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:800;
+}
+
+.profile-link:hover{
+  border-color:#7b25ff;
 }
 
 .card{
@@ -381,7 +423,10 @@ header{
 
   <section class="profile">
 
-    <div class="avatar">
+    <div
+      class="avatar"
+      id="profileAvatar"
+    >
       👤
     </div>
 
@@ -391,6 +436,18 @@ header{
     >
       User
     </div>
+
+    <div
+      class="profile-bio"
+      id="profileBio"
+      style="display:none"
+    ></div>
+
+    <div
+      class="profile-links"
+      id="profileLinks"
+      style="display:none"
+    ></div>
 
   </section>
 
@@ -625,6 +682,21 @@ const playlistSongs =
     "playlistSongs"
   );
 
+const profileAvatar =
+  document.getElementById(
+    "profileAvatar"
+  );
+
+const profileBio =
+  document.getElementById(
+    "profileBio"
+  );
+
+const profileLinks =
+  document.getElementById(
+    "profileLinks"
+  );
+
 
 /* =========================
    初期化
@@ -663,17 +735,6 @@ async function init(){
     session;
 
 
-  const name =
-    session.user.user_metadata?.artist_name ||
-    "ユーザー";
-
-
-  document
-  .getElementById("username")
-  .textContent =
-    name;
-
-
   loading.style.display =
     "none";
 
@@ -683,9 +744,323 @@ async function init(){
 
 
   await Promise.all([
+    loadProfile(),
     loadLikedSongs(),
     loadPlaylists()
   ]);
+
+}
+
+
+/* =========================
+   プロフィール
+========================= */
+
+async function loadProfile(){
+
+  const fallbackName =
+    currentSession.user.user_metadata?.artist_name ||
+    "ユーザー";
+
+  document
+  .getElementById("username")
+  .textContent =
+    fallbackName;
+
+  renderProfileAvatar(null);
+
+  profileBio.style.display =
+    "none";
+
+  profileLinks.style.display =
+    "none";
+
+  profileLinks.innerHTML =
+    "";
+
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("profiles")
+  .select(
+    "artist_name,avatar_url,bio,instagram_url,x_url,tiktok_url,youtube_url,website_url"
+  )
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .limit(1);
+
+
+  if(error){
+
+    console.error(
+      "Profile load error:",
+      error
+    );
+
+    return;
+  }
+
+
+  if(
+    !data ||
+    !data.length
+  ){
+    return;
+  }
+
+
+  const profile =
+    data[0];
+
+
+  document
+  .getElementById("username")
+  .textContent =
+    profile.artist_name ||
+    fallbackName;
+
+
+  renderProfileAvatar(
+    profile.avatar_url ||
+    null
+  );
+
+
+  const bioText =
+    String(
+      profile.bio || ""
+    )
+    .trim();
+
+
+  if(bioText){
+
+    profileBio.textContent =
+      bioText;
+
+    profileBio.style.display =
+      "block";
+
+  }else{
+
+    profileBio.textContent =
+      "";
+
+    profileBio.style.display =
+      "none";
+
+  }
+
+
+  renderProfileLinks(
+    profile
+  );
+
+}
+
+
+function renderProfileAvatar(
+  url
+){
+
+  profileAvatar.innerHTML =
+    "";
+
+
+  if(!url){
+
+    profileAvatar.textContent =
+      "👤";
+
+    return;
+  }
+
+
+  const image =
+    document.createElement(
+      "img"
+    );
+
+
+  image.src =
+    url;
+
+
+  image.alt =
+    "プロフィール画像";
+
+
+  image.referrerPolicy =
+    "no-referrer";
+
+
+  image.addEventListener(
+    "error",
+    ()=>{
+
+      profileAvatar.innerHTML =
+        "";
+
+      profileAvatar.textContent =
+        "👤";
+
+    }
+  );
+
+
+  profileAvatar.appendChild(
+    image
+  );
+
+}
+
+
+function renderProfileLinks(
+  profile
+){
+
+  profileLinks.innerHTML =
+    "";
+
+
+  const links = [
+
+    {
+      label:"Instagram",
+      emoji:"📸",
+      url:profile.instagram_url
+    },
+
+    {
+      label:"X",
+      emoji:"𝕏",
+      url:profile.x_url
+    },
+
+    {
+      label:"TikTok",
+      emoji:"🎵",
+      url:profile.tiktok_url
+    },
+
+    {
+      label:"YouTube",
+      emoji:"▶️",
+      url:profile.youtube_url
+    },
+
+    {
+      label:"Website",
+      emoji:"🌐",
+      url:profile.website_url
+    }
+
+  ];
+
+
+  links.forEach(
+    link=>{
+
+      const url =
+        safeHttpUrl(
+          link.url
+        );
+
+
+      if(!url){
+        return;
+      }
+
+
+      const anchor =
+        document.createElement(
+          "a"
+        );
+
+
+      anchor.className =
+        "profile-link";
+
+
+      anchor.href =
+        url;
+
+
+      anchor.target =
+        "_blank";
+
+
+      anchor.rel =
+        "noopener noreferrer";
+
+
+      anchor.textContent =
+        `${link.emoji} ${link.label}`;
+
+
+      profileLinks.appendChild(
+        anchor
+      );
+
+    }
+  );
+
+
+  profileLinks.style.display =
+    profileLinks.children.length
+      ? "flex"
+      : "none";
+
+}
+
+
+function safeHttpUrl(
+  value
+){
+
+  const raw =
+    String(
+      value || ""
+    )
+    .trim();
+
+
+  if(!raw){
+    return null;
+  }
+
+
+  try{
+
+    const url =
+      new URL(
+        raw
+      );
+
+
+    if(
+      url.protocol !== "http:" &&
+      url.protocol !== "https:"
+    ){
+
+      return null;
+
+    }
+
+
+    return url.href;
+
+  }
+  catch{
+
+    return null;
+
+  }
 
 }
 
@@ -1032,7 +1407,9 @@ document
 
     setTimeout(
       ()=>{
+
         playlistNameInput.focus();
+
       },
       100
     );
@@ -1891,10 +2268,18 @@ function escapeHtml(
 ========================= */
 
 document
-  .getElementById("accountSettings")
-  .addEventListener("click", () => {
-    window.location.href = "profile-edit.html";
-  });
+.getElementById(
+  "accountSettings"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    window.location.href =
+      "profile-edit.html";
+
+  }
+);
 
 
 /* =========================
