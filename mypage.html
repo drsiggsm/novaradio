@@ -1891,19 +1891,10 @@ function escapeHtml(
 ========================= */
 
 document
-.getElementById(
-  "accountSettings"
-)
-.addEventListener(
-  "click",
-  ()=>{
-
-    alert(
-      "アカウント設定は次に追加します。"
-    );
-
-  }
-);
+  .getElementById("accountSettings")
+  .addEventListener("click", () => {
+    window.location.href = "profile-edit.html";
+  });
 
 
 /* =========================
