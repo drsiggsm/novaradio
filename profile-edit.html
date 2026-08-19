@@ -1,0 +1,1496 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>NovaRadio - Profile Edit</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  background:radial-gradient(circle at 50% 0,#211b50,#080a18 55%,#050611);
+  color:#fff;
+}
+
+.wrap{
+  width:min(900px,94vw);
+  margin:auto;
+  padding:40px 0 80px;
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:40px;
+}
+
+.logo{
+  font-size:32px;
+  font-weight:800;
+}
+
+.back{
+  color:#fff;
+  text-decoration:none;
+  padding:11px 16px;
+  background:#101228;
+  border:1px solid #343b67;
+  border-radius:14px;
+}
+
+.card{
+  background:#101228e8;
+  border:1px solid #30355e;
+  border-radius:28px;
+  padding:30px;
+  margin-bottom:20px;
+}
+
+.card h1{
+  margin:0 0 8px;
+  font-size:28px;
+}
+
+.subtitle{
+  color:#9da2c0;
+  margin-bottom:30px;
+  line-height:1.6;
+}
+
+.avatar-area{
+  text-align:center;
+  margin-bottom:32px;
+}
+
+.avatar-preview{
+  width:130px;
+  height:130px;
+  margin:0 auto 18px;
+  border-radius:50%;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:52px;
+  background:linear-gradient(135deg,#7b25ff,#159df5);
+  border:3px solid #363c70;
+}
+
+.avatar-preview img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.avatar-buttons{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.avatar-button{
+  display:inline-block;
+  padding:12px 18px;
+  border-radius:14px;
+  border:1px solid #343b67;
+  background:#171a31;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.avatar-delete{
+  background:#35202a;
+  border-color:#633846;
+}
+
+#avatarInput{
+  display:none;
+}
+
+.field{
+  margin-bottom:22px;
+}
+
+label{
+  display:block;
+  margin-bottom:9px;
+  font-weight:800;
+  font-size:15px;
+}
+
+input,
+textarea{
+  width:100%;
+  padding:15px 16px;
+  border-radius:14px;
+  border:1px solid #353b67;
+  background:#080b1d;
+  color:#fff;
+  font-size:16px;
+  outline:none;
+}
+
+input:focus,
+textarea:focus{
+  border-color:#6c52ff;
+  box-shadow:0 0 0 3px #6c52ff22;
+}
+
+textarea{
+  resize:vertical;
+  min-height:130px;
+  line-height:1.6;
+}
+
+.field-help{
+  margin-top:7px;
+  color:#858baa;
+  font-size:12px;
+}
+
+.section-title{
+  font-size:20px;
+  font-weight:800;
+  margin:30px 0 18px;
+  padding-top:24px;
+  border-top:1px solid #30355e;
+}
+
+.save-button{
+  width:100%;
+  border:0;
+  border-radius:17px;
+  padding:17px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  color:#fff;
+  font-size:17px;
+  font-weight:800;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+.save-button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.status{
+  display:none;
+  margin-top:16px;
+  padding:14px 16px;
+  border-radius:14px;
+  text-align:center;
+  line-height:1.5;
+}
+
+.status.show{
+  display:block;
+}
+
+.status.success{
+  background:#153728;
+  border:1px solid #2c7656;
+  color:#cffff0;
+}
+
+.status.error{
+  background:#3a1d29;
+  border:1px solid #7c4057;
+  color:#ffd9e6;
+}
+
+.loading{
+  text-align:center;
+  color:#aaa;
+  padding:80px 0;
+}
+
+@media(max-width:600px){
+
+  .wrap{
+    padding-top:25px;
+  }
+
+  .logo{
+    font-size:27px;
+  }
+
+  .card{
+    padding:22px;
+  }
+
+  .card h1{
+    font-size:24px;
+  }
+
+  .avatar-preview{
+    width:110px;
+    height:110px;
+  }
+
+  .avatar-buttons{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<main class="wrap">
+
+<header>
+
+  <div class="logo">
+    NovaRadio
+  </div>
+
+  <a
+    class="back"
+    href="mypage.html"
+  >
+    ← マイページ
+  </a>
+
+</header>
+
+
+<div
+  id="loading"
+  class="loading"
+>
+  プロフィールを読み込んでいます…
+</div>
+
+
+<div
+  id="content"
+  style="display:none"
+>
+
+<section class="card">
+
+  <h1>
+    👤 プロフィール編集
+  </h1>
+
+  <div class="subtitle">
+    アーティストページに表示する情報を設定できます。
+  </div>
+
+
+  <!-- アバター -->
+
+  <div class="avatar-area">
+
+    <div
+      class="avatar-preview"
+      id="avatarPreview"
+    >
+      👤
+    </div>
+
+
+    <div class="avatar-buttons">
+
+      <label
+        for="avatarInput"
+        class="avatar-button"
+      >
+        📷 アイコンを選ぶ
+      </label>
+
+      <button
+        type="button"
+        class="avatar-button avatar-delete"
+        id="removeAvatar"
+      >
+        🗑️ アイコンを削除
+      </button>
+
+    </div>
+
+
+    <input
+      id="avatarInput"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+    >
+
+    <div class="field-help">
+      JPEG / PNG / WebP・最大5MB
+    </div>
+
+  </div>
+
+
+  <!-- アーティスト名 -->
+
+  <div class="field">
+
+    <label for="artistName">
+      アーティスト名
+    </label>
+
+    <input
+      id="artistName"
+      type="text"
+      maxlength="50"
+      placeholder="Dr.SIG"
+    >
+
+  </div>
+
+
+  <!-- Bio -->
+
+  <div class="field">
+
+    <label for="bio">
+      Bio / 自己紹介
+    </label>
+
+    <textarea
+      id="bio"
+      maxlength="300"
+      placeholder="音楽活動や自分について自由に書いてください。"
+    ></textarea>
+
+    <div class="field-help">
+      最大300文字
+    </div>
+
+  </div>
+
+
+  <div class="section-title">
+    🔗 SNS・リンク
+  </div>
+
+
+  <div class="field">
+
+    <label for="instagramUrl">
+      Instagram
+    </label>
+
+    <input
+      id="instagramUrl"
+      type="text"
+      placeholder="https://instagram.com/..."
+    >
+
+  </div>
+
+
+  <div class="field">
+
+    <label for="xUrl">
+      X
+    </label>
+
+    <input
+      id="xUrl"
+      type="text"
+      placeholder="https://x.com/..."
+    >
+
+  </div>
+
+
+  <div class="field">
+
+    <label for="tiktokUrl">
+      TikTok
+    </label>
+
+    <input
+      id="tiktokUrl"
+      type="text"
+      placeholder="https://tiktok.com/@..."
+    >
+
+  </div>
+
+
+  <div class="field">
+
+    <label for="youtubeUrl">
+      YouTube
+    </label>
+
+    <input
+      id="youtubeUrl"
+      type="text"
+      placeholder="https://youtube.com/@..."
+    >
+
+  </div>
+
+
+  <div class="field">
+
+    <label for="websiteUrl">
+      Website
+    </label>
+
+    <input
+      id="websiteUrl"
+      type="text"
+      placeholder="https://..."
+    >
+
+  </div>
+
+
+  <button
+    type="button"
+    id="saveProfile"
+    class="save-button"
+  >
+    💾 プロフィールを保存
+  </button>
+
+
+  <div
+    id="status"
+    class="status"
+  ></div>
+
+</section>
+
+</div>
+
+</main>
+
+
+<script>
+
+const SUPABASE_URL =
+  "https://melsoikvhwzvzswlimsi.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
+
+
+const sb =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+let currentSession =
+  null;
+
+let currentProfile =
+  null;
+
+let selectedAvatarFile =
+  null;
+
+let removeAvatarRequested =
+  false;
+
+
+const loading =
+  document.getElementById(
+    "loading"
+  );
+
+const content =
+  document.getElementById(
+    "content"
+  );
+
+const avatarPreview =
+  document.getElementById(
+    "avatarPreview"
+  );
+
+const avatarInput =
+  document.getElementById(
+    "avatarInput"
+  );
+
+const artistName =
+  document.getElementById(
+    "artistName"
+  );
+
+const bio =
+  document.getElementById(
+    "bio"
+  );
+
+const instagramUrl =
+  document.getElementById(
+    "instagramUrl"
+  );
+
+const xUrl =
+  document.getElementById(
+    "xUrl"
+  );
+
+const tiktokUrl =
+  document.getElementById(
+    "tiktokUrl"
+  );
+
+const youtubeUrl =
+  document.getElementById(
+    "youtubeUrl"
+  );
+
+const websiteUrl =
+  document.getElementById(
+    "websiteUrl"
+  );
+
+const saveProfileButton =
+  document.getElementById(
+    "saveProfile"
+  );
+
+const statusBox =
+  document.getElementById(
+    "status"
+  );
+
+
+/* =========================
+   初期化
+========================= */
+
+async function init(){
+
+  const {
+    data:{
+      session
+    },
+    error
+  } =
+  await sb.auth.getSession();
+
+
+  if(error){
+
+    loading.textContent =
+      "ログイン状態を確認できませんでした。";
+
+    console.error(error);
+
+    return;
+  }
+
+
+  if(!session){
+
+    location.href =
+      "index.html";
+
+    return;
+  }
+
+
+  currentSession =
+    session;
+
+
+  await loadProfile();
+
+
+  loading.style.display =
+    "none";
+
+  content.style.display =
+    "block";
+
+}
+
+
+/* =========================
+   プロフィール読み込み
+========================= */
+
+async function loadProfile(){
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("profiles")
+  .select("*")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .limit(1);
+
+
+  if(error){
+
+    console.error(
+      "Profile load error:",
+      error
+    );
+
+    showStatus(
+      "プロフィールの取得に失敗しました：" +
+      error.message,
+      "error"
+    );
+
+    return;
+  }
+
+
+  currentProfile =
+    data && data.length
+      ? data[0]
+      : null;
+
+
+  const metadataName =
+    currentSession
+    .user
+    .user_metadata
+    ?.artist_name ||
+    "";
+
+
+  artistName.value =
+    currentProfile?.artist_name ||
+    metadataName;
+
+
+  bio.value =
+    currentProfile?.bio ||
+    "";
+
+
+  instagramUrl.value =
+    currentProfile?.instagram_url ||
+    "";
+
+
+  xUrl.value =
+    currentProfile?.x_url ||
+    "";
+
+
+  tiktokUrl.value =
+    currentProfile?.tiktok_url ||
+    "";
+
+
+  youtubeUrl.value =
+    currentProfile?.youtube_url ||
+    "";
+
+
+  websiteUrl.value =
+    currentProfile?.website_url ||
+    "";
+
+
+  renderAvatar(
+    currentProfile?.avatar_url ||
+    null
+  );
+
+}
+
+
+/* =========================
+   アバター表示
+========================= */
+
+function renderAvatar(
+  url
+){
+
+  if(!url){
+
+    avatarPreview.innerHTML =
+      "👤";
+
+    return;
+  }
+
+
+  avatarPreview.innerHTML =
+    "";
+
+
+  const image =
+    document.createElement(
+      "img"
+    );
+
+
+  image.src =
+    url;
+
+
+  image.alt =
+    "プロフィール画像";
+
+
+  image.onerror =
+    ()=>{
+
+      avatarPreview.innerHTML =
+        "👤";
+
+    };
+
+
+  avatarPreview.appendChild(
+    image
+  );
+
+}
+
+
+/* =========================
+   画像選択
+========================= */
+
+avatarInput.addEventListener(
+  "change",
+  ()=>{
+
+    const file =
+      avatarInput.files?.[0];
+
+
+    if(!file){
+
+      return;
+    }
+
+
+    const allowedTypes =
+      [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ];
+
+
+    if(
+      !allowedTypes.includes(
+        file.type
+      )
+    ){
+
+      alert(
+        "JPEG / PNG / WebP の画像を選んでください。"
+      );
+
+      avatarInput.value =
+        "";
+
+      return;
+    }
+
+
+    const maxSize =
+      5 * 1024 * 1024;
+
+
+    if(
+      file.size >
+      maxSize
+    ){
+
+      alert(
+        "画像サイズは5MB以下にしてください。"
+      );
+
+      avatarInput.value =
+        "";
+
+      return;
+    }
+
+
+    selectedAvatarFile =
+      file;
+
+    removeAvatarRequested =
+      false;
+
+
+    const previewUrl =
+      URL.createObjectURL(
+        file
+      );
+
+
+    renderAvatar(
+      previewUrl
+    );
+
+  }
+);
+
+
+/* =========================
+   アバター削除予約
+========================= */
+
+document
+.getElementById(
+  "removeAvatar"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    selectedAvatarFile =
+      null;
+
+    avatarInput.value =
+      "";
+
+    removeAvatarRequested =
+      true;
+
+    renderAvatar(
+      null
+    );
+
+  }
+);
+
+
+/* =========================
+   保存
+========================= */
+
+saveProfileButton
+.addEventListener(
+  "click",
+  saveProfile
+);
+
+
+async function saveProfile(){
+
+  if(!currentSession){
+    return;
+  }
+
+
+  const name =
+    artistName
+    .value
+    .trim();
+
+
+  if(!name){
+
+    showStatus(
+      "アーティスト名を入力してください。",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const links = {
+    instagram:
+      normalizeUrl(
+        instagramUrl.value
+      ),
+
+    x:
+      normalizeUrl(
+        xUrl.value
+      ),
+
+    tiktok:
+      normalizeUrl(
+        tiktokUrl.value
+      ),
+
+    youtube:
+      normalizeUrl(
+        youtubeUrl.value
+      ),
+
+    website:
+      normalizeUrl(
+        websiteUrl.value
+      )
+  };
+
+
+  if(
+    links.instagram === false ||
+    links.x === false ||
+    links.tiktok === false ||
+    links.youtube === false ||
+    links.website === false
+  ){
+
+    showStatus(
+      "SNS・WebサイトのURLを確認してください。",
+      "error"
+    );
+
+    return;
+  }
+
+
+  saveProfileButton.disabled =
+    true;
+
+  saveProfileButton.textContent =
+    "保存中…";
+
+  hideStatus();
+
+
+  const oldAvatarUrl =
+    currentProfile?.avatar_url ||
+    null;
+
+
+  let newAvatarUrl =
+    oldAvatarUrl;
+
+
+  let uploadedPath =
+    null;
+
+
+  try{
+
+
+    /* =========================
+       新しい画像アップロード
+    ========================= */
+
+    if(selectedAvatarFile){
+
+      const extension =
+        getExtension(
+          selectedAvatarFile
+        );
+
+
+      uploadedPath =
+        currentSession.user.id +
+        "/avatar-" +
+        Date.now() +
+        "." +
+        extension;
+
+
+      const {
+        error:uploadError
+      } =
+      await sb
+      .storage
+      .from("avatars")
+      .upload(
+        uploadedPath,
+        selectedAvatarFile,
+        {
+          cacheControl:"3600",
+          upsert:false,
+          contentType:
+            selectedAvatarFile.type
+        }
+      );
+
+
+      if(uploadError){
+
+        throw new Error(
+          "画像アップロードに失敗しました：" +
+          uploadError.message
+        );
+
+      }
+
+
+      const {
+        data:publicData
+      } =
+      sb
+      .storage
+      .from("avatars")
+      .getPublicUrl(
+        uploadedPath
+      );
+
+
+      newAvatarUrl =
+        publicData.publicUrl;
+
+    }
+
+
+    /* =========================
+       アイコン削除
+    ========================= */
+
+    if(removeAvatarRequested){
+
+      newAvatarUrl =
+        null;
+
+    }
+
+
+    const payload = {
+
+      user_id:
+        currentSession.user.id,
+
+      artist_name:
+        name,
+
+      avatar_url:
+        newAvatarUrl,
+
+      bio:
+        bio.value.trim(),
+
+      instagram_url:
+        links.instagram || null,
+
+      x_url:
+        links.x || null,
+
+      tiktok_url:
+        links.tiktok || null,
+
+      youtube_url:
+        links.youtube || null,
+
+      website_url:
+        links.website || null
+
+    };
+
+
+    /* =========================
+       profiles 保存
+    ========================= */
+
+    let profileError =
+      null;
+
+
+    if(currentProfile){
+
+      const {
+        error
+      } =
+      await sb
+      .from("profiles")
+      .update(
+        payload
+      )
+      .eq(
+        "id",
+        currentProfile.id
+      )
+      .eq(
+        "user_id",
+        currentSession.user.id
+      );
+
+
+      profileError =
+        error;
+
+    }
+    else{
+
+      const {
+        error
+      } =
+      await sb
+      .from("profiles")
+      .insert(
+        payload
+      );
+
+
+      profileError =
+        error;
+
+    }
+
+
+    if(profileError){
+
+      /*
+        DB保存に失敗した場合、
+        今アップロードした新画像だけ削除
+      */
+
+      if(uploadedPath){
+
+        await sb
+        .storage
+        .from("avatars")
+        .remove([
+          uploadedPath
+        ]);
+
+      }
+
+
+      throw new Error(
+        "プロフィール保存に失敗しました：" +
+        profileError.message
+      );
+
+    }
+
+
+    /* =========================
+       Auth側の名前も同期
+    ========================= */
+
+    const {
+      error:authError
+    } =
+    await sb.auth.updateUser({
+
+      data:{
+        artist_name:
+          name
+      }
+
+    });
+
+
+    if(authError){
+
+      console.warn(
+        "Auth metadata update error:",
+        authError
+      );
+
+    }
+
+
+    /* =========================
+       古い画像を削除
+    ========================= */
+
+    if(
+      oldAvatarUrl &&
+      (
+        selectedAvatarFile ||
+        removeAvatarRequested
+      )
+    ){
+
+      const oldPath =
+        getAvatarStoragePath(
+          oldAvatarUrl
+        );
+
+
+      if(oldPath){
+
+        await sb
+        .storage
+        .from("avatars")
+        .remove([
+          oldPath
+        ]);
+
+      }
+
+    }
+
+
+    selectedAvatarFile =
+      null;
+
+    removeAvatarRequested =
+      false;
+
+    avatarInput.value =
+      "";
+
+
+    showStatus(
+      "✅ プロフィールを保存しました！",
+      "success"
+    );
+
+
+    await loadProfile();
+
+
+  }
+  catch(error){
+
+    console.error(error);
+
+    showStatus(
+      error.message ||
+      "プロフィール保存中にエラーが発生しました。",
+      "error"
+    );
+
+  }
+  finally{
+
+    saveProfileButton.disabled =
+      false;
+
+    saveProfileButton.textContent =
+      "💾 プロフィールを保存";
+
+  }
+
+}
+
+
+/* =========================
+   URL整形
+========================= */
+
+function normalizeUrl(
+  value
+){
+
+  const trimmed =
+    String(
+      value || ""
+    )
+    .trim();
+
+
+  if(!trimmed){
+
+    return "";
+
+  }
+
+
+  let url =
+    trimmed;
+
+
+  if(
+    !/^https?:\/\//i.test(
+      url
+    )
+  ){
+
+    url =
+      "https://" +
+      url;
+
+  }
+
+
+  try{
+
+    const parsed =
+      new URL(
+        url
+      );
+
+
+    if(
+      parsed.protocol !==
+        "http:" &&
+      parsed.protocol !==
+        "https:"
+    ){
+
+      return false;
+
+    }
+
+
+    return parsed.href;
+
+  }
+  catch{
+
+    return false;
+
+  }
+
+}
+
+
+/* =========================
+   拡張子
+========================= */
+
+function getExtension(
+  file
+){
+
+  if(
+    file.type ===
+    "image/png"
+  ){
+
+    return "png";
+
+  }
+
+
+  if(
+    file.type ===
+    "image/webp"
+  ){
+
+    return "webp";
+
+  }
+
+
+  return "jpg";
+
+}
+
+
+/* =========================
+   Storage URLからpath抽出
+========================= */
+
+function getAvatarStoragePath(
+  url
+){
+
+  if(!url){
+    return null;
+  }
+
+
+  try{
+
+    const decoded =
+      decodeURIComponent(
+        url
+      );
+
+
+    const marker =
+      "/storage/v1/object/public/avatars/";
+
+
+    const position =
+      decoded.indexOf(
+        marker
+      );
+
+
+    if(
+      position === -1
+    ){
+
+      return null;
+
+    }
+
+
+    const path =
+      decoded.slice(
+        position +
+        marker.length
+      )
+      .split("?")[0];
+
+
+    if(
+      !path.startsWith(
+        currentSession.user.id +
+        "/"
+      )
+    ){
+
+      return null;
+
+    }
+
+
+    return path;
+
+  }
+  catch{
+
+    return null;
+
+  }
+
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+function showStatus(
+  message,
+  type
+){
+
+  statusBox.textContent =
+    message;
+
+  statusBox.className =
+    "status show " +
+    type;
+
+}
+
+
+function hideStatus(){
+
+  statusBox.textContent =
+    "";
+
+  statusBox.className =
+    "status";
+
+}
+
+
+/* =========================
+   START
+========================= */
+
+init();
+
+</script>
+
+</body>
+</html>
