@@ -26,6 +26,8 @@ body{overflow:hidden}
 .controls{display:flex;align-items:center;gap:8px}
 .ctrl{width:40px;height:40px;border-radius:50%;border:1px solid #343b67;background:#171a31;color:#fff;font-weight:900;cursor:pointer}
 .ctrl.main{width:46px;height:46px;border:0;background:linear-gradient(135deg,#7b25ff,#159df5);font-size:18px}
+.ctrl.mode{border-radius:12px;width:42px}
+.ctrl.mode.active{border-color:#8b36ff;background:#24204a;box-shadow:0 0 0 1px #8b36ff inset}
 .progress{position:absolute;left:0;right:0;bottom:90px;height:4px;background:#181c35}
 .progress-fill{height:100%;width:0;background:linear-gradient(90deg,#7b25ff,#159df5)}
 @media(max-width:600px){
@@ -69,6 +71,8 @@ body{overflow:hidden}
       <button class="ctrl" id="prev">⏮</button>
       <button class="ctrl main" id="playPause">▶</button>
       <button class="ctrl" id="next">⏭</button>
+      <button class="ctrl mode" id="shuffle" title="シャッフル">🔀</button>
+      <button class="ctrl mode" id="repeat" title="リピート">🔁</button>
     </div>
   </footer>
 </div>
@@ -83,6 +87,8 @@ const audio = document.getElementById("audio");
 const playPause = document.getElementById("playPause");
 const prev = document.getElementById("prev");
 const next = document.getElementById("next");
+const shuffle = document.getElementById("shuffle");
+const repeat = document.getElementById("repeat");
 const cover = document.getElementById("cover");
 const title = document.getElementById("title");
 const artist = document.getElementById("artist");
@@ -91,7 +97,9 @@ const progressFill = document.getElementById("progressFill");
 let state = {
   song:null,
   queue:[],
-  index:-1
+  index:-1,
+  shuffle:false,
+  repeat:"off"
 };
 
 function setView(page){
@@ -102,6 +110,7 @@ function setView(page){
 
 navHome.onclick = ()=>setView("home.html");
 navMyPage.onclick = ()=>setView("mypage.html");
+frame.addEventListener("load", ()=>setTimeout(notifyFrameState, 50));
 
 function renderSong(song){
   state.song = song;
@@ -165,22 +174,99 @@ function playSong(
   .catch(()=>{});
 }
 
-function playNext(){
+function notifyFrameState(){
+  try{
+    frame.contentWindow.postMessage({
+      type:"NOVARADIO_PLAYER_STATE",
+      shuffle:state.shuffle,
+      repeat:state.repeat,
+      song:state.song,
+      index:state.index
+    }, "*");
+  }catch(e){}
+}
+
+function updateModeButtons(){
+  shuffle.classList.toggle("active", state.shuffle);
+  repeat.classList.toggle("active", state.repeat !== "off");
+  repeat.textContent = state.repeat === "one" ? "🔂" : "🔁";
+  shuffle.title = state.shuffle ? "シャッフル ON" : "シャッフル OFF";
+  repeat.title = state.repeat === "all" ? "全曲リピート" : state.repeat === "one" ? "1曲リピート" : "リピート OFF";
+  notifyFrameState();
+}
+
+function setShuffle(value){
+  state.shuffle = !!value;
+  updateModeButtons();
+}
+
+function setRepeat(value){
+  state.repeat = ["off","all","one"].includes(value) ? value : "off";
+  updateModeButtons();
+}
+
+function cycleRepeat(){
+  setRepeat(state.repeat === "off" ? "all" : state.repeat === "all" ? "one" : "off");
+}
+
+function playNext(fromEnded=false){
   if(!state.queue.length) return;
+
+  if(fromEnded && state.repeat === "one"){
+    audio.currentTime = 0;
+    audio.play().catch(()=>{});
+    return;
+  }
+
   if(state.index < 0){
     state.index = state.queue.findIndex(s=>Number(s.id)===Number(state.song?.id));
   }
-  state.index = (state.index + 1) % state.queue.length;
+
+  if(state.shuffle && state.queue.length > 1){
+    let nextIndex = state.index;
+    while(nextIndex === state.index){
+      nextIndex = Math.floor(Math.random() * state.queue.length);
+    }
+    state.index = nextIndex;
+  }else{
+    const candidate = state.index + 1;
+    if(candidate >= state.queue.length){
+      if(fromEnded && state.repeat === "off") return;
+      state.index = 0;
+    }else{
+      state.index = candidate;
+    }
+  }
+
   playSong(state.queue[state.index], state.queue, state.index);
+  notifyFrameState();
 }
 
 function playPrev(){
   if(!state.queue.length) return;
+
+  if(audio.currentTime > 3){
+    audio.currentTime = 0;
+    return;
+  }
+
   if(state.index < 0){
     state.index = state.queue.findIndex(s=>Number(s.id)===Number(state.song?.id));
   }
-  state.index = (state.index - 1 + state.queue.length) % state.queue.length;
+
+  if(state.shuffle && state.queue.length > 1){
+    let prevIndex = state.index;
+    while(prevIndex === state.index){
+      prevIndex = Math.floor(Math.random() * state.queue.length);
+    }
+    state.index = prevIndex;
+  }else{
+    state.index = state.index - 1;
+    if(state.index < 0) state.index = state.queue.length - 1;
+  }
+
   playSong(state.queue[state.index], state.queue, state.index);
+  notifyFrameState();
 }
 
 playPause.onclick = ()=>{
@@ -189,11 +275,13 @@ playPause.onclick = ()=>{
   else audio.pause();
 };
 prev.onclick = playPrev;
-next.onclick = playNext;
+next.onclick = ()=>playNext(false);
+shuffle.onclick = ()=>setShuffle(!state.shuffle);
+repeat.onclick = cycleRepeat;
 
 audio.addEventListener("play", ()=>playPause.textContent="⏸");
 audio.addEventListener("pause", ()=>playPause.textContent="▶");
-audio.addEventListener("ended", playNext);
+audio.addEventListener("ended", ()=>playNext(true));
 audio.addEventListener("timeupdate", ()=>{
   if(Number.isFinite(audio.duration) && audio.duration > 0){
     progressFill.style.width = ((audio.currentTime/audio.duration)*100) + "%";
@@ -218,22 +306,32 @@ window.addEventListener("message", (event)=>{
               Number(data.song?.id)
           );
 
+    if(typeof data.shuffle === "boolean") state.shuffle = data.shuffle;
+    if(["off","all","one"].includes(data.repeat)) state.repeat = data.repeat;
+    updateModeButtons();
+
     playSong(
       data.song,
       queue,
       index,
       true
     );
+    notifyFrameState();
   }
 
-  if(data.type === "NOVARADIO_NEXT") playNext();
+  if(data.type === "NOVARADIO_NEXT") playNext(false);
   if(data.type === "NOVARADIO_PREV") playPrev();
+  if(data.type === "NOVARADIO_SET_SHUFFLE") setShuffle(data.value);
+  if(data.type === "NOVARADIO_SET_REPEAT") setRepeat(data.value);
+  if(data.type === "NOVARADIO_CYCLE_REPEAT") cycleRepeat();
+  if(data.type === "NOVARADIO_GET_PLAYER_STATE") notifyFrameState();
 
   if(data.type === "NOVARADIO_NAV"){
     if(data.page === "home") setView("home.html");
     if(data.page === "mypage") setView("mypage.html");
   }
 });
+updateModeButtons();
 </script>
 </body>
 </html>
