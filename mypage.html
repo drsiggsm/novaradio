@@ -500,6 +500,204 @@ header{
   }
 }
 
+
+/* =========================
+   画面下固定ミニプレイヤー
+========================= */
+
+body{
+  padding-bottom:118px;
+}
+
+.mini-player{
+  position:fixed;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  width:min(920px,94vw);
+  z-index:90;
+  padding:10px 14px 8px;
+  border:1px solid #3a3f70;
+  border-radius:20px;
+  background:#0b0e20f2;
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  box-shadow:0 18px 60px #000a;
+  display:none;
+}
+
+.mini-player.show{
+  display:block;
+}
+
+.mini-main{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:14px;
+  align-items:center;
+}
+
+.mini-track{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+}
+
+.mini-cover{
+  width:54px;
+  height:54px;
+  flex:0 0 54px;
+  border-radius:11px;
+  overflow:hidden;
+  border:1px solid #343b67;
+  background:#15182e;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+}
+
+.mini-cover img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.mini-info{
+  min-width:0;
+}
+
+.mini-title{
+  font-size:14px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.mini-artist{
+  margin-top:3px;
+  color:#9ba0bd;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.mini-controls{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.mini-button{
+  width:38px;
+  height:38px;
+  border:1px solid #343b67;
+  border-radius:50%;
+  background:#171a31;
+  color:#fff;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.mini-button.main{
+  width:44px;
+  height:44px;
+  border:0;
+  background:linear-gradient(135deg,#7b25ff,#159df5);
+  font-size:18px;
+}
+
+.mini-modes{
+  display:flex;
+  gap:6px;
+}
+
+.mini-mode{
+  min-width:42px;
+  height:36px;
+  padding:0 10px;
+  border:1px solid #343b67;
+  border-radius:11px;
+  background:#171a31;
+  color:#fff;
+  cursor:pointer;
+  font-weight:800;
+}
+
+.mini-mode.active{
+  border-color:#8b36ff;
+  background:#24204a;
+  box-shadow:0 0 0 1px #8b36ff inset;
+}
+
+.mini-progress-row{
+  display:grid;
+  grid-template-columns:42px 1fr 42px;
+  gap:9px;
+  align-items:center;
+  margin-top:6px;
+}
+
+.mini-time{
+  color:#8f94b2;
+  font-size:11px;
+  text-align:center;
+}
+
+.mini-seek{
+  width:100%;
+  accent-color:#7b25ff;
+  cursor:pointer;
+}
+
+/* 曲カード内には大きいaudioバーを出さない */
+.song-audio{
+  display:none !important;
+}
+
+@media(max-width:600px){
+  body{
+    padding-bottom:144px;
+  }
+
+  .mini-player{
+    bottom:8px;
+    padding:9px 10px 8px;
+    border-radius:16px;
+  }
+
+  .mini-main{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px;
+  }
+
+  .mini-modes{
+    grid-column:1 / -1;
+    justify-content:flex-end;
+  }
+
+  .mini-cover{
+    width:46px;
+    height:46px;
+    flex-basis:46px;
+  }
+
+  .mini-button{
+    width:34px;
+    height:34px;
+  }
+
+  .mini-button.main{
+    width:40px;
+    height:40px;
+  }
+}
+
 @media(max-width:600px){
 
   .logo{
@@ -737,6 +935,128 @@ header{
 
 </main>
 
+<!-- 画面下固定ミニプレイヤー -->
+<div
+  class="mini-player"
+  id="miniPlayer"
+>
+  <div class="mini-main">
+
+    <div class="mini-track">
+
+      <div
+        class="mini-cover"
+        id="miniCover"
+      >
+        🎵
+      </div>
+
+      <div class="mini-info">
+        <div
+          class="mini-title"
+          id="miniTitle"
+        >
+          曲を選択
+        </div>
+
+        <div
+          class="mini-artist"
+          id="miniArtist"
+        >
+          NovaRadio
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mini-controls">
+
+      <button
+        type="button"
+        class="mini-button"
+        id="miniPrev"
+        title="前の曲"
+      >
+        ⏮
+      </button>
+
+      <button
+        type="button"
+        class="mini-button main"
+        id="miniPlayPause"
+        title="再生 / 一時停止"
+      >
+        ▶
+      </button>
+
+      <button
+        type="button"
+        class="mini-button"
+        id="miniNext"
+        title="次の曲"
+      >
+        ⏭
+      </button>
+
+    </div>
+
+    <div class="mini-modes">
+
+      <button
+        type="button"
+        class="mini-mode"
+        id="miniShuffle"
+        title="シャッフル"
+      >
+        🔀
+      </button>
+
+      <button
+        type="button"
+        class="mini-mode"
+        id="miniRepeat"
+        title="リピート"
+      >
+        🔁
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="mini-progress-row">
+    <div
+      class="mini-time"
+      id="miniCurrentTime"
+    >
+      0:00
+    </div>
+
+    <input
+      class="mini-seek"
+      id="miniSeek"
+      type="range"
+      min="0"
+      max="100"
+      value="0"
+      step="0.1"
+      aria-label="再生位置"
+    >
+
+    <div
+      class="mini-time"
+      id="miniDuration"
+    >
+      0:00
+    </div>
+  </div>
+
+  <audio
+    id="globalAudio"
+    preload="metadata"
+  ></audio>
+</div>
+
 
 <!-- プレイリスト作成モーダル -->
 
@@ -814,6 +1134,9 @@ let playlistShuffleEnabled = false;
 let playlistRepeatMode = "off";
 let activePlaylistAudio = null;
 
+let currentMiniSong = null;
+let standaloneQueue = [];
+
 
 const loading =
   document.getElementById(
@@ -883,6 +1206,71 @@ const playlistRepeat =
 const playlistNowPlaying =
   document.getElementById(
     "playlistNowPlaying"
+  );
+
+const miniPlayer =
+  document.getElementById(
+    "miniPlayer"
+  );
+
+const miniCover =
+  document.getElementById(
+    "miniCover"
+  );
+
+const miniTitle =
+  document.getElementById(
+    "miniTitle"
+  );
+
+const miniArtist =
+  document.getElementById(
+    "miniArtist"
+  );
+
+const miniPrev =
+  document.getElementById(
+    "miniPrev"
+  );
+
+const miniPlayPause =
+  document.getElementById(
+    "miniPlayPause"
+  );
+
+const miniNext =
+  document.getElementById(
+    "miniNext"
+  );
+
+const miniShuffle =
+  document.getElementById(
+    "miniShuffle"
+  );
+
+const miniRepeat =
+  document.getElementById(
+    "miniRepeat"
+  );
+
+const miniSeek =
+  document.getElementById(
+    "miniSeek"
+  );
+
+const miniCurrentTime =
+  document.getElementById(
+    "miniCurrentTime"
+  );
+
+const miniDuration =
+  document.getElementById(
+    "miniDuration"
+  );
+
+const globalAudio =
+  document.getElementById(
+    "globalAudio"
   );
 
 const profileAvatar =
@@ -1823,7 +2211,6 @@ async function openPlaylist(
   currentPlaylistId =
     playlist.id;
 
-  stopPlaylistPlayback();
   currentPlaylistSongs = [];
   playlistPlayOrder = [];
   playlistPlayIndex = -1;
@@ -2309,8 +2696,7 @@ function createSongItem(
       if(type === "playlist"){
         playPlaylistFromSong(song.id);
       }else{
-        toggleAudio(
-          item,
+        playStandaloneSong(
           song
         );
       }
@@ -2526,6 +2912,21 @@ function updatePlaylistControlLabels(){
     playlistRepeatMode !== "off"
   );
 
+  miniShuffle.classList.toggle(
+    "active",
+    playlistShuffleEnabled
+  );
+
+  miniRepeat.textContent =
+    playlistRepeatMode === "one"
+      ? "🔂"
+      : "🔁";
+
+  miniRepeat.classList.toggle(
+    "active",
+    playlistRepeatMode !== "off"
+  );
+
 }
 
 
@@ -2644,8 +3045,6 @@ function playPlaylistIndex(){
     return;
   }
 
-  stopPlaylistPlayback(false);
-
   document
   .querySelectorAll(
     ".playlist-song"
@@ -2669,85 +3068,9 @@ function playPlaylistIndex(){
       );
   }
 
-  const coverUrl =
-    safeHttpUrl(
-      song.cover_url
-    );
-
-  playlistNowPlaying.innerHTML =
-    `${
-      coverUrl
-        ? `<img
-            class="playlist-now-cover"
-            src="${escapeHtml(coverUrl)}"
-            alt="${escapeHtml(
-              (song.title || "ジャケット") + " のジャケット"
-            )}"
-          >`
-        : `<div class="playlist-now-cover-placeholder">
-            🎵
-          </div>`
-    }
-
-    <div class="playlist-now-meta">
-      <div class="playlist-now-label">
-        🎧 再生中
-      </div>
-
-      <div class="playlist-now-title">
-        ${escapeHtml(
-          song.title ||
-          "Untitled"
-        )}
-      </div>
-
-      <div class="playlist-now-artist">
-        ${escapeHtml(
-          song.artist ||
-          "Unknown Artist"
-        )}
-      </div>
-    </div>`;
-
-  playlistNowPlaying.style.display =
-    "flex";
-
-  const audio =
-    document.createElement(
-      "audio"
-    );
-
-  audio.className =
-    "song-audio playlist-active-audio";
-
-  audio.controls =
-    true;
-
-  audio.autoplay =
-    true;
-
-  audio.src =
-    song.audio_url;
-
-  activePlaylistAudio =
-    audio;
-
-  if(cards[sourceIndex]){
-    cards[sourceIndex]
-      .appendChild(audio);
-  }else{
-    playlistSongs
-      .appendChild(audio);
-  }
-
-  audio.addEventListener(
-    "ended",
-    handlePlaylistEnded
+  playSongInMiniPlayer(
+    song
   );
-
-  audio
-  .play()
-  .catch(()=>{});
 
 }
 
@@ -2755,12 +3078,13 @@ function playPlaylistIndex(){
 function handlePlaylistEnded(){
 
   if(playlistRepeatMode === "one"){
-    if(activePlaylistAudio){
-      activePlaylistAudio.currentTime = 0;
-      activePlaylistAudio
-        .play()
-        .catch(()=>{});
-    }
+
+    globalAudio.currentTime = 0;
+
+    globalAudio
+    .play()
+    .catch(()=>{});
+
     return;
   }
 
@@ -2785,7 +3109,8 @@ function handlePlaylistEnded(){
     return;
   }
 
-  stopPlaylistPlayback();
+  miniPlayPause.textContent =
+    "▶";
 
 }
 
@@ -2794,14 +3119,30 @@ function stopPlaylistPlayback(
   clearLabel=true
 ){
 
-  if(activePlaylistAudio){
+  globalAudio.pause();
 
-    activePlaylistAudio.pause();
+  if(clearLabel){
 
-    activePlaylistAudio.remove();
+    currentMiniSong = null;
 
-    activePlaylistAudio =
-      null;
+    globalAudio.removeAttribute(
+      "src"
+    );
+
+    globalAudio.load();
+
+    miniPlayer.classList.remove(
+      "show"
+    );
+
+    miniSeek.value =
+      0;
+
+    miniCurrentTime.textContent =
+      "0:00";
+
+    miniDuration.textContent =
+      "0:00";
 
   }
 
@@ -2816,15 +3157,445 @@ function stopPlaylistPlayback(
       )
   );
 
-  if(clearLabel){
-    playlistNowPlaying.style.display =
-      "none";
+}
 
-    playlistNowPlaying.textContent =
-      "";
+
+/* =========================
+   固定ミニプレイヤー
+========================= */
+
+function playSongInMiniPlayer(
+  song
+){
+
+  if(
+    !song ||
+    !song.audio_url
+  ){
+
+    alert(
+      "この曲には音源がありません。"
+    );
+
+    return;
   }
 
+  currentMiniSong =
+    song;
+
+  miniPlayer.classList.add(
+    "show"
+  );
+
+  const coverUrl =
+    safeHttpUrl(
+      song.cover_url
+    );
+
+  miniCover.innerHTML =
+    coverUrl
+      ? `<img
+          src="${escapeHtml(
+            coverUrl
+          )}"
+          alt="${escapeHtml(
+            (song.title || "ジャケット") +
+            " のジャケット"
+          )}"
+        >`
+      : "🎵";
+
+  miniTitle.textContent =
+    song.title ||
+    "Untitled";
+
+  miniArtist.textContent =
+    song.artist ||
+    "Unknown Artist";
+
+  if(
+    globalAudio.src !==
+    song.audio_url
+  ){
+
+    globalAudio.src =
+      song.audio_url;
+
+    globalAudio.load();
+
+  }
+
+  globalAudio
+  .play()
+  .then(
+    ()=>{
+      miniPlayPause.textContent =
+        "⏸";
+    }
+  )
+  .catch(
+    ()=>{
+      miniPlayPause.textContent =
+        "▶";
+    }
+  );
+
 }
+
+
+function playStandaloneSong(
+  song
+){
+
+  currentPlaylistSongs =
+    [
+      {
+        song,
+        relation:null
+      }
+    ];
+
+  playlistPlayOrder =
+    [0];
+
+  playlistPlayIndex =
+    0;
+
+  playSongInMiniPlayer(
+    song
+  );
+
+}
+
+
+function playNextTrack(){
+
+  if(
+    !currentPlaylistSongs.length
+  ){
+    return;
+  }
+
+  if(
+    playlistRepeatMode ===
+    "one"
+  ){
+
+    globalAudio.currentTime =
+      0;
+
+    globalAudio
+    .play()
+    .catch(()=>{});
+
+    return;
+  }
+
+  playlistPlayIndex++;
+
+  if(
+    playlistPlayIndex >=
+    playlistPlayOrder.length
+  ){
+
+    if(
+      playlistRepeatMode ===
+      "all"
+    ){
+
+      buildPlaylistOrder();
+
+      playlistPlayIndex =
+        0;
+
+    }else{
+
+      playlistPlayIndex =
+        playlistPlayOrder.length - 1;
+
+      return;
+    }
+
+  }
+
+  playPlaylistIndex();
+
+}
+
+
+function playPreviousTrack(){
+
+  if(
+    !currentPlaylistSongs.length
+  ){
+    return;
+  }
+
+  if(
+    globalAudio.currentTime >
+    3
+  ){
+
+    globalAudio.currentTime =
+      0;
+
+    return;
+  }
+
+  playlistPlayIndex--;
+
+  if(
+    playlistPlayIndex < 0
+  ){
+
+    if(
+      playlistRepeatMode ===
+      "all"
+    ){
+
+      playlistPlayIndex =
+        playlistPlayOrder.length - 1;
+
+    }else{
+
+      playlistPlayIndex =
+        0;
+
+      globalAudio.currentTime =
+        0;
+
+      return;
+    }
+
+  }
+
+  playPlaylistIndex();
+
+}
+
+
+function formatTime(
+  seconds
+){
+
+  if(
+    !Number.isFinite(
+      seconds
+    )
+  ){
+    return "0:00";
+  }
+
+  const minutes =
+    Math.floor(
+      seconds / 60
+    );
+
+  const secs =
+    Math.floor(
+      seconds % 60
+    );
+
+  return (
+    minutes +
+    ":" +
+    String(secs)
+    .padStart(
+      2,
+      "0"
+    )
+  );
+
+}
+
+
+miniPlayPause.addEventListener(
+  "click",
+  ()=>{
+
+    if(!currentMiniSong){
+      return;
+    }
+
+    if(globalAudio.paused){
+
+      globalAudio
+      .play()
+      .catch(()=>{});
+
+    }else{
+
+      globalAudio.pause();
+
+    }
+
+  }
+);
+
+
+miniPrev.addEventListener(
+  "click",
+  playPreviousTrack
+);
+
+
+miniNext.addEventListener(
+  "click",
+  playNextTrack
+);
+
+
+miniShuffle.addEventListener(
+  "click",
+  ()=>{
+
+    playlistShuffleEnabled =
+      !playlistShuffleEnabled;
+
+    miniShuffle.classList.toggle(
+      "active",
+      playlistShuffleEnabled
+    );
+
+    updatePlaylistControlLabels();
+
+  }
+);
+
+
+miniRepeat.addEventListener(
+  "click",
+  ()=>{
+
+    if(
+      playlistRepeatMode ===
+      "off"
+    ){
+      playlistRepeatMode =
+        "all";
+    }
+    else if(
+      playlistRepeatMode ===
+      "all"
+    ){
+      playlistRepeatMode =
+        "one";
+    }
+    else{
+      playlistRepeatMode =
+        "off";
+    }
+
+    miniRepeat.textContent =
+      playlistRepeatMode ===
+      "one"
+        ? "🔂"
+        : "🔁";
+
+    miniRepeat.classList.toggle(
+      "active",
+      playlistRepeatMode !==
+      "off"
+    );
+
+    updatePlaylistControlLabels();
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "play",
+  ()=>{
+
+    miniPlayPause.textContent =
+      "⏸";
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "pause",
+  ()=>{
+
+    miniPlayPause.textContent =
+      "▶";
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "loadedmetadata",
+  ()=>{
+
+    miniDuration.textContent =
+      formatTime(
+        globalAudio.duration
+      );
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "timeupdate",
+  ()=>{
+
+    miniCurrentTime.textContent =
+      formatTime(
+        globalAudio.currentTime
+      );
+
+    if(
+      Number.isFinite(
+        globalAudio.duration
+      ) &&
+      globalAudio.duration > 0
+    ){
+
+      miniSeek.value =
+        (
+          globalAudio.currentTime /
+          globalAudio.duration
+        ) * 100;
+
+    }
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "ended",
+  handlePlaylistEnded
+);
+
+
+miniSeek.addEventListener(
+  "input",
+  ()=>{
+
+    if(
+      !Number.isFinite(
+        globalAudio.duration
+      ) ||
+      globalAudio.duration <= 0
+    ){
+      return;
+    }
+
+    globalAudio.currentTime =
+      (
+        Number(
+          miniSeek.value
+        ) / 100
+      ) *
+      globalAudio.duration;
+
+  }
+);
 
 
 /* =========================
@@ -2892,12 +3663,6 @@ document
 
     currentPlaylistId =
       null;
-
-    stopPlaylistPlayback();
-    currentPlaylistSongs = [];
-    playlistPlayOrder = [];
-    playlistPlayIndex = -1;
-
 
     playlistDetail.classList.remove(
       "show"
