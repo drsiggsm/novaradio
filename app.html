@@ -765,7 +765,15 @@ let state = {
 
   repeat:"off",
 
-  highlight:false
+  highlight:false,
+
+  /*
+    ハイライトモード中に
+    「この曲だけフルで聴く」を選んだ状態。
+    曲が終わったら自動でfalseに戻り、
+    次曲から30秒ハイライトへ復帰する。
+  */
+  fullTrack:false
 
 };
 
@@ -1216,7 +1224,10 @@ async function playSong(
     highlight_startから開始する。
   */
   const requestedStart =
-    state.highlight
+    (
+      state.highlight &&
+      !state.fullTrack
+    )
       ? Math.max(
           0,
           Number(
@@ -1356,6 +1367,9 @@ function notifyFrameState(){
 
         highlight:
           state.highlight,
+
+        fullTrack:
+          state.fullTrack,
 
         song:
           state.song,
@@ -1947,7 +1961,8 @@ audio.addEventListener(
       "⏸";
 
     if(
-      state.highlight
+      state.highlight &&
+      !state.fullTrack
     ){
       highlightStartTime =
         Number.isFinite(
@@ -1992,6 +2007,7 @@ audio.addEventListener(
 
     if(
       state.highlight &&
+      !state.fullTrack &&
       !audio.paused &&
       Number.isFinite(
         audio.currentTime
@@ -2025,6 +2041,28 @@ audio.addEventListener(
 audio.addEventListener(
   "ended",
   ()=>{
+
+    /*
+      ハイライト中に「この曲だけフルで聴く」を
+      選んでいた場合は、曲終了後に
+      ハイライトモードへ自動復帰して次曲へ。
+    */
+    if(
+      state.highlight &&
+      state.fullTrack
+    ){
+
+      state.fullTrack =
+        false;
+
+      notifyFrameState();
+
+      playNext(
+        false
+      );
+
+      return;
+    }
 
     playNext(
       true
@@ -2716,6 +2754,13 @@ window.addEventListener(
         state.highlight =
           data.highlight;
 
+        /*
+          新しい通常再生 / ハイライト再生を明示的に始めた時は
+          「この曲だけフル」状態を解除。
+        */
+        state.fullTrack =
+          false;
+
       }
 
       if(
@@ -2845,6 +2890,42 @@ window.addEventListener(
         )
           ? audio.currentTime
           : 0;
+
+      notifyFrameState();
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_FULL_CURRENT"
+    ){
+
+      if(
+        !state.song
+      ){
+        return;
+      }
+
+      /*
+        ハイライトモード自体は維持したまま、
+        現在曲だけ0:00から最後まで再生する。
+      */
+      state.highlight =
+        true;
+
+      state.fullTrack =
+        true;
+
+      highlightStartTime =
+        0;
+
+      playSong(
+        state.song,
+        state.queue,
+        state.index,
+        true
+      );
 
       notifyFrameState();
 
