@@ -169,9 +169,16 @@ label{
   color:#fff;
 }
 
+.play-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:25px;
+}
+
 .play{
   width:100%;
-  margin-top:25px;
+  margin-top:0;
   padding:19px;
   border:0;
   border-radius:18px;
@@ -189,10 +196,153 @@ label{
   cursor:pointer;
 }
 
+.play.highlight{
+  background:
+    linear-gradient(
+      90deg,
+      #ff3d9a,
+      #8b36ff
+    );
+}
+
 .play:disabled{
   opacity:.45;
   cursor:not-allowed;
 }
+
+@media(max-width:650px){
+  .play-buttons{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* =========================
+   30秒ハイライト
+========================= */
+
+document
+.getElementById(
+  "highlightPlay"
+)
+.addEventListener(
+  "click",
+  async ()=>{
+
+    const now =
+      document.getElementById(
+        "now"
+      );
+
+    now.innerHTML =
+      `<div class="now-label">
+        HIGHLIGHT RADIO
+      </div>
+
+      <div class="empty">
+        30秒ハイライトを準備しています… ⚡
+      </div>`;
+
+    const {
+      data,
+      error
+    } =
+    await sb
+    .from(
+      "songs"
+    )
+    .select(
+      "*"
+    );
+
+    if(error){
+
+      now.innerHTML =
+        `<div class="now-label">
+          ERROR
+        </div>
+
+        <div class="empty">
+          曲の取得に失敗しました。
+          <br><br>
+          ${escapeHtml(
+            error.message
+          )}
+        </div>`;
+
+      return;
+    }
+
+    currentQueue =
+      (data || [])
+      .filter(
+        songMatches
+      );
+
+    if(
+      !currentQueue.length
+    ){
+
+      now.innerHTML =
+        `<div class="now-label">
+          HIGHLIGHT RADIO
+        </div>
+
+        <div class="empty">
+          この条件に合う曲は
+          <br>
+          まだありません 🎧
+        </div>`;
+
+      return;
+    }
+
+    historySongs =
+      [];
+
+    historyIndex =
+      -1;
+
+    const randomSong =
+      currentQueue[
+        Math.floor(
+          Math.random() *
+          currentQueue.length
+        )
+      ];
+
+    if(isInsideNovaApp()){
+
+      window.parent.postMessage(
+        {
+          type:"NOVARADIO_PLAY",
+          song:randomSong,
+          queue:currentQueue,
+          index:currentQueue.findIndex(
+            item=>
+              Number(item.id) ===
+              Number(randomSong.id)
+          ),
+          highlight:true
+        },
+        "*"
+      );
+
+      /*
+        親プレイヤーが再生を担当するため、
+        Homeの表示はプレイヤー状態同期で更新されます。
+      */
+    }
+    else{
+
+      await playSong(
+        randomSong
+      );
+
+    }
+
+  }
+);
 
 
 /* =========================
@@ -1126,13 +1276,27 @@ body{
   </div>
 
 
-  <button
-    class="play"
-    id="play"
-    disabled
-  >
-    ▶️ この条件で再生
-  </button>
+  <div class="play-buttons">
+
+    <button
+      class="play"
+      id="play"
+      disabled
+      type="button"
+    >
+      ▶️ この条件で再生
+    </button>
+
+    <button
+      class="play highlight"
+      id="highlightPlay"
+      disabled
+      type="button"
+    >
+      ⚡ 30秒ハイライト
+    </button>
+
+  </div>
 
 
   <div
@@ -1623,13 +1787,23 @@ function updateConditions(){
     )}`;
 
 
+  const noConditions =
+    !selectedGenres.length &&
+    !selectedMoods.length;
+
   document
   .getElementById(
     "play"
   )
   .disabled =
-    !selectedGenres.length &&
-    !selectedMoods.length;
+    noConditions;
+
+  document
+  .getElementById(
+    "highlightPlay"
+  )
+  .disabled =
+    noConditions;
 
 }
 
@@ -2452,7 +2626,10 @@ function isInsideNovaApp(){
   );
 }
 
-function sendPlayToNovaApp(song){
+function sendPlayToNovaApp(
+  song,
+  highlight=false
+){
   if(!isInsideNovaApp()){
     return false;
   }
@@ -2466,7 +2643,9 @@ function sendPlayToNovaApp(song){
         item=>
           Number(item.id) ===
           Number(song.id)
-      )
+      ),
+      highlight:
+        !!highlight
     },
     "*"
   );
@@ -3617,6 +3796,16 @@ document
         )
       ];
 
+
+    if(isInsideNovaApp()){
+      window.parent.postMessage(
+        {
+          type:"NOVARADIO_SET_HIGHLIGHT",
+          value:false
+        },
+        "*"
+      );
+    }
 
     await playSong(
       randomSong
