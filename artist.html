@@ -1,240 +1,642 @@
 <!doctype html>
 <html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NovaRadio - Artist</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>
+  NovaRadio - Artist
+</title>
+
+
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+
 
 <style>
+
 *{
   box-sizing:border-box;
 }
 
+
 body{
+
   margin:0;
+
   min-height:100vh;
-  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-  background:radial-gradient(circle at 50% 0,#211b50,#080a18 55%,#050611);
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+
+  background:
+    radial-gradient(
+      circle at 50% 0,
+      #211b50,
+      #080a18 55%,
+      #050611
+    );
+
   color:#fff;
+
 }
+
 
 .wrap{
-  width:min(980px,94vw);
+
+  width:min(
+    980px,
+    94vw
+  );
+
   margin:auto;
-  padding:40px 0 90px;
+
+  padding:
+    40px
+    0
+    90px;
+
 }
+
+
+/* =========================
+   HEADER
+========================= */
 
 header{
+
   display:flex;
-  justify-content:space-between;
+
+  justify-content:
+    space-between;
+
   align-items:center;
-  margin-bottom:34px;
+
+  margin-bottom:
+    34px;
+
 }
+
 
 .logo{
-  font-size:32px;
-  font-weight:800;
+
+  font-size:
+    32px;
+
+  font-weight:
+    800;
+
 }
+
 
 .back{
+
   color:#fff;
+
   text-decoration:none;
-  padding:11px 16px;
-  background:#101228;
-  border:1px solid #343b67;
-  border-radius:14px;
+
+  padding:
+    11px
+    16px;
+
+  background:
+    #101228;
+
+  border:
+    1px solid #343b67;
+
+  border-radius:
+    14px;
+
+  transition:
+    .15s;
+
 }
+
+
+.back:hover{
+
+  border-color:
+    #7b25ff;
+
+}
+
+
+/* =========================
+   PROFILE
+========================= */
 
 .profile{
+
   text-align:center;
-  padding:42px 24px;
-  margin-bottom:24px;
-  background:#101228e8;
-  border:1px solid #30355e;
-  border-radius:28px;
+
+  padding:
+    42px
+    24px;
+
+  margin-bottom:
+    24px;
+
+  background:
+    #101228e8;
+
+  border:
+    1px solid #30355e;
+
+  border-radius:
+    28px;
+
 }
+
 
 .avatar{
-  width:120px;
-  height:120px;
+
+  width:
+    120px;
+
+  height:
+    120px;
+
   margin:auto;
-  border-radius:50%;
+
+  border-radius:
+    50%;
+
   display:flex;
+
   align-items:center;
+
   justify-content:center;
-  font-size:48px;
+
+  font-size:
+    48px;
+
   overflow:hidden;
-  background:linear-gradient(135deg,#7b25ff,#159df5);
+
+  background:
+    linear-gradient(
+      135deg,
+      #7b25ff,
+      #159df5
+    );
+
 }
+
 
 .avatar img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
+
+  width:
+    100%;
+
+  height:
+    100%;
+
+  object-fit:
+    cover;
+
   display:block;
+
 }
+
 
 .artist-name{
-  margin-top:18px;
-  font-size:32px;
-  font-weight:800;
+
+  margin-top:
+    18px;
+
+  font-size:
+    32px;
+
+  font-weight:
+    800;
+
 }
+
 
 .bio{
-  max-width:620px;
-  margin:14px auto 0;
-  color:#aeb0c8;
-  line-height:1.7;
-  white-space:pre-wrap;
+
+  max-width:
+    620px;
+
+  margin:
+    14px
+    auto
+    0;
+
+  color:
+    #aeb0c8;
+
+  line-height:
+    1.7;
+
+  white-space:
+    pre-wrap;
+
 }
+
 
 .links{
+
   display:flex;
+
   flex-wrap:wrap;
+
   justify-content:center;
-  gap:9px;
-  margin-top:18px;
+
+  gap:
+    9px;
+
+  margin-top:
+    18px;
+
 }
+
 
 .link{
+
   display:inline-flex;
+
   align-items:center;
+
   justify-content:center;
-  padding:10px 14px;
-  border-radius:999px;
-  border:1px solid #343b67;
-  background:#171a31;
-  color:#fff;
+
+  padding:
+    10px
+    14px;
+
+  border-radius:
+    999px;
+
+  border:
+    1px solid #343b67;
+
+  background:
+    #171a31;
+
+  color:
+    #fff;
+
   text-decoration:none;
-  font-size:13px;
-  font-weight:800;
+
+  font-size:
+    13px;
+
+  font-weight:
+    800;
+
+  transition:
+    .15s;
+
 }
+
 
 .link:hover{
-  border-color:#7b25ff;
+
+  border-color:
+    #7b25ff;
+
+  transform:
+    translateY(-1px);
+
 }
+
+
+/* =========================
+   CARD
+========================= */
 
 .card{
-  background:#101228e8;
-  border:1px solid #30355e;
-  border-radius:24px;
-  padding:25px;
-  margin-bottom:18px;
+
+  background:
+    #101228e8;
+
+  border:
+    1px solid #30355e;
+
+  border-radius:
+    24px;
+
+  padding:
+    25px;
+
+  margin-bottom:
+    18px;
+
 }
+
 
 .card h2{
-  margin:0 0 18px;
-  font-size:22px;
+
+  margin:
+    0
+    0
+    18px;
+
+  font-size:
+    22px;
+
 }
+
+
+/* =========================
+   SONGS
+========================= */
 
 .song-list{
+
   display:grid;
-  gap:12px;
+
+  gap:
+    12px;
+
 }
+
 
 .song{
-  padding:18px;
-  border-radius:18px;
-  background:#080b1d;
-  border:1px solid #30355e;
+
+  padding:
+    18px;
+
+  border-radius:
+    18px;
+
+  background:
+    #080b1d;
+
+  border:
+    1px solid #30355e;
+
 }
+
 
 .song-title{
-  font-size:18px;
-  font-weight:800;
+
+  font-size:
+    18px;
+
+  font-weight:
+    800;
+
 }
+
+
+.song-artist{
+
+  margin-top:
+    5px;
+
+  color:
+    #adb1c9;
+
+  font-size:
+    14px;
+
+}
+
 
 .song-meta{
-  margin-top:7px;
-  font-size:13px;
-  color:#858baa;
+
+  margin-top:
+    7px;
+
+  font-size:
+    13px;
+
+  color:
+    #858baa;
+
 }
+
 
 .song-buttons{
+
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  margin-top:14px;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  gap:
+    8px;
+
+  margin-top:
+    14px;
+
 }
+
 
 .song-buttons button{
-  padding:12px;
-  border:0;
-  border-radius:13px;
-  color:#fff;
-  font-weight:800;
+
+  padding:
+    12px;
+
+  border:
+    0;
+
+  border-radius:
+    13px;
+
+  color:
+    #fff;
+
+  font-weight:
+    800;
+
   cursor:pointer;
+
 }
+
 
 .play-song{
-  background:#242842;
+
+  background:
+    #242842;
+
 }
+
+
+.play-song:hover{
+
+  background:
+    #303653;
+
+}
+
 
 .like-song{
-  background:#171325;
-  border:1px solid #4a3558 !important;
+
+  background:
+    #171325;
+
+  border:
+    1px solid #4a3558 !important;
+
 }
+
+
+.like-song:hover{
+
+  border-color:
+    #a34b6a !important;
+
+}
+
 
 .like-song.liked{
-  background:#542237;
-  border-color:#a34b6a !important;
+
+  background:
+    #542237;
+
+  border-color:
+    #a34b6a !important;
+
 }
 
+
 .song-audio{
-  width:100%;
-  margin-top:14px;
+
+  width:
+    100%;
+
+  margin-top:
+    14px;
+
 }
+
+
+/* =========================
+   EMPTY / LOADING
+========================= */
 
 .empty,
 .loading{
-  padding:28px;
+
+  padding:
+    28px;
+
   text-align:center;
-  color:#8f93ad;
+
+  color:
+    #8f93ad;
+
 }
+
 
 .error{
-  padding:20px;
-  border-radius:16px;
-  background:#351c28;
-  border:1px solid #633846;
-  color:#ffd7e5;
+
+  padding:
+    20px;
+
+  border-radius:
+    16px;
+
+  background:
+    #351c28;
+
+  border:
+    1px solid #633846;
+
+  color:
+    #ffd7e5;
+
   text-align:center;
+
 }
 
-@media(max-width:600px){
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(
+  max-width:600px
+){
+
+  .wrap{
+
+    padding-top:
+      24px;
+
+  }
+
 
   .logo{
-    font-size:27px;
+
+    font-size:
+      27px;
+
   }
+
 
   .artist-name{
-    font-size:27px;
+
+    font-size:
+      27px;
+
   }
+
 
   .avatar{
-    width:100px;
-    height:100px;
+
+    width:
+      100px;
+
+    height:
+      100px;
+
   }
 
+
   .song-buttons{
-    grid-template-columns:1fr;
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .profile{
+
+    padding:
+      34px
+      18px;
+
   }
 
 }
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <main class="wrap">
+
+
+<!-- =========================
+     HEADER
+========================= -->
 
 <header>
 
   <div class="logo">
     NovaRadio
   </div>
+
 
   <a
     class="back"
@@ -246,20 +648,34 @@ header{
 </header>
 
 
+<!-- =========================
+     LOADING
+========================= -->
+
 <div
   id="loading"
   class="loading"
 >
+
   アーティスト情報を読み込んでいます…
+
 </div>
 
+
+<!-- =========================
+     CONTENT
+========================= -->
 
 <div
   id="content"
   style="display:none"
 >
 
+
+  <!-- PROFILE -->
+
   <section class="profile">
+
 
     <div
       class="avatar"
@@ -268,6 +684,7 @@ header{
       👤
     </div>
 
+
     <div
       class="artist-name"
       id="artistName"
@@ -275,11 +692,13 @@ header{
       Artist
     </div>
 
+
     <div
       class="bio"
       id="artistBio"
       style="display:none"
     ></div>
+
 
     <div
       class="links"
@@ -287,38 +706,55 @@ header{
       style="display:none"
     ></div>
 
+
   </section>
 
 
+  <!-- SONGS -->
+
   <section class="card">
+
 
     <h2>
       🎵 このアーティストの曲
     </h2>
 
+
     <div
       class="song-list"
       id="songList"
     >
+
       <div class="empty">
         曲を読み込んでいます…
       </div>
+
     </div>
+
 
   </section>
 
+
 </div>
+
 
 </main>
 
 
 <script>
 
+
+/* =========================
+   SUPABASE
+========================= */
+
 const SUPABASE_URL =
   "https://melsoikvhwzvzswlimsi.supabase.co";
 
+
 const SUPABASE_KEY =
   "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
+
 
 const sb =
   supabase.createClient(
@@ -327,48 +763,67 @@ const sb =
   );
 
 
+/* =========================
+   STATE
+========================= */
+
 let currentSession =
   null;
+
 
 let artistUserId =
   null;
 
+
+/* =========================
+   DOM
+========================= */
 
 const loading =
   document.getElementById(
     "loading"
   );
 
+
 const content =
   document.getElementById(
     "content"
   );
+
 
 const artistAvatar =
   document.getElementById(
     "artistAvatar"
   );
 
+
 const artistName =
   document.getElementById(
     "artistName"
   );
+
 
 const artistBio =
   document.getElementById(
     "artistBio"
   );
 
+
 const artistLinks =
   document.getElementById(
     "artistLinks"
   );
+
 
 const songList =
   document.getElementById(
     "songList"
   );
 
+
+/* =========================
+   INIT
+========================= */
 
 async function init(){
 
@@ -384,23 +839,41 @@ async function init(){
     );
 
 
-  if(!artistUserId){
+  if(
+    !artistUserId
+  ){
 
     loading.innerHTML =
       `<div class="error">
+
         アーティストIDが指定されていません。
+
       </div>`;
 
     return;
+
   }
 
 
   const {
     data:{
       session
-    }
+    },
+    error:sessionError
   } =
   await sb.auth.getSession();
+
+
+  if(
+    sessionError
+  ){
+
+    console.error(
+      "Session error:",
+      sessionError
+    );
+
+  }
 
 
   currentSession =
@@ -411,8 +884,12 @@ async function init(){
     await loadArtistProfile();
 
 
-  if(!success){
+  if(
+    !success
+  ){
+
     return;
+
   }
 
 
@@ -422,6 +899,7 @@ async function init(){
   loading.style.display =
     "none";
 
+
   content.style.display =
     "block";
 
@@ -429,7 +907,7 @@ async function init(){
 
 
 /* =========================
-   プロフィール
+   PROFILE
 ========================= */
 
 async function loadArtistProfile(){
@@ -439,7 +917,9 @@ async function loadArtistProfile(){
     error
   } =
   await sb
-  .from("profiles")
+  .from(
+    "profiles"
+  )
   .select(
     "artist_name,avatar_url,bio,instagram_url,x_url,tiktok_url,youtube_url,website_url"
   )
@@ -447,18 +927,30 @@ async function loadArtistProfile(){
     "user_id",
     artistUserId
   )
-  .limit(1);
+  .limit(
+    1
+  );
 
 
-  if(error){
+  if(
+    error
+  ){
 
     loading.innerHTML =
       `<div class="error">
-        プロフィール取得に失敗しました。<br><br>
-        ${escapeHtml(error.message)}
+
+        プロフィール取得に失敗しました。
+
+        <br><br>
+
+        ${escapeHtml(
+          error.message
+        )}
+
       </div>`;
 
     return false;
+
   }
 
 
@@ -469,10 +961,13 @@ async function loadArtistProfile(){
 
     loading.innerHTML =
       `<div class="error">
+
         このアーティストのプロフィールはまだありません。
+
       </div>`;
 
     return false;
+
   }
 
 
@@ -485,6 +980,10 @@ async function loadArtistProfile(){
     "Unknown Artist";
 
 
+  document.title =
+    `${profile.artist_name || "Artist"} - NovaRadio`;
+
+
   renderAvatar(
     profile.avatar_url ||
     null
@@ -493,18 +992,32 @@ async function loadArtistProfile(){
 
   const bioText =
     String(
-      profile.bio || ""
+      profile.bio ||
+      ""
     )
     .trim();
 
 
-  if(bioText){
+  if(
+    bioText
+  ){
 
     artistBio.textContent =
       bioText;
 
+
     artistBio.style.display =
       "block";
+
+  }
+  else{
+
+    artistBio.textContent =
+      "";
+
+
+    artistBio.style.display =
+      "none";
 
   }
 
@@ -519,6 +1032,10 @@ async function loadArtistProfile(){
 }
 
 
+/* =========================
+   AVATAR
+========================= */
+
 function renderAvatar(
   url
 ){
@@ -527,12 +1044,15 @@ function renderAvatar(
     "";
 
 
-  if(!url){
+  if(
+    !url
+  ){
 
     artistAvatar.textContent =
       "👤";
 
     return;
+
   }
 
 
@@ -550,12 +1070,17 @@ function renderAvatar(
     "プロフィール画像";
 
 
+  image.referrerPolicy =
+    "no-referrer";
+
+
   image.addEventListener(
     "error",
     ()=>{
 
       artistAvatar.innerHTML =
         "";
+
 
       artistAvatar.textContent =
         "👤";
@@ -571,6 +1096,10 @@ function renderAvatar(
 }
 
 
+/* =========================
+   SNS LINKS
+========================= */
+
 function renderLinks(
   profile
 ){
@@ -582,33 +1111,72 @@ function renderLinks(
   const links = [
 
     {
-      label:"Instagram",
-      emoji:"📸",
-      url:profile.instagram_url
+
+      label:
+        "Instagram",
+
+      emoji:
+        "📸",
+
+      url:
+        profile.instagram_url
+
     },
 
-    {
-      label:"X",
-      emoji:"𝕏",
-      url:profile.x_url
-    },
 
     {
-      label:"TikTok",
-      emoji:"🎵",
-      url:profile.tiktok_url
+
+      label:
+        "X",
+
+      emoji:
+        "𝕏",
+
+      url:
+        profile.x_url
+
     },
 
-    {
-      label:"YouTube",
-      emoji:"▶️",
-      url:profile.youtube_url
-    },
 
     {
-      label:"Website",
-      emoji:"🌐",
-      url:profile.website_url
+
+      label:
+        "TikTok",
+
+      emoji:
+        "🎵",
+
+      url:
+        profile.tiktok_url
+
+    },
+
+
+    {
+
+      label:
+        "YouTube",
+
+      emoji:
+        "▶️",
+
+      url:
+        profile.youtube_url
+
+    },
+
+
+    {
+
+      label:
+        "Website",
+
+      emoji:
+        "🌐",
+
+      url:
+        profile.website_url
+
     }
 
   ];
@@ -623,8 +1191,12 @@ function renderLinks(
         );
 
 
-      if(!url){
+      if(
+        !url
+      ){
+
         return;
+
       }
 
 
@@ -671,55 +1243,29 @@ function renderLinks(
 
 
 /* =========================
-   曲一覧
+   LOAD SONGS
 ========================= */
 
 async function loadArtistSongs(){
 
   songList.innerHTML =
     `<div class="empty">
+
       曲を読み込んでいます…
+
     </div>`;
 
 
-  const {
-    data:profileData,
-    error:profileError
-  } =
-  await sb
-  .from("profiles")
-  .select("artist_name")
-  .eq(
-    "user_id",
-    artistUserId
-  )
-  .limit(1);
+  /*
+    ここが今回の重要ポイント。
 
+    artist名ではなく
+    songs.user_id と
+    URLの artistUserId を比較する。
 
-  if(profileError){
-
-    songList.innerHTML =
-      `<div class="error">
-        アーティスト情報を取得できませんでした。
-      </div>`;
-
-    return;
-  }
-
-
-  const targetArtistName =
-    profileData?.[0]?.artist_name;
-
-
-  if(!targetArtistName){
-
-    songList.innerHTML =
-      `<div class="empty">
-        まだ曲はありません。
-      </div>`;
-
-    return;
-  }
+    これならアーティスト名を変更しても
+    曲との紐付けが壊れない。
+  */
 
 
   const {
@@ -727,11 +1273,15 @@ async function loadArtistSongs(){
     error
   } =
   await sb
-  .from("songs")
-  .select("*")
+  .from(
+    "songs"
+  )
+  .select(
+    "*"
+  )
   .eq(
-    "artist",
-    targetArtistName
+    "user_id",
+    artistUserId
   )
   .order(
     "created_at",
@@ -741,15 +1291,25 @@ async function loadArtistSongs(){
   );
 
 
-  if(error){
+  if(
+    error
+  ){
 
     songList.innerHTML =
       `<div class="error">
-        曲の取得に失敗しました。<br><br>
-        ${escapeHtml(error.message)}
+
+        曲の取得に失敗しました。
+
+        <br><br>
+
+        ${escapeHtml(
+          error.message
+        )}
+
       </div>`;
 
     return;
+
   }
 
 
@@ -760,10 +1320,13 @@ async function loadArtistSongs(){
 
     songList.innerHTML =
       `<div class="empty">
-        このアーティストの曲はまだありません。
+
+        このアーティストの曲はまだありません 🎧
+
       </div>`;
 
     return;
+
   }
 
 
@@ -792,7 +1355,7 @@ async function loadArtistSongs(){
 
 
 /* =========================
-   曲カード
+   SONG ITEM
 ========================= */
 
 async function createSongItem(
@@ -822,14 +1385,30 @@ async function createSongItem(
 
 
   item.innerHTML =
-    `<div class="song-title">
+    `
+
+    <div class="song-title">
+
       ${escapeHtml(
         song.title ||
         "Untitled"
       )}
+
     </div>
 
+
+    <div class="song-artist">
+
+      ${escapeHtml(
+        song.artist ||
+        "Unknown Artist"
+      )}
+
+    </div>
+
+
     <div class="song-meta">
+
       ${escapeHtml(
         genreText
       )}
@@ -842,9 +1421,12 @@ async function createSongItem(
             )
           : ""
       }
+
     </div>
 
+
     <div class="song-buttons">
+
 
       <button
         type="button"
@@ -853,6 +1435,7 @@ async function createSongItem(
         ▶️ 再生
       </button>
 
+
       <button
         type="button"
         class="like-song"
@@ -860,8 +1443,15 @@ async function createSongItem(
         🤍 いいね
       </button>
 
-    </div>`;
 
+    </div>
+
+    `;
+
+
+  /* =========================
+     PLAY
+  ========================= */
 
   item
   .querySelector(
@@ -880,16 +1470,23 @@ async function createSongItem(
   );
 
 
+  /* =========================
+     LIKE
+  ========================= */
+
   const likeButton =
     item.querySelector(
       ".like-song"
     );
 
 
-  if(!currentSession){
+  if(
+    !currentSession
+  ){
 
     likeButton.textContent =
       "🔒 ログインでいいね";
+
 
     likeButton.addEventListener(
       "click",
@@ -932,15 +1529,19 @@ async function createSongItem(
 
 
 /* =========================
-   いいね
+   CHECK LIKE
 ========================= */
 
 async function isLiked(
   songId
 ){
 
-  if(!currentSession){
+  if(
+    !currentSession
+  ){
+
     return false;
+
   }
 
 
@@ -949,8 +1550,12 @@ async function isLiked(
     error
   } =
   await sb
-  .from("likes")
-  .select("id")
+  .from(
+    "likes"
+  )
+  .select(
+    "id"
+  )
   .eq(
     "user_id",
     currentSession.user.id
@@ -959,17 +1564,23 @@ async function isLiked(
     "song_id",
     songId
   )
-  .limit(1);
+  .limit(
+    1
+  );
 
 
-  if(error){
+  if(
+    error
+  ){
 
     console.error(
       "Like check error:",
       error
     );
 
+
     return false;
+
   }
 
 
@@ -980,6 +1591,10 @@ async function isLiked(
 
 }
 
+
+/* =========================
+   UPDATE LIKE BUTTON
+========================= */
 
 async function updateLikeButton(
   button,
@@ -992,19 +1607,24 @@ async function updateLikeButton(
     );
 
 
-  if(liked){
+  if(
+    liked
+  ){
 
     button.textContent =
       "❤️ いいね済み";
+
 
     button.classList.add(
       "liked"
     );
 
-  }else{
+  }
+  else{
 
     button.textContent =
       "🤍 いいね";
+
 
     button.classList.remove(
       "liked"
@@ -1015,13 +1635,21 @@ async function updateLikeButton(
 }
 
 
+/* =========================
+   TOGGLE LIKE
+========================= */
+
 async function toggleLike(
   button,
   songId
 ){
 
-  if(!currentSession){
+  if(
+    !currentSession
+  ){
+
     return;
+
   }
 
 
@@ -1031,13 +1659,17 @@ async function toggleLike(
     );
 
 
-  if(liked){
+  if(
+    liked
+  ){
 
     const {
       error
     } =
     await sb
-    .from("likes")
+    .from(
+      "likes"
+    )
     .delete()
     .eq(
       "user_id",
@@ -1049,23 +1681,30 @@ async function toggleLike(
     );
 
 
-    if(error){
+    if(
+      error
+    ){
 
       alert(
         "いいね解除に失敗しました：" +
         error.message
       );
 
+
       return;
+
     }
 
-  }else{
+  }
+  else{
 
     const {
       error
     } =
     await sb
-    .from("likes")
+    .from(
+      "likes"
+    )
     .insert({
 
       user_id:
@@ -1077,14 +1716,18 @@ async function toggleLike(
     });
 
 
-    if(error){
+    if(
+      error
+    ){
 
       alert(
         "いいねに失敗しました：" +
         error.message
       );
 
+
       return;
+
     }
 
   }
@@ -1099,7 +1742,7 @@ async function toggleLike(
 
 
 /* =========================
-   再生
+   AUDIO
 ========================= */
 
 function toggleAudio(
@@ -1113,24 +1756,40 @@ function toggleAudio(
     );
 
 
-  if(old){
+  /*
+    同じ曲の再生ボタンを
+    もう一度押したら閉じる
+  */
+
+  if(
+    old
+  ){
 
     old.pause();
+
     old.remove();
 
     return;
+
   }
 
 
-  if(!song.audio_url){
+  if(
+    !song.audio_url
+  ){
 
     alert(
       "この曲には音源がありません。"
     );
 
     return;
+
   }
 
+
+  /*
+    他の曲が鳴っていたら停止
+  */
 
   document
   .querySelectorAll(
@@ -1140,6 +1799,7 @@ function toggleAudio(
     audio=>{
 
       audio.pause();
+
       audio.remove();
 
     }
@@ -1164,6 +1824,10 @@ function toggleAudio(
     true;
 
 
+  audio.preload =
+    "metadata";
+
+
   audio.src =
     song.audio_url;
 
@@ -1175,36 +1839,53 @@ function toggleAudio(
 
   audio
   .play()
-  .catch(()=>{});
+  .catch(
+    ()=>{}
+  );
 
 }
 
 
 /* =========================
-   Helpers
+   FORMAT TAGS
 ========================= */
 
 function formatTags(
   value
 ){
 
-  if(!value){
+  if(
+    !value
+  ){
+
     return "";
+
   }
 
 
   return String(
     value
   )
-  .split(",")
-  .map(
-    value=>value.trim()
+  .split(
+    ","
   )
-  .filter(Boolean)
-  .join(" / ");
+  .map(
+    value=>
+      value.trim()
+  )
+  .filter(
+    Boolean
+  )
+  .join(
+    " / "
+  );
 
 }
 
+
+/* =========================
+   SAFE URL
+========================= */
 
 function safeHttpUrl(
   value
@@ -1212,13 +1893,18 @@ function safeHttpUrl(
 
   const raw =
     String(
-      value || ""
+      value ||
+      ""
     )
     .trim();
 
 
-  if(!raw){
+  if(
+    !raw
+  ){
+
     return null;
+
   }
 
 
@@ -1252,12 +1938,17 @@ function safeHttpUrl(
 }
 
 
+/* =========================
+   ESCAPE HTML
+========================= */
+
 function escapeHtml(
   value
 ){
 
   return String(
-    value ?? ""
+    value ??
+    ""
   )
   .replaceAll(
     "&",
@@ -1283,9 +1974,16 @@ function escapeHtml(
 }
 
 
+/* =========================
+   START
+========================= */
+
 init();
+
 
 </script>
 
+
 </body>
+
 </html>
