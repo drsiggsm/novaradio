@@ -1210,6 +1210,21 @@ async function playSong(
 
   }
 
+  /*
+    通常再生は0秒から。
+    ハイライト再生はアーティストが指定した
+    highlight_startから開始する。
+  */
+  const requestedStart =
+    state.highlight
+      ? Math.max(
+          0,
+          Number(
+            song.highlight_start
+          ) || 0
+        )
+      : 0;
+
   if(
     restart ||
     sourceChanged ||
@@ -1217,16 +1232,89 @@ async function playSong(
     Number(song.id)
   ){
 
+    /*
+      highlight_start が0より大きい場合は
+      durationを取得してからシークする。
+    */
+    if(
+      requestedStart > 0 &&
+      audio.readyState < 1
+    ){
+
+      await new Promise(
+        resolve=>{
+
+          let done =
+            false;
+
+          const finish =
+            ()=>{
+
+              if(done){
+                return;
+              }
+
+              done =
+                true;
+
+              clearTimeout(
+                timer
+              );
+
+              audio.removeEventListener(
+                "loadedmetadata",
+                onMetadata
+              );
+
+              resolve();
+
+            };
+
+          const onMetadata =
+            ()=>finish();
+
+          const timer =
+            setTimeout(
+              finish,
+              2500
+            );
+
+          audio.addEventListener(
+            "loadedmetadata",
+            onMetadata,
+            {
+              once:true
+            }
+          );
+
+        }
+      );
+
+    }
+
     try{
 
+      const maxStart =
+        Number.isFinite(
+          audio.duration
+        )
+          ? Math.max(
+              0,
+              audio.duration - 0.1
+            )
+          : requestedStart;
+
       audio.currentTime =
-        0;
+        Math.min(
+          requestedStart,
+          maxStart
+        );
 
     }
     catch(error){
 
       console.warn(
-        "Seek reset error:",
+        "Highlight seek error:",
         error
       );
 
@@ -1235,7 +1323,7 @@ async function playSong(
   }
 
   highlightStartTime =
-    0;
+    requestedStart;
 
   await startPlayback(
     requestId
