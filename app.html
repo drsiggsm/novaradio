@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NovaRadio App</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
 
@@ -16,14 +18,14 @@ html,body{
   font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
 }
 
-body{
-  overflow:hidden;
-}
+body{overflow:hidden}
+
+button,input{font:inherit}
 
 .app-shell{
   height:100vh;
   display:grid;
-  grid-template-rows:64px 1fr 96px;
+  grid-template-rows:64px 1fr 108px;
   background:radial-gradient(circle at 50% 0,#211b50,#07091a 55%,#050611);
 }
 
@@ -77,15 +79,21 @@ body{
   background:#050611;
 }
 
+/* =========================
+   共通プレイヤー
+========================= */
+
 .player{
+  position:relative;
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
   gap:14px;
-  padding:10px 18px;
+  padding:14px 18px 10px;
   border-top:1px solid #343b67;
   background:#0b0e20f2;
   backdrop-filter:blur(18px);
+  z-index:50;
 }
 
 .track{
@@ -137,6 +145,13 @@ body{
   text-overflow:ellipsis;
 }
 
+.time{
+  margin-top:6px;
+  color:#8f94b2;
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+}
+
 .controls{
   display:flex;
   align-items:center;
@@ -152,6 +167,10 @@ body{
   color:#fff;
   font-weight:900;
   cursor:pointer;
+}
+
+.ctrl:hover{
+  border-color:#646ca5;
 }
 
 .ctrl.main{
@@ -173,12 +192,19 @@ body{
   box-shadow:0 0 0 1px #8b36ff inset;
 }
 
+.ctrl.more{
+  border-radius:12px;
+  width:42px;
+  font-size:21px;
+  line-height:1;
+}
+
 /* シークバー */
 .progress{
   position:absolute;
   left:0;
   right:0;
-  bottom:90px;
+  top:0;
   height:12px;
   background:#181c35;
   cursor:pointer;
@@ -192,10 +218,160 @@ body{
   pointer-events:none;
 }
 
-@media(max-width:600px){
+/* =========================
+   その他メニュー
+========================= */
+
+.more-menu{
+  position:fixed;
+  right:18px;
+  bottom:118px;
+  width:min(300px,calc(100vw - 28px));
+  padding:10px;
+  border:1px solid #343b67;
+  border-radius:16px;
+  background:#101328f5;
+  box-shadow:0 20px 60px #000b;
+  backdrop-filter:blur(18px);
+  z-index:1000;
+  display:none;
+}
+
+.more-menu.show{
+  display:grid;
+  gap:8px;
+}
+
+.menu-btn{
+  width:100%;
+  border:1px solid #343b67;
+  border-radius:12px;
+  padding:13px 14px;
+  background:#171a31;
+  color:#fff;
+  text-align:left;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.menu-btn:hover{
+  border-color:#7b25ff;
+}
+
+.menu-btn.liked{
+  background:#442136;
+  border-color:#8b415b;
+}
+
+/* =========================
+   プレイリスト選択モーダル
+========================= */
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:#000b;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:1500;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:min(520px,95vw);
+  max-height:min(650px,80vh);
+  overflow:auto;
+  background:#101228;
+  border:1px solid #343b67;
+  border-radius:22px;
+  padding:20px;
+  box-shadow:0 24px 80px #000c;
+}
+
+.modal-title{
+  font-size:20px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.modal-sub{
+  color:#9ba0bd;
+  font-size:13px;
+  margin-bottom:16px;
+}
+
+.playlist-list{
+  display:grid;
+  gap:9px;
+}
+
+.playlist-choice{
+  width:100%;
+  border:1px solid #343b67;
+  border-radius:13px;
+  padding:14px;
+  background:#080b1d;
+  color:#fff;
+  text-align:left;
+  cursor:pointer;
+  font-weight:800;
+}
+
+.playlist-choice:hover{
+  border-color:#7b25ff;
+}
+
+.modal-empty{
+  padding:20px;
+  text-align:center;
+  color:#9ba0bd;
+  border:1px solid #343b67;
+  border-radius:13px;
+  background:#080b1d;
+}
+
+.modal-close{
+  width:100%;
+  margin-top:12px;
+  border:1px solid #343b67;
+  border-radius:13px;
+  padding:13px;
+  background:#171a31;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+/* 再生エラー */
+.player-status{
+  position:fixed;
+  left:50%;
+  bottom:122px;
+  transform:translateX(-50%);
+  width:min(620px,92vw);
+  border:1px solid #7f4951;
+  border-radius:14px;
+  padding:10px 14px;
+  background:#381e28f5;
+  color:#ffdce2;
+  font-size:12px;
+  z-index:1200;
+  display:none;
+}
+
+.player-status.show{
+  display:block;
+}
+
+@media(max-width:700px){
 
   .app-shell{
-    grid-template-rows:58px 1fr 88px;
+    grid-template-rows:58px 1fr 126px;
   }
 
   .brand{
@@ -206,14 +382,20 @@ body{
     padding:8px 10px;
   }
 
-  .cover{
-    width:48px;
-    height:48px;
-    flex-basis:48px;
+  .player{
+    grid-template-columns:minmax(0,1fr);
+    gap:8px;
+    padding:16px 10px 8px;
   }
 
-  .player{
-    padding:8px 10px;
+  .cover{
+    width:46px;
+    height:46px;
+    flex-basis:46px;
+  }
+
+  .controls{
+    justify-content:flex-end;
   }
 
   .ctrl{
@@ -226,12 +408,18 @@ body{
     height:40px;
   }
 
-  .ctrl.mode{
-    width:34px;
+  .ctrl.mode,
+  .ctrl.more{
+    width:36px;
   }
 
-  .progress{
-    bottom:84px;
+  .more-menu{
+    right:10px;
+    bottom:136px;
+  }
+
+  .player-status{
+    bottom:140px;
   }
 }
 </style>
@@ -241,139 +429,252 @@ body{
 
 <div class="app-shell">
 
-<header class="app-nav">
+  <header class="app-nav">
 
-  <div class="brand">
-    NovaRadio
-  </div>
+    <div class="brand">
+      NovaRadio
+    </div>
 
-  <div class="nav-buttons">
+    <div class="nav-buttons">
 
-    <button
-      class="nav-btn active"
-      id="navHome"
+      <button
+        class="nav-btn active"
+        id="navHome"
+        type="button"
+      >
+        Home
+      </button>
+
+      <button
+        class="nav-btn"
+        id="navMyPage"
+        type="button"
+      >
+        My Page
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <main class="view">
+
+    <iframe
+      id="appFrame"
+      src="home.html"
+    ></iframe>
+
+  </main>
+
+
+  <footer class="player">
+
+    <div
+      class="progress"
+      id="progress"
+      aria-label="再生位置"
     >
-      Home
-    </button>
-
-    <button
-      class="nav-btn"
-      id="navMyPage"
-    >
-      My Page
-    </button>
-
-  </div>
-
-</header>
+      <div
+        class="progress-fill"
+        id="progressFill"
+      ></div>
+    </div>
 
 
-<main class="view">
+    <div class="track">
 
-  <iframe
-    id="appFrame"
-    src="home.html"
-  ></iframe>
+      <div
+        class="cover"
+        id="cover"
+      >
+        🎵
+      </div>
 
-</main>
+      <div class="meta">
+
+        <div
+          class="title"
+          id="title"
+        >
+          曲を選択
+        </div>
+
+        <div
+          class="artist"
+          id="artist"
+        >
+          NovaRadio
+        </div>
+
+        <div
+          class="time"
+          id="timeText"
+        >
+          0:00 / 0:00
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="controls">
+
+      <button
+        class="ctrl"
+        id="prev"
+        type="button"
+        title="前の曲"
+      >
+        ⏮
+      </button>
+
+      <button
+        class="ctrl main"
+        id="playPause"
+        type="button"
+        title="再生 / 一時停止"
+      >
+        ▶
+      </button>
+
+      <button
+        class="ctrl"
+        id="next"
+        type="button"
+        title="次の曲"
+      >
+        ⏭
+      </button>
+
+      <button
+        class="ctrl mode"
+        id="shuffle"
+        type="button"
+        title="シャッフル"
+      >
+        🔀
+      </button>
+
+      <button
+        class="ctrl mode"
+        id="repeat"
+        type="button"
+        title="リピート"
+      >
+        🔁
+      </button>
+
+      <button
+        class="ctrl more"
+        id="more"
+        type="button"
+        title="その他"
+      >
+        ⋯
+      </button>
+
+    </div>
+
+  </footer>
+
+</div>
 
 
 <div
-  class="progress"
-  id="progress"
+  class="more-menu"
+  id="moreMenu"
 >
-  <div
-    class="progress-fill"
-    id="progressFill"
-  ></div>
+  <button
+    class="menu-btn"
+    id="menuLike"
+    type="button"
+  >
+    🤍 いいね
+  </button>
+
+  <button
+    class="menu-btn"
+    id="menuPlaylist"
+    type="button"
+  >
+    ＋ プレイリストに追加
+  </button>
 </div>
 
 
-<footer class="player">
+<div
+  class="modal"
+  id="playlistModal"
+>
+  <div class="modal-box">
 
-  <div class="track">
+    <div class="modal-title">
+      ＋ プレイリストに追加
+    </div>
 
     <div
-      class="cover"
-      id="cover"
+      class="modal-sub"
+      id="playlistModalSong"
     >
-      🎵
+      曲を選択してください
     </div>
 
-    <div class="meta">
-
-      <div
-        class="title"
-        id="title"
-      >
-        曲を選択
-      </div>
-
-      <div
-        class="artist"
-        id="artist"
-      >
-        NovaRadio
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <div class="controls">
+    <div
+      class="playlist-list"
+      id="playlistChoices"
+    ></div>
 
     <button
-      class="ctrl"
-      id="prev"
+      class="modal-close"
+      id="playlistModalClose"
+      type="button"
     >
-      ⏮
-    </button>
-
-    <button
-      class="ctrl main"
-      id="playPause"
-    >
-      ▶
-    </button>
-
-    <button
-      class="ctrl"
-      id="next"
-    >
-      ⏭
-    </button>
-
-    <button
-      class="ctrl mode"
-      id="shuffle"
-      title="シャッフル"
-    >
-      🔀
-    </button>
-
-    <button
-      class="ctrl mode"
-      id="repeat"
-      title="リピート"
-    >
-      🔁
+      閉じる
     </button>
 
   </div>
-
-</footer>
-
 </div>
+
+
+<div
+  class="player-status"
+  id="playerStatus"
+></div>
 
 
 <audio
   id="audio"
-  preload="metadata"
+  preload="auto"
 ></audio>
 
 
 <script>
+
+/* =========================
+   Supabase
+========================= */
+
+const SUPABASE_URL =
+  "https://melsoikvhwzvzswlimsi.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
+
+const sb =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+let currentSession =
+  null;
+
+
+/* =========================
+   DOM
+========================= */
 
 const frame =
   document.getElementById("appFrame");
@@ -402,6 +703,9 @@ const shuffle =
 const repeat =
   document.getElementById("repeat");
 
+const more =
+  document.getElementById("more");
+
 const cover =
   document.getElementById("cover");
 
@@ -411,12 +715,43 @@ const title =
 const artist =
   document.getElementById("artist");
 
+const timeText =
+  document.getElementById("timeText");
+
 const progress =
   document.getElementById("progress");
 
 const progressFill =
   document.getElementById("progressFill");
 
+const moreMenu =
+  document.getElementById("moreMenu");
+
+const menuLike =
+  document.getElementById("menuLike");
+
+const menuPlaylist =
+  document.getElementById("menuPlaylist");
+
+const playlistModal =
+  document.getElementById("playlistModal");
+
+const playlistModalSong =
+  document.getElementById("playlistModalSong");
+
+const playlistChoices =
+  document.getElementById("playlistChoices");
+
+const playlistModalClose =
+  document.getElementById("playlistModalClose");
+
+const playerStatus =
+  document.getElementById("playerStatus");
+
+
+/* =========================
+   State
+========================= */
 
 let state = {
 
@@ -431,6 +766,123 @@ let state = {
   repeat:"off"
 
 };
+
+let playRequestId =
+  0;
+
+let isSeeking =
+  false;
+
+let seekRatio =
+  0;
+
+
+/* =========================
+   Helpers
+========================= */
+
+function formatTime(seconds){
+
+  if(
+    !Number.isFinite(seconds) ||
+    seconds < 0
+  ){
+    return "0:00";
+  }
+
+  const minutes =
+    Math.floor(seconds / 60);
+
+  const secs =
+    Math.floor(seconds % 60);
+
+  return (
+    minutes +
+    ":" +
+    String(secs).padStart(2,"0")
+  );
+}
+
+
+function showPlayerStatus(message){
+
+  playerStatus.textContent =
+    message;
+
+  playerStatus.classList.add(
+    "show"
+  );
+
+  clearTimeout(
+    showPlayerStatus.timer
+  );
+
+  showPlayerStatus.timer =
+    setTimeout(
+      ()=>{
+        playerStatus.classList.remove(
+          "show"
+        );
+      },
+      3500
+    );
+}
+
+
+function escapeAttribute(value){
+
+  return String(
+    value ?? ""
+  )
+  .replaceAll("&","&amp;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;");
+
+}
+
+
+function closeMoreMenu(){
+
+  moreMenu.classList.remove(
+    "show"
+  );
+
+}
+
+
+/* =========================
+   セッション
+========================= */
+
+async function initSession(){
+
+  try{
+
+    const {
+      data:{session},
+      error
+    } =
+    await sb.auth.getSession();
+
+    if(error){
+      throw error;
+    }
+
+    currentSession =
+      session || null;
+
+  }
+  catch(error){
+
+    console.warn(
+      "Session load error:",
+      error
+    );
+
+  }
+
+}
 
 
 /* =========================
@@ -493,61 +945,219 @@ function renderSong(song){
     return;
   }
 
-
   title.textContent =
     song.title ||
     "Untitled";
-
 
   artist.textContent =
     song.artist ||
     "Unknown Artist";
 
-
   const c =
     song.cover_url ||
     "";
 
-
   cover.innerHTML =
     c
-      ? `<img src="${String(c).replaceAll('"','&quot;')}" alt="">`
+      ? `<img src="${escapeAttribute(c)}" alt="">`
       : "🎵";
 
+  timeText.textContent =
+    "0:00 / 0:00";
+
+  updateLikeMenu();
+
+}
+
+
+/* =========================
+   再生安定化
+========================= */
+
+function waitForPlayable(
+  requestId,
+  timeoutMs=3000
+){
+
+  return new Promise(
+    resolve=>{
+
+      if(
+        requestId !==
+        playRequestId
+      ){
+        resolve(false);
+        return;
+      }
+
+      if(
+        audio.readyState >= 2
+      ){
+        resolve(true);
+        return;
+      }
+
+      let finished =
+        false;
+
+      const finish =
+        ok=>{
+
+          if(finished){
+            return;
+          }
+
+          finished =
+            true;
+
+          clearTimeout(timer);
+
+          audio.removeEventListener(
+            "canplay",
+            onCanPlay
+          );
+
+          audio.removeEventListener(
+            "error",
+            onError
+          );
+
+          resolve(ok);
+        };
+
+      const onCanPlay =
+        ()=>finish(true);
+
+      const onError =
+        ()=>finish(false);
+
+      const timer =
+        setTimeout(
+          ()=>finish(
+            audio.readyState >= 2
+          ),
+          timeoutMs
+        );
+
+      audio.addEventListener(
+        "canplay",
+        onCanPlay,
+        {once:true}
+      );
+
+      audio.addEventListener(
+        "error",
+        onError,
+        {once:true}
+      );
+
+    }
+  );
+
+}
+
+
+async function startPlayback(
+  requestId
+){
 
   if(
-    audio.getAttribute("src") !==
-    song.audio_url
+    requestId !==
+    playRequestId
+  ){
+    return;
+  }
+
+  /*
+    まず即play。
+    これが一番ユーザー操作扱いを維持しやすい。
+  */
+  try{
+
+    await audio.play();
+
+    return;
+
+  }
+  catch(firstError){
+
+    console.warn(
+      "First play attempt:",
+      firstError
+    );
+
+  }
+
+  /*
+    読み込み待ち後にもう一度。
+  */
+  const playable =
+    await waitForPlayable(
+      requestId
+    );
+
+  if(
+    !playable ||
+    requestId !==
+    playRequestId
   ){
 
-    audio.src =
-      song.audio_url;
+    showPlayerStatus(
+      "音源の読み込みに時間がかかっています。▶をもう一度押してみてください。"
+    );
 
-    audio.load();
+    return;
+
+  }
+
+  try{
+
+    await audio.play();
+
+  }
+  catch(secondError){
+
+    console.warn(
+      "Second play attempt:",
+      secondError
+    );
+
+    showPlayerStatus(
+      "再生できませんでした。▶を押すと再試行できます。"
+    );
 
   }
 
 }
 
 
-/* =========================
-   曲再生
-========================= */
-
-function playSong(
+async function playSong(
   song,
   queue=null,
   index=null,
   restart=false
 ){
 
-  if(queue){
+  if(
+    !song ||
+    !song.audio_url
+  ){
+
+    showPlayerStatus(
+      "この曲には再生できる音源がありません。"
+    );
+
+    return;
+  }
+
+  if(
+    Array.isArray(queue)
+  ){
 
     state.queue =
       queue;
 
   }
-
 
   if(
     Number.isInteger(index)
@@ -558,22 +1168,45 @@ function playSong(
 
   }
 
-
   const previousSongId =
     Number(
       state.song?.id
     );
 
+  const previousSrc =
+    audio.getAttribute(
+      "src"
+    ) || "";
 
   renderSong(
     song
   );
 
+  const requestId =
+    ++playRequestId;
+
+  const sourceChanged =
+    previousSrc !==
+    String(song.audio_url);
+
+  if(sourceChanged){
+
+    audio.src =
+      song.audio_url;
+
+    /*
+      preload=auto と組み合わせて
+      新しい曲の読込を明示的に開始。
+    */
+    audio.load();
+
+  }
 
   if(
     restart ||
+    sourceChanged ||
     previousSongId !==
-    Number(song?.id)
+    Number(song.id)
   ){
 
     try{
@@ -585,7 +1218,7 @@ function playSong(
     catch(error){
 
       console.warn(
-        "再生位置のリセットに失敗:",
+        "Seek reset error:",
         error
       );
 
@@ -593,16 +1226,17 @@ function playSong(
 
   }
 
+  await startPlayback(
+    requestId
+  );
 
-  audio
-  .play()
-  .catch(()=>{});
+  notifyFrameState();
 
 }
 
 
 /* =========================
-   My Pageとの状態同期
+   Home / My Pageとの状態同期
 ========================= */
 
 function notifyFrameState(){
@@ -648,24 +1282,20 @@ function updateModeButtons(){
     state.shuffle
   );
 
-
   repeat.classList.toggle(
     "active",
     state.repeat !== "off"
   );
-
 
   repeat.textContent =
     state.repeat === "one"
       ? "🔂"
       : "🔁";
 
-
   shuffle.title =
     state.shuffle
       ? "シャッフル ON"
       : "シャッフル OFF";
-
 
   repeat.title =
     state.repeat === "all"
@@ -673,7 +1303,6 @@ function updateModeButtons(){
       : state.repeat === "one"
       ? "1曲リピート"
       : "リピート OFF";
-
 
   notifyFrameState();
 
@@ -701,7 +1330,6 @@ function setRepeat(value){
       ? value
       : "off";
 
-
   updateModeButtons();
 
 }
@@ -710,13 +1338,11 @@ function setRepeat(value){
 function cycleRepeat(){
 
   setRepeat(
-
     state.repeat === "off"
       ? "all"
       : state.repeat === "all"
       ? "one"
       : "off"
-
   );
 
 }
@@ -733,11 +1359,8 @@ function playNext(
   if(
     !state.queue.length
   ){
-
     return;
-
   }
-
 
   if(
     fromEnded &&
@@ -749,12 +1372,14 @@ function playNext(
 
     audio
     .play()
-    .catch(()=>{});
+    .catch(
+      ()=>startPlayback(
+        ++playRequestId
+      )
+    );
 
     return;
-
   }
-
 
   if(
     state.index < 0
@@ -769,7 +1394,6 @@ function playNext(
 
   }
 
-
   if(
     state.shuffle &&
     state.queue.length > 1
@@ -777,7 +1401,6 @@ function playNext(
 
     let nextIndex =
       state.index;
-
 
     while(
       nextIndex ===
@@ -792,7 +1415,6 @@ function playNext(
 
     }
 
-
     state.index =
       nextIndex;
 
@@ -803,7 +1425,6 @@ function playNext(
     const candidate =
       state.index + 1;
 
-
     if(
       candidate >=
       state.queue.length
@@ -813,11 +1434,8 @@ function playNext(
         fromEnded &&
         state.repeat === "off"
       ){
-
         return;
-
       }
-
 
       state.index =
         0;
@@ -833,17 +1451,14 @@ function playNext(
 
   }
 
-
   playSong(
     state.queue[
       state.index
     ],
     state.queue,
-    state.index
+    state.index,
+    true
   );
-
-
-  notifyFrameState();
 
 }
 
@@ -857,16 +1472,9 @@ function playPrev(){
   if(
     !state.queue.length
   ){
-
     return;
-
   }
 
-
-  /*
-    3秒以上再生済みなら
-    前曲ではなく曲頭へ戻る
-  */
   if(
     audio.currentTime > 3
   ){
@@ -875,9 +1483,7 @@ function playPrev(){
       0;
 
     return;
-
   }
-
 
   if(
     state.index < 0
@@ -892,7 +1498,6 @@ function playPrev(){
 
   }
 
-
   if(
     state.shuffle &&
     state.queue.length > 1
@@ -900,7 +1505,6 @@ function playPrev(){
 
     let prevIndex =
       state.index;
-
 
     while(
       prevIndex ===
@@ -915,7 +1519,6 @@ function playPrev(){
 
     }
 
-
     state.index =
       prevIndex;
 
@@ -923,9 +1526,7 @@ function playPrev(){
 
   else{
 
-    state.index =
-      state.index - 1;
-
+    state.index--;
 
     if(
       state.index < 0
@@ -938,17 +1539,14 @@ function playPrev(){
 
   }
 
-
   playSong(
     state.queue[
       state.index
     ],
     state.queue,
-    state.index
+    state.index,
+    true
   );
-
-
-  notifyFrameState();
 
 }
 
@@ -958,24 +1556,24 @@ function playPrev(){
 ========================= */
 
 playPause.onclick =
-  ()=>{
+  async ()=>{
 
     if(
       !state.song
     ){
-
       return;
-
     }
-
 
     if(
       audio.paused
     ){
 
-      audio
-      .play()
-      .catch(()=>{});
+      const requestId =
+        ++playRequestId;
+
+      await startPlayback(
+        requestId
+      );
 
     }
 
@@ -1012,18 +1610,6 @@ repeat.onclick =
    軽量シーク
 ========================= */
 
-let isSeeking =
-  false;
-
-let seekRatio =
-  0;
-
-
-/*
-  マウス・指の位置を
-  0〜1の割合に変換
-*/
-
 function getSeekRatio(
   event
 ){
@@ -1031,15 +1617,11 @@ function getSeekRatio(
   const rect =
     progress.getBoundingClientRect();
 
-
   if(
     rect.width <= 0
   ){
-
     return 0;
-
   }
-
 
   return Math.max(
     0,
@@ -1056,11 +1638,6 @@ function getSeekRatio(
 }
 
 
-/*
-  ドラッグ中は
-  見た目だけ変更する
-*/
-
 function previewSeek(
   event
 ){
@@ -1071,17 +1648,13 @@ function previewSeek(
     ) ||
     audio.duration <= 0
   ){
-
     return;
-
   }
-
 
   seekRatio =
     getSeekRatio(
       event
     );
-
 
   progressFill.style.width =
     (
@@ -1090,12 +1663,18 @@ function previewSeek(
     ) +
     "%";
 
+  timeText.textContent =
+    formatTime(
+      seekRatio *
+      audio.duration
+    ) +
+    " / " +
+    formatTime(
+      audio.duration
+    );
+
 }
 
-
-/*
-  シーク開始
-*/
 
 progress.addEventListener(
   "pointerdown",
@@ -1107,20 +1686,15 @@ progress.addEventListener(
       ) ||
       audio.duration <= 0
     ){
-
       return;
-
     }
-
 
     isSeeking =
       true;
 
-
     previewSeek(
       event
     );
-
 
     try{
 
@@ -1135,13 +1709,6 @@ progress.addEventListener(
 );
 
 
-/*
-  ドラッグ中
-
-  audio.currentTimeは
-  変更しないので軽い
-*/
-
 progress.addEventListener(
   "pointermove",
   event=>{
@@ -1149,11 +1716,8 @@ progress.addEventListener(
     if(
       !isSeeking
     ){
-
       return;
-
     }
-
 
     previewSeek(
       event
@@ -1163,11 +1727,6 @@ progress.addEventListener(
 );
 
 
-/*
-  指・マウスを離した瞬間に
-  1回だけ本当にシークする
-*/
-
 progress.addEventListener(
   "pointerup",
   event=>{
@@ -1175,20 +1734,15 @@ progress.addEventListener(
     if(
       !isSeeking
     ){
-
       return;
-
     }
-
 
     previewSeek(
       event
     );
 
-
     isSeeking =
       false;
-
 
     if(
       Number.isFinite(
@@ -1203,7 +1757,6 @@ progress.addEventListener(
 
     }
 
-
     try{
 
       progress.releasePointerCapture(
@@ -1217,10 +1770,6 @@ progress.addEventListener(
 );
 
 
-/*
-  操作キャンセル
-*/
-
 progress.addEventListener(
   "pointercancel",
   ()=>{
@@ -1228,23 +1777,7 @@ progress.addEventListener(
     isSeeking =
       false;
 
-
-    if(
-      Number.isFinite(
-        audio.duration
-      ) &&
-      audio.duration > 0
-    ){
-
-      progressFill.style.width =
-        (
-          audio.currentTime /
-          audio.duration *
-          100
-        ) +
-        "%";
-
-    }
+    updateProgressUI();
 
   }
 );
@@ -1253,6 +1786,56 @@ progress.addEventListener(
 /* =========================
    Audioイベント
 ========================= */
+
+function updateProgressUI(){
+
+  if(
+    isSeeking
+  ){
+    return;
+  }
+
+  const duration =
+    Number.isFinite(
+      audio.duration
+    )
+      ? audio.duration
+      : 0;
+
+  const current =
+    Number.isFinite(
+      audio.currentTime
+    )
+      ? audio.currentTime
+      : 0;
+
+  if(
+    duration > 0
+  ){
+
+    progressFill.style.width =
+      (
+        current /
+        duration *
+        100
+      ) +
+      "%";
+
+  }
+  else{
+
+    progressFill.style.width =
+      "0%";
+
+  }
+
+  timeText.textContent =
+    formatTime(current) +
+    " / " +
+    formatTime(duration);
+
+}
+
 
 audio.addEventListener(
   "play",
@@ -1277,6 +1860,24 @@ audio.addEventListener(
 
 
 audio.addEventListener(
+  "loadedmetadata",
+  updateProgressUI
+);
+
+
+audio.addEventListener(
+  "durationchange",
+  updateProgressUI
+);
+
+
+audio.addEventListener(
+  "timeupdate",
+  updateProgressUI
+);
+
+
+audio.addEventListener(
   "ended",
   ()=>{
 
@@ -1288,40 +1889,636 @@ audio.addEventListener(
 );
 
 
-/*
-  通常再生中は
-  シークバーを更新。
-
-  ドラッグ中は更新しない。
-*/
-
 audio.addEventListener(
-  "timeupdate",
+  "stalled",
   ()=>{
 
-    if(
-      isSeeking
-    ){
+    console.warn(
+      "Audio stalled"
+    );
 
-      return;
+  }
+);
+
+
+audio.addEventListener(
+  "waiting",
+  ()=>{
+
+    /*
+      一時的なバッファ待ちは
+      エラー扱いにしない。
+    */
+
+  }
+);
+
+
+audio.addEventListener(
+  "error",
+  ()=>{
+
+    const error =
+      audio.error;
+
+    console.warn(
+      "Audio error:",
+      error
+    );
+
+    showPlayerStatus(
+      "音源の読み込みに失敗しました。次の曲へ進むか、▶で再試行してください。"
+    );
+
+  }
+);
+
+
+/* =========================
+   いいね
+========================= */
+
+async function isSongLiked(
+  songId
+){
+
+  if(
+    !currentSession ||
+    !songId
+  ){
+    return false;
+  }
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("likes")
+  .select("id")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .eq(
+    "song_id",
+    songId
+  )
+  .limit(1);
+
+  if(error){
+
+    console.warn(
+      "Like check error:",
+      error
+    );
+
+    return false;
+  }
+
+  return !!(
+    data &&
+    data.length
+  );
+
+}
+
+
+async function updateLikeMenu(){
+
+  menuLike.classList.remove(
+    "liked"
+  );
+
+  if(
+    !state.song
+  ){
+
+    menuLike.textContent =
+      "🤍 いいね";
+
+    return;
+  }
+
+  if(
+    !currentSession
+  ){
+
+    menuLike.textContent =
+      "🤍 いいね";
+
+    return;
+  }
+
+  const songId =
+    state.song.id;
+
+  const liked =
+    await isSongLiked(
+      songId
+    );
+
+  /*
+    曲が変わっている途中に
+    古い問い合わせが返ってきた場合は無視。
+  */
+  if(
+    Number(state.song?.id) !==
+    Number(songId)
+  ){
+    return;
+  }
+
+  if(liked){
+
+    menuLike.textContent =
+      "❤️ いいね解除";
+
+    menuLike.classList.add(
+      "liked"
+    );
+
+  }
+  else{
+
+    menuLike.textContent =
+      "🤍 いいね";
+
+  }
+
+}
+
+
+async function toggleCurrentLike(){
+
+  if(
+    !state.song
+  ){
+
+    showPlayerStatus(
+      "まず曲を再生してください。"
+    );
+
+    return;
+  }
+
+  if(
+    !currentSession
+  ){
+
+    showPlayerStatus(
+      "いいねするにはログインしてください。"
+    );
+
+    return;
+  }
+
+  menuLike.disabled =
+    true;
+
+  try{
+
+    const liked =
+      await isSongLiked(
+        state.song.id
+      );
+
+    if(liked){
+
+      const {
+        error
+      } =
+      await sb
+      .from("likes")
+      .delete()
+      .eq(
+        "user_id",
+        currentSession.user.id
+      )
+      .eq(
+        "song_id",
+        state.song.id
+      );
+
+      if(error){
+        throw error;
+      }
+
+      showPlayerStatus(
+        "いいねを解除しました。"
+      );
+
+    }
+    else{
+
+      const {
+        error
+      } =
+      await sb
+      .from("likes")
+      .insert({
+
+        user_id:
+          currentSession.user.id,
+
+        song_id:
+          state.song.id
+
+      });
+
+      if(error){
+        throw error;
+      }
+
+      showPlayerStatus(
+        "❤️ いいねしました！"
+      );
 
     }
 
+    await updateLikeMenu();
+
+  }
+  catch(error){
+
+    console.error(error);
+
+    showPlayerStatus(
+      "いいねの更新に失敗しました：" +
+      (
+        error.message ||
+        error
+      )
+    );
+
+  }
+  finally{
+
+    menuLike.disabled =
+      false;
+
+  }
+
+}
+
+
+/* =========================
+   プレイリスト追加
+========================= */
+
+async function openPlaylistModal(){
+
+  closeMoreMenu();
+
+  if(
+    !state.song
+  ){
+
+    showPlayerStatus(
+      "まず曲を再生してください。"
+    );
+
+    return;
+  }
+
+  if(
+    !currentSession
+  ){
+
+    showPlayerStatus(
+      "プレイリスト機能にはログインが必要です。"
+    );
+
+    return;
+  }
+
+  playlistModalSong.textContent =
+    state.song.title ||
+    "Untitled";
+
+  playlistChoices.innerHTML =
+    `<div class="modal-empty">
+      プレイリストを読み込んでいます…
+    </div>`;
+
+  playlistModal.classList.add(
+    "show"
+  );
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("playlists")
+  .select("*")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .order(
+    "created_at",
+    {
+      ascending:false
+    }
+  );
+
+  if(error){
+
+    playlistChoices.innerHTML =
+      `<div class="modal-empty">
+        プレイリストを取得できませんでした。
+      </div>`;
+
+    console.error(error);
+
+    return;
+  }
+
+  if(
+    !data ||
+    !data.length
+  ){
+
+    playlistChoices.innerHTML =
+      `<div class="modal-empty">
+        まだプレイリストがありません。<br><br>
+        My Pageでプレイリストを作成できます。
+      </div>`;
+
+    return;
+  }
+
+  playlistChoices.innerHTML =
+    "";
+
+  data.forEach(
+    playlist=>{
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type =
+        "button";
+
+      button.className =
+        "playlist-choice";
+
+      button.textContent =
+        "📚 " +
+        (
+          playlist.name ||
+          "無題のプレイリスト"
+        );
+
+      button.addEventListener(
+        "click",
+        ()=>addCurrentSongToPlaylist(
+          playlist,
+          button
+        )
+      );
+
+      playlistChoices.appendChild(
+        button
+      );
+
+    }
+  );
+
+}
+
+
+async function addCurrentSongToPlaylist(
+  playlist,
+  button
+){
+
+  if(
+    !state.song ||
+    !currentSession
+  ){
+    return;
+  }
+
+  const targetSong =
+    state.song;
+
+  button.disabled =
+    true;
+
+  try{
+
+    const {
+      data:existing,
+      error:checkError
+    } =
+    await sb
+    .from("playlist_songs")
+    .select("id")
+    .eq(
+      "playlist_id",
+      playlist.id
+    )
+    .eq(
+      "song_id",
+      targetSong.id
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .limit(1);
+
+    if(checkError){
+      throw checkError;
+    }
 
     if(
-      Number.isFinite(
-        audio.duration
-      ) &&
-      audio.duration > 0
+      existing &&
+      existing.length
     ){
 
-      progressFill.style.width =
+      showPlayerStatus(
+        "この曲はすでに「" +
         (
-          audio.currentTime /
-          audio.duration *
-          100
+          playlist.name ||
+          "プレイリスト"
         ) +
-        "%";
+        "」に入っています。"
+      );
+
+      playlistModal.classList.remove(
+        "show"
+      );
+
+      return;
+    }
+
+    const {
+      error
+    } =
+    await sb
+    .from("playlist_songs")
+    .insert({
+
+      playlist_id:
+        playlist.id,
+
+      song_id:
+        targetSong.id,
+
+      user_id:
+        currentSession.user.id
+
+    });
+
+    if(error){
+      throw error;
+    }
+
+    showPlayerStatus(
+      "「" +
+      (
+        targetSong.title ||
+        "曲"
+      ) +
+      "」を「" +
+      (
+        playlist.name ||
+        "プレイリスト"
+      ) +
+      "」に追加しました！"
+    );
+
+    playlistModal.classList.remove(
+      "show"
+    );
+
+  }
+  catch(error){
+
+    console.error(error);
+
+    showPlayerStatus(
+      "プレイリストへの追加に失敗しました：" +
+      (
+        error.message ||
+        error
+      )
+    );
+
+  }
+  finally{
+
+    button.disabled =
+      false;
+
+  }
+
+}
+
+
+/* =========================
+   その他メニュー操作
+========================= */
+
+more.addEventListener(
+  "click",
+  async event=>{
+
+    event.stopPropagation();
+
+    if(
+      !state.song
+    ){
+
+      showPlayerStatus(
+        "まず曲を再生してください。"
+      );
+
+      return;
+    }
+
+    moreMenu.classList.toggle(
+      "show"
+    );
+
+    if(
+      moreMenu.classList.contains(
+        "show"
+      )
+    ){
+
+      await updateLikeMenu();
+
+    }
+
+  }
+);
+
+
+menuLike.addEventListener(
+  "click",
+  async ()=>{
+
+    await toggleCurrentLike();
+
+  }
+);
+
+
+menuPlaylist.addEventListener(
+  "click",
+  openPlaylistModal
+);
+
+
+document.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      !moreMenu.contains(
+        event.target
+      ) &&
+      event.target !== more
+    ){
+
+      closeMoreMenu();
+
+    }
+
+  }
+);
+
+
+playlistModalClose.addEventListener(
+  "click",
+  ()=>{
+
+    playlistModal.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+playlistModal.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      event.target ===
+      playlistModal
+    ){
+
+      playlistModal.classList.remove(
+        "show"
+      );
 
     }
 
@@ -1341,11 +2538,6 @@ window.addEventListener(
       event.data ||
       {};
 
-
-    /*
-      曲を再生
-    */
-
     if(
       data.type ===
       "NOVARADIO_PLAY"
@@ -1357,7 +2549,6 @@ window.addEventListener(
         )
           ? data.queue
           : [];
-
 
       const index =
         Number.isInteger(
@@ -1372,7 +2563,6 @@ window.addEventListener(
                 )
             );
 
-
       if(
         typeof data.shuffle ===
         "boolean"
@@ -1382,7 +2572,6 @@ window.addEventListener(
           data.shuffle;
 
       }
-
 
       if(
         [
@@ -1399,9 +2588,7 @@ window.addEventListener(
 
       }
 
-
       updateModeButtons();
-
 
       playSong(
         data.song,
@@ -1410,15 +2597,8 @@ window.addEventListener(
         true
       );
 
-
-      notifyFrameState();
-
     }
 
-
-    /*
-      次の曲
-    */
 
     if(
       data.type ===
@@ -1432,10 +2612,6 @@ window.addEventListener(
     }
 
 
-    /*
-      前の曲
-    */
-
     if(
       data.type ===
       "NOVARADIO_PREV"
@@ -1446,9 +2622,15 @@ window.addEventListener(
     }
 
 
-    /*
-      シャッフル
-    */
+    if(
+      data.type ===
+      "NOVARADIO_TOGGLE"
+    ){
+
+      playPause.click();
+
+    }
+
 
     if(
       data.type ===
@@ -1461,10 +2643,6 @@ window.addEventListener(
 
     }
 
-
-    /*
-      リピート
-    */
 
     if(
       data.type ===
@@ -1488,10 +2666,6 @@ window.addEventListener(
     }
 
 
-    /*
-      プレイヤー状態取得
-    */
-
     if(
       data.type ===
       "NOVARADIO_GET_PLAYER_STATE"
@@ -1501,10 +2675,6 @@ window.addEventListener(
 
     }
 
-
-    /*
-      ページ移動
-    */
 
     if(
       data.type ===
@@ -1521,7 +2691,6 @@ window.addEventListener(
         );
 
       }
-
 
       if(
         data.page ===
@@ -1540,10 +2709,19 @@ window.addEventListener(
 );
 
 
-/* 初期状態 */
+/* =========================
+   起動
+========================= */
 
-updateModeButtons();
+(async ()=>{
 
+  await initSession();
+
+  updateModeButtons();
+
+  updateProgressUI();
+
+})();
 </script>
 
 </body>
