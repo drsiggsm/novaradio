@@ -4,131 +4,526 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NovaRadio App</title>
+
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:#050611;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
-body{overflow:hidden}
-.app-shell{height:100vh;display:grid;grid-template-rows:64px 1fr 96px;background:radial-gradient(circle at 50% 0,#211b50,#07091a 55%,#050611)}
-.app-nav{display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid #24294d;background:#090c1bee;backdrop-filter:blur(16px);z-index:10}
-.brand{font-size:22px;font-weight:900}
-.nav-buttons{display:flex;gap:8px}
-.nav-btn{border:1px solid #343b67;background:#11152a;color:#fff;padding:10px 14px;border-radius:12px;font-weight:800;cursor:pointer}
-.nav-btn.active{background:linear-gradient(90deg,#7b25ff,#159df5);border-color:transparent}
-.view{position:relative;overflow:hidden}
-.view iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#050611}
-.player{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:10px 18px;border-top:1px solid #343b67;background:#0b0e20f2;backdrop-filter:blur(18px)}
-.track{display:flex;align-items:center;gap:12px;min-width:0}
-.cover{width:58px;height:58px;flex:0 0 58px;border-radius:12px;overflow:hidden;border:1px solid #343b67;background:#15182e;display:flex;align-items:center;justify-content:center;font-size:24px}
-.cover img{width:100%;height:100%;object-fit:cover;display:block}
-.meta{min-width:0}
-.title{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.artist{font-size:12px;color:#9ba0bd;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.controls{display:flex;align-items:center;gap:8px}
-.ctrl{width:40px;height:40px;border-radius:50%;border:1px solid #343b67;background:#171a31;color:#fff;font-weight:900;cursor:pointer}
-.ctrl.main{width:46px;height:46px;border:0;background:linear-gradient(135deg,#7b25ff,#159df5);font-size:18px}
-.ctrl.mode{border-radius:12px;width:42px}
-.ctrl.mode.active{border-color:#8b36ff;background:#24204a;box-shadow:0 0 0 1px #8b36ff inset}
-.progress{position:absolute;left:0;right:0;bottom:90px;height:4px;background:#181c35}
-.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#7b25ff,#159df5)}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  background:#050611;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+}
+
+body{
+  overflow:hidden;
+}
+
+.app-shell{
+  height:100vh;
+  display:grid;
+  grid-template-rows:64px 1fr 96px;
+  background:radial-gradient(circle at 50% 0,#211b50,#07091a 55%,#050611);
+}
+
+.app-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  border-bottom:1px solid #24294d;
+  background:#090c1bee;
+  backdrop-filter:blur(16px);
+  z-index:10;
+}
+
+.brand{
+  font-size:22px;
+  font-weight:900;
+}
+
+.nav-buttons{
+  display:flex;
+  gap:8px;
+}
+
+.nav-btn{
+  border:1px solid #343b67;
+  background:#11152a;
+  color:#fff;
+  padding:10px 14px;
+  border-radius:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.nav-btn.active{
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  border-color:transparent;
+}
+
+.view{
+  position:relative;
+  overflow:hidden;
+}
+
+.view iframe{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+  background:#050611;
+}
+
+.player{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:14px;
+  padding:10px 18px;
+  border-top:1px solid #343b67;
+  background:#0b0e20f2;
+  backdrop-filter:blur(18px);
+}
+
+.track{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.cover{
+  width:58px;
+  height:58px;
+  flex:0 0 58px;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid #343b67;
+  background:#15182e;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px;
+}
+
+.cover img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.meta{
+  min-width:0;
+}
+
+.title{
+  font-size:14px;
+  font-weight:900;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.artist{
+  font-size:12px;
+  color:#9ba0bd;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.ctrl{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:1px solid #343b67;
+  background:#171a31;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.ctrl.main{
+  width:46px;
+  height:46px;
+  border:0;
+  background:linear-gradient(135deg,#7b25ff,#159df5);
+  font-size:18px;
+}
+
+.ctrl.mode{
+  border-radius:12px;
+  width:42px;
+}
+
+.ctrl.mode.active{
+  border-color:#8b36ff;
+  background:#24204a;
+  box-shadow:0 0 0 1px #8b36ff inset;
+}
+
+/* クリック・タップ・ドラッグできるシークバー */
+.progress{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:90px;
+  height:12px;
+  background:#181c35;
+  cursor:pointer;
+  touch-action:none;
+}
+
+.progress-fill{
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  pointer-events:none;
+}
+
 @media(max-width:600px){
-  .app-shell{grid-template-rows:58px 1fr 88px}
-  .brand{font-size:18px}
-  .nav-btn{padding:8px 10px}
-  .cover{width:48px;height:48px;flex-basis:48px}
-  .player{padding:8px 10px}
-  .ctrl{width:34px;height:34px}
-  .ctrl.main{width:40px;height:40px}
-  .progress{bottom:84px}
+
+  .app-shell{
+    grid-template-rows:58px 1fr 88px;
+  }
+
+  .brand{
+    font-size:18px;
+  }
+
+  .nav-btn{
+    padding:8px 10px;
+  }
+
+  .cover{
+    width:48px;
+    height:48px;
+    flex-basis:48px;
+  }
+
+  .player{
+    padding:8px 10px;
+  }
+
+  .ctrl{
+    width:34px;
+    height:34px;
+  }
+
+  .ctrl.main{
+    width:40px;
+    height:40px;
+  }
+
+  .ctrl.mode{
+    width:34px;
+  }
+
+  .progress{
+    bottom:84px;
+  }
 }
 </style>
 </head>
+
 <body>
+
 <div class="app-shell">
+
   <header class="app-nav">
-    <div class="brand">NovaRadio</div>
-    <div class="nav-buttons">
-      <button class="nav-btn active" id="navHome">Home</button>
-      <button class="nav-btn" id="navMyPage">My Page</button>
+
+    <div class="brand">
+      NovaRadio
     </div>
+
+    <div class="nav-buttons">
+
+      <button
+        class="nav-btn active"
+        id="navHome"
+      >
+        Home
+      </button>
+
+      <button
+        class="nav-btn"
+        id="navMyPage"
+      >
+        My Page
+      </button>
+
+    </div>
+
   </header>
 
+
   <main class="view">
-    <iframe id="appFrame" src="home.html"></iframe>
+
+    <iframe
+      id="appFrame"
+      src="home.html"
+    ></iframe>
+
   </main>
 
-  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div class="progress">
+
+    <div
+      class="progress-fill"
+      id="progressFill"
+    ></div>
+
+  </div>
+
 
   <footer class="player">
+
     <div class="track">
-      <div class="cover" id="cover">🎵</div>
-      <div class="meta">
-        <div class="title" id="title">曲を選択</div>
-        <div class="artist" id="artist">NovaRadio</div>
+
+      <div
+        class="cover"
+        id="cover"
+      >
+        🎵
       </div>
+
+      <div class="meta">
+
+        <div
+          class="title"
+          id="title"
+        >
+          曲を選択
+        </div>
+
+        <div
+          class="artist"
+          id="artist"
+        >
+          NovaRadio
+        </div>
+
+      </div>
+
     </div>
+
 
     <div class="controls">
-      <button class="ctrl" id="prev">⏮</button>
-      <button class="ctrl main" id="playPause">▶</button>
-      <button class="ctrl" id="next">⏭</button>
-      <button class="ctrl mode" id="shuffle" title="シャッフル">🔀</button>
-      <button class="ctrl mode" id="repeat" title="リピート">🔁</button>
+
+      <button
+        class="ctrl"
+        id="prev"
+      >
+        ⏮
+      </button>
+
+      <button
+        class="ctrl main"
+        id="playPause"
+      >
+        ▶
+      </button>
+
+      <button
+        class="ctrl"
+        id="next"
+      >
+        ⏭
+      </button>
+
+      <button
+        class="ctrl mode"
+        id="shuffle"
+        title="シャッフル"
+      >
+        🔀
+      </button>
+
+      <button
+        class="ctrl mode"
+        id="repeat"
+        title="リピート"
+      >
+        🔁
+      </button>
+
     </div>
+
   </footer>
+
 </div>
 
-<audio id="audio" preload="metadata"></audio>
+
+<audio
+  id="audio"
+  preload="metadata"
+></audio>
+
 
 <script>
-const frame = document.getElementById("appFrame");
-const navHome = document.getElementById("navHome");
-const navMyPage = document.getElementById("navMyPage");
-const audio = document.getElementById("audio");
-const playPause = document.getElementById("playPause");
-const prev = document.getElementById("prev");
-const next = document.getElementById("next");
-const shuffle = document.getElementById("shuffle");
-const repeat = document.getElementById("repeat");
-const cover = document.getElementById("cover");
-const title = document.getElementById("title");
-const artist = document.getElementById("artist");
-const progressFill = document.getElementById("progressFill");
+
+const frame =
+  document.getElementById("appFrame");
+
+const navHome =
+  document.getElementById("navHome");
+
+const navMyPage =
+  document.getElementById("navMyPage");
+
+const audio =
+  document.getElementById("audio");
+
+const playPause =
+  document.getElementById("playPause");
+
+const prev =
+  document.getElementById("prev");
+
+const next =
+  document.getElementById("next");
+
+const shuffle =
+  document.getElementById("shuffle");
+
+const repeat =
+  document.getElementById("repeat");
+
+const cover =
+  document.getElementById("cover");
+
+const title =
+  document.getElementById("title");
+
+const artist =
+  document.getElementById("artist");
+
+const progressFill =
+  document.getElementById("progressFill");
+
+const progress =
+  document.querySelector(".progress");
+
 
 let state = {
+
   song:null,
+
   queue:[],
+
   index:-1,
+
   shuffle:false,
+
   repeat:"off"
+
 };
 
+
+/* =========================
+   ページ切り替え
+========================= */
+
 function setView(page){
+
   frame.src = page;
-  navHome.classList.toggle("active", page === "home.html");
-  navMyPage.classList.toggle("active", page === "mypage.html");
+
+  navHome.classList.toggle(
+    "active",
+    page === "home.html"
+  );
+
+  navMyPage.classList.toggle(
+    "active",
+    page === "mypage.html"
+  );
+
 }
 
-navHome.onclick = ()=>setView("home.html");
-navMyPage.onclick = ()=>setView("mypage.html");
-frame.addEventListener("load", ()=>setTimeout(notifyFrameState, 50));
+
+navHome.onclick =
+  ()=>setView("home.html");
+
+
+navMyPage.onclick =
+  ()=>setView("mypage.html");
+
+
+frame.addEventListener(
+  "load",
+  ()=>{
+
+    setTimeout(
+      notifyFrameState,
+      50
+    );
+
+  }
+);
+
+
+/* =========================
+   曲表示
+========================= */
 
 function renderSong(song){
+
   state.song = song;
+
   if(!song) return;
 
-  title.textContent = song.title || "Untitled";
-  artist.textContent = song.artist || "Unknown Artist";
 
-  const c = song.cover_url || "";
-  cover.innerHTML = c
-    ? `<img src="${String(c).replaceAll('"','&quot;')}" alt="">`
-    : "🎵";
+  title.textContent =
+    song.title ||
+    "Untitled";
 
-  if(audio.getAttribute("src") !== song.audio_url){
-    audio.src = song.audio_url;
+
+  artist.textContent =
+    song.artist ||
+    "Unknown Artist";
+
+
+  const c =
+    song.cover_url ||
+    "";
+
+
+  cover.innerHTML =
+    c
+      ? `<img src="${String(c).replaceAll('"','&quot;')}" alt="">`
+      : "🎵";
+
+
+  if(
+    audio.getAttribute("src") !==
+    song.audio_url
+  ){
+
+    audio.src =
+      song.audio_url;
+
     audio.load();
+
   }
+
 }
+
+
+/* =========================
+   曲再生
+========================= */
 
 function playSong(
   song,
@@ -136,202 +531,860 @@ function playSong(
   index=null,
   restart=false
 ){
+
   if(queue){
-    state.queue = queue;
+
+    state.queue =
+      queue;
+
   }
 
-  if(Number.isInteger(index)){
-    state.index = index;
+
+  if(
+    Number.isInteger(index)
+  ){
+
+    state.index =
+      index;
+
   }
+
 
   const previousSongId =
-    Number(state.song?.id);
+    Number(
+      state.song?.id
+    );
+
 
   renderSong(song);
 
-  /*
-    同じ曲がすでに再生中でも、
-    プレイリストの「再生」を押したら
-    先頭から再スタートできるようにする
-  */
+
   if(
     restart ||
-    previousSongId !== Number(song?.id)
+    previousSongId !==
+    Number(song?.id)
   ){
+
     try{
-      audio.currentTime = 0;
+
+      audio.currentTime =
+        0;
+
     }
     catch(error){
+
       console.warn(
         "再生位置のリセットに失敗:",
         error
       );
+
     }
+
   }
+
 
   audio
   .play()
   .catch(()=>{});
+
 }
+
+
+/* =========================
+   My Pageとの状態同期
+========================= */
 
 function notifyFrameState(){
+
   try{
-    frame.contentWindow.postMessage({
-      type:"NOVARADIO_PLAYER_STATE",
-      shuffle:state.shuffle,
-      repeat:state.repeat,
-      song:state.song,
-      index:state.index
-    }, "*");
-  }catch(e){}
+
+    frame.contentWindow.postMessage(
+      {
+
+        type:
+          "NOVARADIO_PLAYER_STATE",
+
+        shuffle:
+          state.shuffle,
+
+        repeat:
+          state.repeat,
+
+        song:
+          state.song,
+
+        index:
+          state.index
+
+      },
+      "*"
+    );
+
+  }
+  catch(e){}
+
 }
+
+
+/* =========================
+   シャッフル / リピート
+========================= */
 
 function updateModeButtons(){
-  shuffle.classList.toggle("active", state.shuffle);
-  repeat.classList.toggle("active", state.repeat !== "off");
-  repeat.textContent = state.repeat === "one" ? "🔂" : "🔁";
-  shuffle.title = state.shuffle ? "シャッフル ON" : "シャッフル OFF";
-  repeat.title = state.repeat === "all" ? "全曲リピート" : state.repeat === "one" ? "1曲リピート" : "リピート OFF";
+
+  shuffle.classList.toggle(
+    "active",
+    state.shuffle
+  );
+
+
+  repeat.classList.toggle(
+    "active",
+    state.repeat !== "off"
+  );
+
+
+  repeat.textContent =
+    state.repeat === "one"
+      ? "🔂"
+      : "🔁";
+
+
+  shuffle.title =
+    state.shuffle
+      ? "シャッフル ON"
+      : "シャッフル OFF";
+
+
+  repeat.title =
+    state.repeat === "all"
+      ? "全曲リピート"
+      : state.repeat === "one"
+      ? "1曲リピート"
+      : "リピート OFF";
+
+
   notifyFrameState();
+
 }
+
 
 function setShuffle(value){
-  state.shuffle = !!value;
+
+  state.shuffle =
+    !!value;
+
   updateModeButtons();
+
 }
+
 
 function setRepeat(value){
-  state.repeat = ["off","all","one"].includes(value) ? value : "off";
+
+  state.repeat =
+    [
+      "off",
+      "all",
+      "one"
+    ].includes(value)
+      ? value
+      : "off";
+
+
   updateModeButtons();
+
 }
+
 
 function cycleRepeat(){
-  setRepeat(state.repeat === "off" ? "all" : state.repeat === "all" ? "one" : "off");
+
+  setRepeat(
+
+    state.repeat === "off"
+      ? "all"
+      : state.repeat === "all"
+      ? "one"
+      : "off"
+
+  );
+
 }
 
-function playNext(fromEnded=false){
-  if(!state.queue.length) return;
 
-  if(fromEnded && state.repeat === "one"){
-    audio.currentTime = 0;
-    audio.play().catch(()=>{});
+/* =========================
+   次の曲
+========================= */
+
+function playNext(
+  fromEnded=false
+){
+
+  if(
+    !state.queue.length
+  ){
     return;
   }
 
-  if(state.index < 0){
-    state.index = state.queue.findIndex(s=>Number(s.id)===Number(state.song?.id));
+
+  if(
+    fromEnded &&
+    state.repeat === "one"
+  ){
+
+    audio.currentTime =
+      0;
+
+    audio
+    .play()
+    .catch(()=>{});
+
+    return;
+
   }
 
-  if(state.shuffle && state.queue.length > 1){
-    let nextIndex = state.index;
-    while(nextIndex === state.index){
-      nextIndex = Math.floor(Math.random() * state.queue.length);
-    }
-    state.index = nextIndex;
-  }else{
-    const candidate = state.index + 1;
-    if(candidate >= state.queue.length){
-      if(fromEnded && state.repeat === "off") return;
-      state.index = 0;
-    }else{
-      state.index = candidate;
-    }
+
+  if(
+    state.index < 0
+  ){
+
+    state.index =
+      state.queue.findIndex(
+        s=>
+          Number(s.id) ===
+          Number(state.song?.id)
+      );
+
   }
 
-  playSong(state.queue[state.index], state.queue, state.index);
+
+  if(
+    state.shuffle &&
+    state.queue.length > 1
+  ){
+
+    let nextIndex =
+      state.index;
+
+
+    while(
+      nextIndex ===
+      state.index
+    ){
+
+      nextIndex =
+        Math.floor(
+          Math.random() *
+          state.queue.length
+        );
+
+    }
+
+
+    state.index =
+      nextIndex;
+
+  }
+
+  else{
+
+    const candidate =
+      state.index + 1;
+
+
+    if(
+      candidate >=
+      state.queue.length
+    ){
+
+      if(
+        fromEnded &&
+        state.repeat === "off"
+      ){
+
+        return;
+
+      }
+
+
+      state.index =
+        0;
+
+    }
+
+    else{
+
+      state.index =
+        candidate;
+
+    }
+
+  }
+
+
+  playSong(
+    state.queue[state.index],
+    state.queue,
+    state.index
+  );
+
+
   notifyFrameState();
+
 }
+
+
+/* =========================
+   前の曲
+========================= */
 
 function playPrev(){
-  if(!state.queue.length) return;
 
-  if(audio.currentTime > 3){
-    audio.currentTime = 0;
+  if(
+    !state.queue.length
+  ){
     return;
   }
 
-  if(state.index < 0){
-    state.index = state.queue.findIndex(s=>Number(s.id)===Number(state.song?.id));
+
+  /*
+    3秒以上再生していたら
+    前曲ではなく曲頭へ戻る
+  */
+  if(
+    audio.currentTime > 3
+  ){
+
+    audio.currentTime =
+      0;
+
+    return;
+
   }
 
-  if(state.shuffle && state.queue.length > 1){
-    let prevIndex = state.index;
-    while(prevIndex === state.index){
-      prevIndex = Math.floor(Math.random() * state.queue.length);
+
+  if(
+    state.index < 0
+  ){
+
+    state.index =
+      state.queue.findIndex(
+        s=>
+          Number(s.id) ===
+          Number(state.song?.id)
+      );
+
+  }
+
+
+  if(
+    state.shuffle &&
+    state.queue.length > 1
+  ){
+
+    let prevIndex =
+      state.index;
+
+
+    while(
+      prevIndex ===
+      state.index
+    ){
+
+      prevIndex =
+        Math.floor(
+          Math.random() *
+          state.queue.length
+        );
+
     }
-    state.index = prevIndex;
-  }else{
-    state.index = state.index - 1;
-    if(state.index < 0) state.index = state.queue.length - 1;
+
+
+    state.index =
+      prevIndex;
+
   }
 
-  playSong(state.queue[state.index], state.queue, state.index);
+  else{
+
+    state.index =
+      state.index - 1;
+
+
+    if(
+      state.index < 0
+    ){
+
+      state.index =
+        state.queue.length - 1;
+
+    }
+
+  }
+
+
+  playSong(
+    state.queue[state.index],
+    state.queue,
+    state.index
+  );
+
+
   notifyFrameState();
+
 }
 
-playPause.onclick = ()=>{
-  if(!state.song) return;
-  if(audio.paused) audio.play().catch(()=>{});
-  else audio.pause();
-};
-prev.onclick = playPrev;
-next.onclick = ()=>playNext(false);
-shuffle.onclick = ()=>setShuffle(!state.shuffle);
-repeat.onclick = cycleRepeat;
 
-audio.addEventListener("play", ()=>playPause.textContent="⏸");
-audio.addEventListener("pause", ()=>playPause.textContent="▶");
-audio.addEventListener("ended", ()=>playNext(true));
-audio.addEventListener("timeupdate", ()=>{
-  if(Number.isFinite(audio.duration) && audio.duration > 0){
-    progressFill.style.width = ((audio.currentTime/audio.duration)*100) + "%";
+/* =========================
+   再生 / 一時停止
+========================= */
+
+playPause.onclick =
+  ()=>{
+
+    if(
+      !state.song
+    ){
+      return;
+    }
+
+
+    if(
+      audio.paused
+    ){
+
+      audio
+      .play()
+      .catch(()=>{});
+
+    }
+
+    else{
+
+      audio.pause();
+
+    }
+
+  };
+
+
+prev.onclick =
+  playPrev;
+
+
+next.onclick =
+  ()=>playNext(false);
+
+
+shuffle.onclick =
+  ()=>setShuffle(
+    !state.shuffle
+  );
+
+
+repeat.onclick =
+  cycleRepeat;
+
+
+/* =========================
+   シークバー
+   クリック / タップ / ドラッグ
+========================= */
+
+let isSeeking =
+  false;
+
+
+function seekFromPointer(
+  event
+){
+
+  if(
+    !Number.isFinite(
+      audio.duration
+    ) ||
+    audio.duration <= 0
+  ){
+
+    return;
+
   }
-});
 
-window.addEventListener("message", (event)=>{
-  const data = event.data || {};
 
-  if(data.type === "NOVARADIO_PLAY"){
-    const queue =
-      Array.isArray(data.queue)
-        ? data.queue
-        : [];
+  const rect =
+    progress.getBoundingClientRect();
 
-    const index =
-      Number.isInteger(data.index)
-        ? data.index
-        : queue.findIndex(
-            s=>
-              Number(s.id) ===
-              Number(data.song?.id)
-          );
 
-    if(typeof data.shuffle === "boolean") state.shuffle = data.shuffle;
-    if(["off","all","one"].includes(data.repeat)) state.repeat = data.repeat;
-    updateModeButtons();
+  const clientX =
+    event.clientX;
 
-    playSong(
-      data.song,
-      queue,
-      index,
-      true
+
+  const ratio =
+    Math.max(
+      0,
+      Math.min(
+        1,
+        (
+          clientX -
+          rect.left
+        ) /
+        rect.width
+      )
     );
-    notifyFrameState();
-  }
 
-  if(data.type === "NOVARADIO_NEXT") playNext(false);
-  if(data.type === "NOVARADIO_PREV") playPrev();
-  if(data.type === "NOVARADIO_SET_SHUFFLE") setShuffle(data.value);
-  if(data.type === "NOVARADIO_SET_REPEAT") setRepeat(data.value);
-  if(data.type === "NOVARADIO_CYCLE_REPEAT") cycleRepeat();
-  if(data.type === "NOVARADIO_GET_PLAYER_STATE") notifyFrameState();
 
-  if(data.type === "NOVARADIO_NAV"){
-    if(data.page === "home") setView("home.html");
-    if(data.page === "mypage") setView("mypage.html");
+  audio.currentTime =
+    ratio *
+    audio.duration;
+
+
+  progressFill.style.width =
+    (
+      ratio *
+      100
+    ) +
+    "%";
+
+}
+
+
+progress.addEventListener(
+  "pointerdown",
+  event=>{
+
+    isSeeking =
+      true;
+
+
+    try{
+
+      progress.setPointerCapture(
+        event.pointerId
+      );
+
+    }
+    catch(e){}
+
+
+    seekFromPointer(
+      event
+    );
+
   }
-});
+);
+
+
+progress.addEventListener(
+  "pointermove",
+  event=>{
+
+    if(
+      !isSeeking
+    ){
+      return;
+    }
+
+
+    seekFromPointer(
+      event
+    );
+
+  }
+);
+
+
+progress.addEventListener(
+  "pointerup",
+  event=>{
+
+    if(
+      !isSeeking
+    ){
+      return;
+    }
+
+
+    seekFromPointer(
+      event
+    );
+
+
+    isSeeking =
+      false;
+
+
+    try{
+
+      progress.releasePointerCapture(
+        event.pointerId
+      );
+
+    }
+    catch(e){}
+
+  }
+);
+
+
+progress.addEventListener(
+  "pointercancel",
+  ()=>{
+
+    isSeeking =
+      false;
+
+  }
+);
+
+
+/* =========================
+   Audioイベント
+========================= */
+
+audio.addEventListener(
+  "play",
+  ()=>{
+
+    playPause.textContent =
+      "⏸";
+
+  }
+);
+
+
+audio.addEventListener(
+  "pause",
+  ()=>{
+
+    playPause.textContent =
+      "▶";
+
+  }
+);
+
+
+audio.addEventListener(
+  "ended",
+  ()=>{
+
+    playNext(true);
+
+  }
+);
+
+
+audio.addEventListener(
+  "timeupdate",
+  ()=>{
+
+    if(
+      Number.isFinite(
+        audio.duration
+      ) &&
+      audio.duration > 0
+    ){
+
+      progressFill.style.width =
+        (
+          (
+            audio.currentTime /
+            audio.duration
+          ) *
+          100
+        ) +
+        "%";
+
+    }
+
+  }
+);
+
+
+/* =========================
+   Home / My Pageからの命令
+========================= */
+
+window.addEventListener(
+  "message",
+  event=>{
+
+    const data =
+      event.data ||
+      {};
+
+
+    if(
+      data.type ===
+      "NOVARADIO_PLAY"
+    ){
+
+      const queue =
+        Array.isArray(
+          data.queue
+        )
+          ? data.queue
+          : [];
+
+
+      const index =
+        Number.isInteger(
+          data.index
+        )
+          ? data.index
+          : queue.findIndex(
+              s=>
+                Number(s.id) ===
+                Number(
+                  data.song?.id
+                )
+            );
+
+
+      if(
+        typeof data.shuffle ===
+        "boolean"
+      ){
+
+        state.shuffle =
+          data.shuffle;
+
+      }
+
+
+      if(
+        [
+          "off",
+          "all",
+          "one"
+        ].includes(
+          data.repeat
+        )
+      ){
+
+        state.repeat =
+          data.repeat;
+
+      }
+
+
+      updateModeButtons();
+
+
+      playSong(
+        data.song,
+        queue,
+        index,
+        true
+      );
+
+
+      notifyFrameState();
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_NEXT"
+    ){
+
+      playNext(false);
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_PREV"
+    ){
+
+      playPrev();
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_SET_SHUFFLE"
+    ){
+
+      setShuffle(
+        data.value
+      );
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_SET_REPEAT"
+    ){
+
+      setRepeat(
+        data.value
+      );
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_CYCLE_REPEAT"
+    ){
+
+      cycleRepeat();
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_GET_PLAYER_STATE"
+    ){
+
+      notifyFrameState();
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_NAV"
+    ){
+
+      if(
+        data.page ===
+        "home"
+      ){
+
+        setView(
+          "home.html"
+        );
+
+      }
+
+
+      if(
+        data.page ===
+        "mypage"
+      ){
+
+        setView(
+          "mypage.html"
+        );
+
+      }
+
+    }
+
+  }
+);
+
+
+/* 初期状態 */
+
 updateModeButtons();
+
 </script>
+
 </body>
 </html>
