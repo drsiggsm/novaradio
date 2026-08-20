@@ -717,10 +717,37 @@ body{
   }
 
 }
+
+
+/* =========================
+   app.html 内で表示している時は
+   My Page 側の旧ミニプレイヤーを隠す
+   再生本体は親 app.html に一本化
+========================= */
+body.inside-nova-app{
+  padding-bottom:40px !important;
+}
+
+body.inside-nova-app .mini-player{
+  display:none !important;
+}
+
 </style>
 </head>
 
 <body>
+
+<script>
+/* app.html の中で開かれている時だけ、ページ内の旧プレイヤー表示を消す */
+if(
+  window.parent &&
+  window.parent !== window
+){
+  document.body.classList.add(
+    "inside-nova-app"
+  );
+}
+</script>
 
 <main class="wrap">
 
@@ -1105,6 +1132,35 @@ body{
 
 
 <script>
+
+/* app.html 内のナビゲーション補助 */
+document.addEventListener(
+  "DOMContentLoaded",
+  ()=>{
+    const homeLink =
+      document.querySelector("a.back");
+
+    if(
+      homeLink &&
+      window.parent &&
+      window.parent !== window
+    ){
+      homeLink.addEventListener(
+        "click",
+        event=>{
+          event.preventDefault();
+          window.parent.postMessage(
+            {
+              type:"NOVARADIO_NAV",
+              page:"home"
+            },
+            "*"
+          );
+        }
+      );
+    }
+  }
+);
 
 const SUPABASE_URL =
   "https://melsoikvhwzvzswlimsi.supabase.co";
