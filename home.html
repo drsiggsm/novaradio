@@ -218,134 +218,6 @@ label{
 
 
 /* =========================
-   30秒ハイライト
-========================= */
-
-document
-.getElementById(
-  "highlightPlay"
-)
-.addEventListener(
-  "click",
-  async ()=>{
-
-    const now =
-      document.getElementById(
-        "now"
-      );
-
-    now.innerHTML =
-      `<div class="now-label">
-        HIGHLIGHT RADIO
-      </div>
-
-      <div class="empty">
-        30秒ハイライトを準備しています… ⚡
-      </div>`;
-
-    const {
-      data,
-      error
-    } =
-    await sb
-    .from(
-      "songs"
-    )
-    .select(
-      "*"
-    );
-
-    if(error){
-
-      now.innerHTML =
-        `<div class="now-label">
-          ERROR
-        </div>
-
-        <div class="empty">
-          曲の取得に失敗しました。
-          <br><br>
-          ${escapeHtml(
-            error.message
-          )}
-        </div>`;
-
-      return;
-    }
-
-    currentQueue =
-      (data || [])
-      .filter(
-        songMatches
-      );
-
-    if(
-      !currentQueue.length
-    ){
-
-      now.innerHTML =
-        `<div class="now-label">
-          HIGHLIGHT RADIO
-        </div>
-
-        <div class="empty">
-          この条件に合う曲は
-          <br>
-          まだありません 🎧
-        </div>`;
-
-      return;
-    }
-
-    historySongs =
-      [];
-
-    historyIndex =
-      -1;
-
-    const randomSong =
-      currentQueue[
-        Math.floor(
-          Math.random() *
-          currentQueue.length
-        )
-      ];
-
-    if(isInsideNovaApp()){
-
-      window.parent.postMessage(
-        {
-          type:"NOVARADIO_PLAY",
-          song:randomSong,
-          queue:currentQueue,
-          index:currentQueue.findIndex(
-            item=>
-              Number(item.id) ===
-              Number(randomSong.id)
-          ),
-          highlight:true
-        },
-        "*"
-      );
-
-      /*
-        親プレイヤーが再生を担当するため、
-        Homeの表示はプレイヤー状態同期で更新されます。
-      */
-    }
-    else{
-
-      await playSong(
-        randomSong
-      );
-
-    }
-
-  }
-);
-
-
-/* =========================
    ARTIST SEARCH
 ========================= */
 
@@ -3807,6 +3679,146 @@ document
       );
     }
 
+    await playSong(
+      randomSong
+    );
+
+  }
+);
+
+
+/* =========================
+   30秒ハイライト
+========================= */
+
+document
+.getElementById(
+  "highlightPlay"
+)
+.addEventListener(
+  "click",
+  async ()=>{
+
+    const now =
+      document.getElementById(
+        "now"
+      );
+
+    now.innerHTML =
+      `<div class="now-label">
+        HIGHLIGHT RADIO
+      </div>
+
+      <div class="empty">
+        30秒ハイライトを準備しています… ⚡
+      </div>`;
+
+    const {
+      data,
+      error
+    } =
+    await sb
+    .from(
+      "songs"
+    )
+    .select(
+      "*"
+    );
+
+    if(error){
+
+      now.innerHTML =
+        `<div class="now-label">
+          ERROR
+        </div>
+
+        <div class="empty">
+          曲の取得に失敗しました。
+          <br><br>
+          ${escapeHtml(
+            error.message
+          )}
+        </div>`;
+
+      return;
+    }
+
+    currentQueue =
+      (data || [])
+      .filter(
+        songMatches
+      );
+
+    if(
+      !currentQueue.length
+    ){
+
+      now.innerHTML =
+        `<div class="now-label">
+          HIGHLIGHT RADIO
+        </div>
+
+        <div class="empty">
+          この条件に合う曲は
+          <br>
+          まだありません 🎧
+        </div>`;
+
+      return;
+    }
+
+    historySongs =
+      [];
+
+    historyIndex =
+      -1;
+
+    const randomSong =
+      currentQueue[
+        Math.floor(
+          Math.random() *
+          currentQueue.length
+        )
+      ];
+
+    /*
+      共通プレイヤー内なら親へ直接送る。
+      これでハイライトモードONの状態で再生開始。
+    */
+    if(isInsideNovaApp()){
+
+      window.parent.postMessage(
+        {
+          type:"NOVARADIO_PLAY",
+          song:randomSong,
+          queue:currentQueue,
+          index:currentQueue.findIndex(
+            item=>
+              Number(item.id) ===
+              Number(randomSong.id)
+          ),
+          highlight:true
+        },
+        "*"
+      );
+
+      currentSong =
+        randomSong;
+
+      historySongs.push(
+        randomSong
+      );
+
+      historyIndex =
+        0;
+
+      return;
+    }
+
+    /*
+      app.htmlを通さずHome単体で開いた場合は
+      通常再生にフォールバック。
+    */
     await playSong(
       randomSong
     );
