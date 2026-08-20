@@ -3161,6 +3161,260 @@ function stopPlaylistPlayback(
 
 
 /* =========================
+   共通プレイヤー状態
+   Home / My Page 間で共有
+========================= */
+
+function saveSharedPlayerState(){
+
+  if(!currentMiniSong){
+    return;
+  }
+
+  const queue =
+    currentPlaylistSongs
+    .map(entry=>entry?.song)
+    .filter(Boolean);
+
+  const state = {
+    song:currentMiniSong,
+    queue:queue,
+    currentIndex:playlistPlayIndex,
+    playOrder:playlistPlayOrder,
+    shuffle:playlistShuffleEnabled,
+    repeat:playlistRepeatMode,
+    currentTime:Number(
+      globalAudio.currentTime || 0
+    ),
+    wasPlaying:!globalAudio.paused,
+    savedAt:Date.now()
+  };
+
+  try{
+    localStorage.setItem(
+      "novaradio_player_state",
+      JSON.stringify(state)
+    );
+  }
+  catch(error){
+    console.warn(
+      "Shared player state save failed:",
+      error
+    );
+  }
+
+}
+
+
+async function restoreSharedPlayerState(){
+
+  let raw;
+
+  try{
+    raw =
+      localStorage.getItem(
+        "novaradio_player_state"
+      );
+  }
+  catch{
+    return;
+  }
+
+  if(!raw){
+    return;
+  }
+
+  try{
+
+    const state =
+      JSON.parse(raw);
+
+    if(
+      !state ||
+      !state.song ||
+      !state.song.audio_url
+    ){
+      return;
+    }
+
+    currentMiniSong =
+      state.song;
+
+    const queue =
+      Array.isArray(state.queue) &&
+      state.queue.length
+        ? state.queue
+        : [state.song];
+
+    currentPlaylistSongs =
+      queue.map(
+        song=>({
+          song,
+          relation:null
+        })
+      );
+
+    playlistPlayOrder =
+      Array.isArray(state.playOrder) &&
+      state.playOrder.length ===
+        currentPlaylistSongs.length
+        ? state.playOrder
+        : currentPlaylistSongs.map(
+            (_, index)=>index
+          );
+
+    const foundIndex =
+      playlistPlayOrder.findIndex(
+        index=>
+          Number(
+            currentPlaylistSongs[
+              index
+            ]?.song?.id
+          ) ===
+          Number(
+            state.song.id
+          )
+      );
+
+    playlistPlayIndex =
+      Number.isInteger(
+        state.currentIndex
+      )
+        ? Math.max(
+            0,
+            Math.min(
+              state.currentIndex,
+              playlistPlayOrder.length - 1
+            )
+          )
+        : Math.max(
+            0,
+            foundIndex
+          );
+
+    playlistShuffleEnabled =
+      !!state.shuffle;
+
+    playlistRepeatMode =
+      ["off","all","one"].includes(
+        state.repeat
+      )
+        ? state.repeat
+        : "off";
+
+    updatePlaylistControlLabels();
+
+    miniPlayer.classList.add(
+      "show"
+    );
+
+    const coverUrl =
+      safeHttpUrl(
+        currentMiniSong.cover_url
+      );
+
+    miniCover.innerHTML =
+      coverUrl
+        ? `<img
+            src="${escapeHtml(
+              coverUrl
+            )}"
+            alt="${escapeHtml(
+              (currentMiniSong.title || "ジャケット") +
+              " のジャケット"
+            )}"
+          >`
+        : "🎵";
+
+    miniTitle.textContent =
+      currentMiniSong.title ||
+      "Untitled";
+
+    miniArtist.textContent =
+      currentMiniSong.artist ||
+      "Unknown Artist";
+
+    globalAudio.src =
+      currentMiniSong.audio_url;
+
+    globalAudio.load();
+
+    const restoreTime =
+      Number(
+        state.currentTime || 0
+      );
+
+    const applyRestoreTime =
+      ()=>{
+
+        if(
+          Number.isFinite(
+            restoreTime
+          ) &&
+          restoreTime > 0
+        ){
+
+          globalAudio.currentTime =
+            Math.min(
+              restoreTime,
+              Number.isFinite(
+                globalAudio.duration
+              )
+                ? Math.max(
+                    0,
+                    globalAudio.duration - 0.25
+                  )
+                : restoreTime
+            );
+
+        }
+
+      };
+
+    if(
+      globalAudio.readyState >= 1
+    ){
+      applyRestoreTime();
+    }
+    else{
+      globalAudio.addEventListener(
+        "loadedmetadata",
+        applyRestoreTime,
+        {once:true}
+      );
+    }
+
+    if(state.wasPlaying){
+
+      globalAudio
+      .play()
+      .catch(
+        ()=>{
+          miniPlayPause.textContent =
+            "▶";
+        }
+      );
+
+    }
+    else{
+      miniPlayPause.textContent =
+        "▶";
+    }
+
+  }
+  catch(error){
+
+    console.warn(
+      "Shared player state restore failed:",
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================
    固定ミニプレイヤー
 ========================= */
 
@@ -3231,12 +3485,14 @@ function playSongInMiniPlayer(
     ()=>{
       miniPlayPause.textContent =
         "⏸";
+      saveSharedPlayerState();
     }
   )
   .catch(
     ()=>{
       miniPlayPause.textContent =
         "▶";
+      saveSharedPlayerState();
     }
   );
 
@@ -3511,6 +3767,8 @@ globalAudio.addEventListener(
     miniPlayPause.textContent =
       "⏸";
 
+    saveSharedPlayerState();
+
   }
 );
 
@@ -3521,6 +3779,8 @@ globalAudio.addEventListener(
 
     miniPlayPause.textContent =
       "▶";
+
+    saveSharedPlayerState();
 
   }
 );
@@ -3563,6 +3823,14 @@ globalAudio.addEventListener(
 
     }
 
+    if(
+      Math.floor(
+        globalAudio.currentTime
+      ) % 2 === 0
+    ){
+      saveSharedPlayerState();
+    }
+
   }
 );
 
@@ -3593,6 +3861,8 @@ miniSeek.addEventListener(
         ) / 100
       ) *
       globalAudio.duration;
+
+    saveSharedPlayerState();
 
   }
 );
@@ -3767,7 +4037,19 @@ document
 );
 
 
-init();
+window.addEventListener(
+  "beforeunload",
+  saveSharedPlayerState
+);
+
+
+(async ()=>{
+
+  await init();
+
+  await restoreSharedPlayerState();
+
+})();
 
 </script>
 
