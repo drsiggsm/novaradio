@@ -121,11 +121,48 @@ function renderSong(song){
   }
 }
 
-function playSong(song, queue=null, index=null){
-  if(queue) state.queue = queue;
-  if(Number.isInteger(index)) state.index = index;
+function playSong(
+  song,
+  queue=null,
+  index=null,
+  restart=false
+){
+  if(queue){
+    state.queue = queue;
+  }
+
+  if(Number.isInteger(index)){
+    state.index = index;
+  }
+
+  const previousSongId =
+    Number(state.song?.id);
+
   renderSong(song);
-  audio.play().catch(()=>{});
+
+  /*
+    同じ曲がすでに再生中でも、
+    プレイリストの「再生」を押したら
+    先頭から再スタートできるようにする
+  */
+  if(
+    restart ||
+    previousSongId !== Number(song?.id)
+  ){
+    try{
+      audio.currentTime = 0;
+    }
+    catch(error){
+      console.warn(
+        "再生位置のリセットに失敗:",
+        error
+      );
+    }
+  }
+
+  audio
+  .play()
+  .catch(()=>{});
 }
 
 function playNext(){
@@ -167,9 +204,26 @@ window.addEventListener("message", (event)=>{
   const data = event.data || {};
 
   if(data.type === "NOVARADIO_PLAY"){
-    const queue = Array.isArray(data.queue) ? data.queue : [];
-    const index = Number.isInteger(data.index) ? data.index : queue.findIndex(s=>Number(s.id)===Number(data.song?.id));
-    playSong(data.song, queue, index);
+    const queue =
+      Array.isArray(data.queue)
+        ? data.queue
+        : [];
+
+    const index =
+      Number.isInteger(data.index)
+        ? data.index
+        : queue.findIndex(
+            s=>
+              Number(s.id) ===
+              Number(data.song?.id)
+          );
+
+    playSong(
+      data.song,
+      queue,
+      index,
+      true
+    );
   }
 
   if(data.type === "NOVARADIO_NEXT") playNext();
