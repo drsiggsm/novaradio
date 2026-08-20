@@ -1284,17 +1284,13 @@ async function playSong(
       song.audio_url;
 
     /*
-      先読み済みURLならブラウザキャッシュを使わせ、
-      余計なload呼び出しを避ける。
+      ここは軽量化より正確さを優先。
+      新しいsrcに切り替えたら必ずloadして、
+      この曲自身のmetadataを確実に読み込む。
+      先読み済みならブラウザキャッシュが効くので
+      ネットワーク負荷は抑えられる。
     */
-    if(
-      preloadedAudioUrl !==
-      String(song.audio_url)
-    ){
-
-      audio.load();
-
-    }
+    audio.load();
 
   }
 
@@ -1324,88 +1320,144 @@ async function playSong(
   ){
 
     /*
-      highlight_start が0より大きい場合は
-      durationを取得してからシークする。
+      ハイライト開始位置を正確に反映する。
+
+      sourceChanged直後は、readyStateが一瞬だけ
+      前の曲の状態を持つブラウザがあるため、
+      requestedStart > 0 の時は「新しい曲のmetadata」を
+      必ず待ってからcurrentTimeを設定する。
     */
     if(
-      requestedStart > 0 &&
-      audio.readyState < 1
+      requestedStart > 0
     ){
 
-      await new Promise(
-        resolve=>{
+      if(
+        sourceChanged ||
+        audio.readyState < 1
+      ){
 
-          let done =
-            false;
+        await new Promise(
+          resolve=>{
 
-          const finish =
-            ()=>{
+            let finished =
+              false;
 
-              if(done){
-                return;
+            const finish =
+              ()=>{
+
+                if(finished){
+                  return;
+                }
+
+                finished =
+                  true;
+
+                clearTimeout(
+                  timer
+                );
+
+                audio.removeEventListener(
+                  "loadedmetadata",
+                  onMetadata
+                );
+
+                resolve();
+
+              };
+
+            const onMetadata =
+              ()=>finish();
+
+            const timer =
+              setTimeout(
+                finish,
+                4000
+              );
+
+            audio.addEventListener(
+              "loadedmetadata",
+              onMetadata,
+              {
+                once:true
               }
-
-              done =
-                true;
-
-              clearTimeout(
-                timer
-              );
-
-              audio.removeEventListener(
-                "loadedmetadata",
-                onMetadata
-              );
-
-              resolve();
-
-            };
-
-          const onMetadata =
-            ()=>finish();
-
-          const timer =
-            setTimeout(
-              finish,
-              2500
             );
 
-          audio.addEventListener(
-            "loadedmetadata",
-            onMetadata,
-            {
-              once:true
-            }
+          }
+        );
+
+      }
+
+      try{
+
+        const maxStart =
+          Number.isFinite(
+            audio.duration
+          )
+            ? Math.max(
+                0,
+                audio.duration - 0.1
+              )
+            : requestedStart;
+
+        audio.currentTime =
+          Math.min(
+            requestedStart,
+            maxStart
           );
 
-        }
-      );
+      }
+      catch(error){
+
+        console.warn(
+          "Highlight seek error:",
+          error
+        );
+
+      }
+
+    }
+    else{
+
+      try{
+
+        audio.currentTime =
+          0;
+
+      }
+      catch(error){
+
+        console.warn(
+          "Seek reset error:",
+          error
+        );
+
+      }
 
     }
 
+  }
+
+  /*
+    src切替直後にブラウザ側がcurrentTimeを0へ戻すケースへの保険。
+  */
+  if(
+    requestedStart > 0 &&
+    Math.abs(
+      audio.currentTime -
+      requestedStart
+    ) > 0.75
+  ){
+
     try{
 
-      const maxStart =
-        Number.isFinite(
-          audio.duration
-        )
-          ? Math.max(
-              0,
-              audio.duration - 0.1
-            )
-          : requestedStart;
-
       audio.currentTime =
-        Math.min(
-          requestedStart,
-          maxStart
-        );
+        requestedStart;
 
     }
     catch(error){
 
       console.warn(
-        "Highlight seek error:",
+        "Final highlight seek retry:",
         error
       );
 
