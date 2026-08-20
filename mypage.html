@@ -3414,6 +3414,40 @@ async function restoreSharedPlayerState(){
 }
 
 
+function isInsideNovaApp(){
+  return (
+    window.parent &&
+    window.parent !== window
+  );
+}
+
+function sendPlayToNovaApp(song){
+  if(!isInsideNovaApp()){
+    return false;
+  }
+
+  const queue =
+    currentPlaylistSongs
+    .map(entry=>entry?.song)
+    .filter(Boolean);
+
+  window.parent.postMessage(
+    {
+      type:"NOVARADIO_PLAY",
+      song:song,
+      queue:queue,
+      index:queue.findIndex(
+        item=>
+          Number(item.id) ===
+          Number(song.id)
+      )
+    },
+    "*"
+  );
+
+  return true;
+}
+
 /* =========================
    固定ミニプレイヤー
 ========================= */
@@ -3421,6 +3455,11 @@ async function restoreSharedPlayerState(){
 function playSongInMiniPlayer(
   song
 ){
+
+  const delegatedToApp =
+    sendPlayToNovaApp(
+      song
+    );
 
   if(
     !song ||
@@ -3466,6 +3505,10 @@ function playSongInMiniPlayer(
   miniArtist.textContent =
     song.artist ||
     "Unknown Artist";
+
+  if(delegatedToApp){
+    return;
+  }
 
   if(
     globalAudio.src !==
@@ -3669,6 +3712,14 @@ miniPlayPause.addEventListener(
   "click",
   ()=>{
 
+    if(isInsideNovaApp()){
+      window.parent.postMessage(
+        {type:"NOVARADIO_TOGGLE"},
+        "*"
+      );
+      return;
+    }
+
     if(!currentMiniSong){
       return;
     }
@@ -3691,13 +3742,31 @@ miniPlayPause.addEventListener(
 
 miniPrev.addEventListener(
   "click",
-  playPreviousTrack
+  ()=>{
+    if(isInsideNovaApp()){
+      window.parent.postMessage(
+        {type:"NOVARADIO_PREV"},
+        "*"
+      );
+      return;
+    }
+    playPreviousTrack();
+  }
 );
 
 
 miniNext.addEventListener(
   "click",
-  playNextTrack
+  ()=>{
+    if(isInsideNovaApp()){
+      window.parent.postMessage(
+        {type:"NOVARADIO_NEXT"},
+        "*"
+      );
+      return;
+    }
+    playNextTrack();
+  }
 );
 
 
@@ -4047,7 +4116,9 @@ window.addEventListener(
 
   await init();
 
-  await restoreSharedPlayerState();
+  if(!isInsideNovaApp()){
+    await restoreSharedPlayerState();
+  }
 
 })();
 
