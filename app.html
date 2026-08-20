@@ -173,7 +173,7 @@ body{
   box-shadow:0 0 0 1px #8b36ff inset;
 }
 
-/* クリック・タップ・ドラッグできるシークバー */
+/* シークバー */
 .progress{
   position:absolute;
   left:0;
@@ -241,127 +241,128 @@ body{
 
 <div class="app-shell">
 
-  <header class="app-nav">
+<header class="app-nav">
 
-    <div class="brand">
-      NovaRadio
-    </div>
+  <div class="brand">
+    NovaRadio
+  </div>
 
-    <div class="nav-buttons">
+  <div class="nav-buttons">
 
-      <button
-        class="nav-btn active"
-        id="navHome"
-      >
-        Home
-      </button>
+    <button
+      class="nav-btn active"
+      id="navHome"
+    >
+      Home
+    </button>
 
-      <button
-        class="nav-btn"
-        id="navMyPage"
-      >
-        My Page
-      </button>
+    <button
+      class="nav-btn"
+      id="navMyPage"
+    >
+      My Page
+    </button>
 
-    </div>
+  </div>
 
-  </header>
-
-
-  <main class="view">
-
-    <iframe
-      id="appFrame"
-      src="home.html"
-    ></iframe>
-
-  </main>
+</header>
 
 
-  <div class="progress">
+<main class="view">
+
+  <iframe
+    id="appFrame"
+    src="home.html"
+  ></iframe>
+
+</main>
+
+
+<div
+  class="progress"
+  id="progress"
+>
+  <div
+    class="progress-fill"
+    id="progressFill"
+  ></div>
+</div>
+
+
+<footer class="player">
+
+  <div class="track">
 
     <div
-      class="progress-fill"
-      id="progressFill"
-    ></div>
+      class="cover"
+      id="cover"
+    >
+      🎵
+    </div>
+
+    <div class="meta">
+
+      <div
+        class="title"
+        id="title"
+      >
+        曲を選択
+      </div>
+
+      <div
+        class="artist"
+        id="artist"
+      >
+        NovaRadio
+      </div>
+
+    </div>
 
   </div>
 
 
-  <footer class="player">
+  <div class="controls">
 
-    <div class="track">
+    <button
+      class="ctrl"
+      id="prev"
+    >
+      ⏮
+    </button>
 
-      <div
-        class="cover"
-        id="cover"
-      >
-        🎵
-      </div>
+    <button
+      class="ctrl main"
+      id="playPause"
+    >
+      ▶
+    </button>
 
-      <div class="meta">
+    <button
+      class="ctrl"
+      id="next"
+    >
+      ⏭
+    </button>
 
-        <div
-          class="title"
-          id="title"
-        >
-          曲を選択
-        </div>
+    <button
+      class="ctrl mode"
+      id="shuffle"
+      title="シャッフル"
+    >
+      🔀
+    </button>
 
-        <div
-          class="artist"
-          id="artist"
-        >
-          NovaRadio
-        </div>
+    <button
+      class="ctrl mode"
+      id="repeat"
+      title="リピート"
+    >
+      🔁
+    </button>
 
-      </div>
+  </div>
 
-    </div>
-
-
-    <div class="controls">
-
-      <button
-        class="ctrl"
-        id="prev"
-      >
-        ⏮
-      </button>
-
-      <button
-        class="ctrl main"
-        id="playPause"
-      >
-        ▶
-      </button>
-
-      <button
-        class="ctrl"
-        id="next"
-      >
-        ⏭
-      </button>
-
-      <button
-        class="ctrl mode"
-        id="shuffle"
-        title="シャッフル"
-      >
-        🔀
-      </button>
-
-      <button
-        class="ctrl mode"
-        id="repeat"
-        title="リピート"
-      >
-        🔁
-      </button>
-
-    </div>
-
-  </footer>
+</footer>
 
 </div>
 
@@ -410,11 +411,11 @@ const title =
 const artist =
   document.getElementById("artist");
 
+const progress =
+  document.getElementById("progress");
+
 const progressFill =
   document.getElementById("progressFill");
-
-const progress =
-  document.querySelector(".progress");
 
 
 let state = {
@@ -438,7 +439,8 @@ let state = {
 
 function setView(page){
 
-  frame.src = page;
+  frame.src =
+    page;
 
   navHome.classList.toggle(
     "active",
@@ -454,11 +456,15 @@ function setView(page){
 
 
 navHome.onclick =
-  ()=>setView("home.html");
+  ()=>setView(
+    "home.html"
+  );
 
 
 navMyPage.onclick =
-  ()=>setView("mypage.html");
+  ()=>setView(
+    "mypage.html"
+  );
 
 
 frame.addEventListener(
@@ -475,14 +481,17 @@ frame.addEventListener(
 
 
 /* =========================
-   曲表示
+   曲情報表示
 ========================= */
 
 function renderSong(song){
 
-  state.song = song;
+  state.song =
+    song;
 
-  if(!song) return;
+  if(!song){
+    return;
+  }
 
 
   title.textContent =
@@ -556,7 +565,9 @@ function playSong(
     );
 
 
-  renderSong(song);
+  renderSong(
+    song
+  );
 
 
   if(
@@ -722,7 +733,9 @@ function playNext(
   if(
     !state.queue.length
   ){
+
     return;
+
   }
 
 
@@ -822,7 +835,9 @@ function playNext(
 
 
   playSong(
-    state.queue[state.index],
+    state.queue[
+      state.index
+    ],
     state.queue,
     state.index
   );
@@ -842,12 +857,14 @@ function playPrev(){
   if(
     !state.queue.length
   ){
+
     return;
+
   }
 
 
   /*
-    3秒以上再生していたら
+    3秒以上再生済みなら
     前曲ではなく曲頭へ戻る
   */
   if(
@@ -923,7 +940,9 @@ function playPrev(){
 
 
   playSong(
-    state.queue[state.index],
+    state.queue[
+      state.index
+    ],
     state.queue,
     state.index
   );
@@ -935,7 +954,7 @@ function playPrev(){
 
 
 /* =========================
-   再生 / 一時停止
+   プレイヤーボタン
 ========================= */
 
 playPause.onclick =
@@ -944,7 +963,9 @@ playPause.onclick =
     if(
       !state.song
     ){
+
       return;
+
     }
 
 
@@ -972,7 +993,9 @@ prev.onclick =
 
 
 next.onclick =
-  ()=>playNext(false);
+  ()=>playNext(
+    false
+  );
 
 
 shuffle.onclick =
@@ -986,15 +1009,59 @@ repeat.onclick =
 
 
 /* =========================
-   シークバー
-   クリック / タップ / ドラッグ
+   軽量シーク
 ========================= */
 
 let isSeeking =
   false;
 
+let seekRatio =
+  0;
 
-function seekFromPointer(
+
+/*
+  マウス・指の位置を
+  0〜1の割合に変換
+*/
+
+function getSeekRatio(
+  event
+){
+
+  const rect =
+    progress.getBoundingClientRect();
+
+
+  if(
+    rect.width <= 0
+  ){
+
+    return 0;
+
+  }
+
+
+  return Math.max(
+    0,
+    Math.min(
+      1,
+      (
+        event.clientX -
+        rect.left
+      ) /
+      rect.width
+    )
+  );
+
+}
+
+
+/*
+  ドラッグ中は
+  見た目だけ変更する
+*/
+
+function previewSeek(
   event
 ){
 
@@ -1010,36 +1077,15 @@ function seekFromPointer(
   }
 
 
-  const rect =
-    progress.getBoundingClientRect();
-
-
-  const clientX =
-    event.clientX;
-
-
-  const ratio =
-    Math.max(
-      0,
-      Math.min(
-        1,
-        (
-          clientX -
-          rect.left
-        ) /
-        rect.width
-      )
+  seekRatio =
+    getSeekRatio(
+      event
     );
-
-
-  audio.currentTime =
-    ratio *
-    audio.duration;
 
 
   progressFill.style.width =
     (
-      ratio *
+      seekRatio *
       100
     ) +
     "%";
@@ -1047,12 +1093,33 @@ function seekFromPointer(
 }
 
 
+/*
+  シーク開始
+*/
+
 progress.addEventListener(
   "pointerdown",
   event=>{
 
+    if(
+      !Number.isFinite(
+        audio.duration
+      ) ||
+      audio.duration <= 0
+    ){
+
+      return;
+
+    }
+
+
     isSeeking =
       true;
+
+
+    previewSeek(
+      event
+    );
 
 
     try{
@@ -1064,14 +1131,16 @@ progress.addEventListener(
     }
     catch(e){}
 
-
-    seekFromPointer(
-      event
-    );
-
   }
 );
 
+
+/*
+  ドラッグ中
+
+  audio.currentTimeは
+  変更しないので軽い
+*/
 
 progress.addEventListener(
   "pointermove",
@@ -1080,17 +1149,24 @@ progress.addEventListener(
     if(
       !isSeeking
     ){
+
       return;
+
     }
 
 
-    seekFromPointer(
+    previewSeek(
       event
     );
 
   }
 );
 
+
+/*
+  指・マウスを離した瞬間に
+  1回だけ本当にシークする
+*/
 
 progress.addEventListener(
   "pointerup",
@@ -1099,17 +1175,33 @@ progress.addEventListener(
     if(
       !isSeeking
     ){
+
       return;
+
     }
 
 
-    seekFromPointer(
+    previewSeek(
       event
     );
 
 
     isSeeking =
       false;
+
+
+    if(
+      Number.isFinite(
+        audio.duration
+      ) &&
+      audio.duration > 0
+    ){
+
+      audio.currentTime =
+        seekRatio *
+        audio.duration;
+
+    }
 
 
     try{
@@ -1125,12 +1217,34 @@ progress.addEventListener(
 );
 
 
+/*
+  操作キャンセル
+*/
+
 progress.addEventListener(
   "pointercancel",
   ()=>{
 
     isSeeking =
       false;
+
+
+    if(
+      Number.isFinite(
+        audio.duration
+      ) &&
+      audio.duration > 0
+    ){
+
+      progressFill.style.width =
+        (
+          audio.currentTime /
+          audio.duration *
+          100
+        ) +
+        "%";
+
+    }
 
   }
 );
@@ -1166,15 +1280,33 @@ audio.addEventListener(
   "ended",
   ()=>{
 
-    playNext(true);
+    playNext(
+      true
+    );
 
   }
 );
 
 
+/*
+  通常再生中は
+  シークバーを更新。
+
+  ドラッグ中は更新しない。
+*/
+
 audio.addEventListener(
   "timeupdate",
   ()=>{
+
+    if(
+      isSeeking
+    ){
+
+      return;
+
+    }
+
 
     if(
       Number.isFinite(
@@ -1185,10 +1317,8 @@ audio.addEventListener(
 
       progressFill.style.width =
         (
-          (
-            audio.currentTime /
-            audio.duration
-          ) *
+          audio.currentTime /
+          audio.duration *
           100
         ) +
         "%";
@@ -1211,6 +1341,10 @@ window.addEventListener(
       event.data ||
       {};
 
+
+    /*
+      曲を再生
+    */
 
     if(
       data.type ===
@@ -1282,15 +1416,25 @@ window.addEventListener(
     }
 
 
+    /*
+      次の曲
+    */
+
     if(
       data.type ===
       "NOVARADIO_NEXT"
     ){
 
-      playNext(false);
+      playNext(
+        false
+      );
 
     }
 
+
+    /*
+      前の曲
+    */
 
     if(
       data.type ===
@@ -1301,6 +1445,10 @@ window.addEventListener(
 
     }
 
+
+    /*
+      シャッフル
+    */
 
     if(
       data.type ===
@@ -1313,6 +1461,10 @@ window.addEventListener(
 
     }
 
+
+    /*
+      リピート
+    */
 
     if(
       data.type ===
@@ -1336,6 +1488,10 @@ window.addEventListener(
     }
 
 
+    /*
+      プレイヤー状態取得
+    */
+
     if(
       data.type ===
       "NOVARADIO_GET_PLAYER_STATE"
@@ -1345,6 +1501,10 @@ window.addEventListener(
 
     }
 
+
+    /*
+      ページ移動
+    */
 
     if(
       data.type ===
