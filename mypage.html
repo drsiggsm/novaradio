@@ -718,34 +718,16 @@ body{
 
 }
 
-
-/* =========================
-   app.html 内で表示している時は
-   My Page 側の旧ミニプレイヤーを隠す
-   再生本体は親 app.html に一本化
-========================= */
-body.inside-nova-app{
-  padding-bottom:40px !important;
-}
-
-body.inside-nova-app .mini-player{
-  display:none !important;
-}
-
+/* app.html 内では下部の共通プレイヤーだけを使う */
+body.inside-nova-app{padding-bottom:40px}
+body.inside-nova-app .mini-player{display:none !important}
 </style>
 </head>
 
 <body>
-
 <script>
-/* app.html の中で開かれている時だけ、ページ内の旧プレイヤー表示を消す */
-if(
-  window.parent &&
-  window.parent !== window
-){
-  document.body.classList.add(
-    "inside-nova-app"
-  );
+if(window.parent && window.parent !== window){
+  document.body.classList.add("inside-nova-app");
 }
 </script>
 
@@ -1132,35 +1114,6 @@ if(
 
 
 <script>
-
-/* app.html 内のナビゲーション補助 */
-document.addEventListener(
-  "DOMContentLoaded",
-  ()=>{
-    const homeLink =
-      document.querySelector("a.back");
-
-    if(
-      homeLink &&
-      window.parent &&
-      window.parent !== window
-    ){
-      homeLink.addEventListener(
-        "click",
-        event=>{
-          event.preventDefault();
-          window.parent.postMessage(
-            {
-              type:"NOVARADIO_NAV",
-              page:"home"
-            },
-            "*"
-          );
-        }
-      );
-    }
-  }
-);
 
 const SUPABASE_URL =
   "https://melsoikvhwzvzswlimsi.supabase.co";
@@ -2912,10 +2865,15 @@ playlistPlayAll.addEventListener(
 playlistShuffle.addEventListener(
   "click",
   ()=>{
-    playlistShuffleEnabled =
-      !playlistShuffleEnabled;
-
+    playlistShuffleEnabled = !playlistShuffleEnabled;
     updatePlaylistControlLabels();
+
+    if(isInsideNovaApp()){
+      window.parent.postMessage({
+        type:"NOVARADIO_SET_SHUFFLE",
+        value:playlistShuffleEnabled
+      }, "*");
+    }
   }
 );
 
@@ -2934,6 +2892,13 @@ playlistRepeat.addEventListener(
     }
 
     updatePlaylistControlLabels();
+
+    if(isInsideNovaApp()){
+      window.parent.postMessage({
+        type:"NOVARADIO_SET_REPEAT",
+        value:playlistRepeatMode
+      }, "*");
+    }
   }
 );
 
@@ -3496,7 +3461,9 @@ function sendPlayToNovaApp(song){
         item=>
           Number(item.id) ===
           Number(song.id)
-      )
+      ),
+      shuffle:playlistShuffleEnabled,
+      repeat:playlistRepeatMode
     },
     "*"
   );
@@ -4166,6 +4133,41 @@ window.addEventListener(
   "beforeunload",
   saveSharedPlayerState
 );
+
+
+
+/* =========================
+   app.html 共通プレイヤーとの状態同期
+========================= */
+window.addEventListener("message", event=>{
+  const data = event.data || {};
+  if(data.type !== "NOVARADIO_PLAYER_STATE") return;
+
+  playlistShuffleEnabled = !!data.shuffle;
+  playlistRepeatMode = ["off","all","one"].includes(data.repeat)
+    ? data.repeat
+    : "off";
+
+  updatePlaylistControlLabels();
+
+  if(data.song){
+    document.querySelectorAll(".playlist-song").forEach(card=>{
+      card.classList.remove("is-playing");
+    });
+
+    const sourceIndex = currentPlaylistSongs.findIndex(entry=>
+      Number(entry?.song?.id) === Number(data.song.id)
+    );
+    const cards = Array.from(playlistSongs.children);
+    if(sourceIndex >= 0 && cards[sourceIndex]){
+      cards[sourceIndex].classList.add("is-playing");
+    }
+  }
+});
+
+if(isInsideNovaApp()){
+  window.parent.postMessage({type:"NOVARADIO_GET_PLAYER_STATE"}, "*");
+}
 
 
 (async ()=>{
