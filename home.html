@@ -1484,6 +1484,18 @@ let currentSession =
   null;
 
 
+/*
+  いいね状態をメモリにキャッシュ。
+  30秒ごとの曲切替で同じ問い合わせを何度も
+  Supabaseへ投げないようにする。
+*/
+const likeStateCache =
+  new Map();
+
+const likeRequestCache =
+  new Map();
+
+
 let currentSong =
   null;
 
@@ -1879,60 +1891,116 @@ function songMatches(
 ========================= */
 
 async function isSongLiked(
-  songId
+  songId,
+  force=false
 ){
 
-  if(!currentSession){
-
+  if(
+    !currentSession ||
+    !songId
+  ){
     return false;
-
   }
 
+  const cacheKey =
+    String(songId);
 
-  const {
-    data,
-    error
-  } =
-  await sb
-  .from(
-    "likes"
-  )
-  .select(
-    "id"
-  )
-  .eq(
-    "user_id",
-    currentSession.user.id
-  )
-  .eq(
-    "song_id",
-    songId
-  )
-  .limit(
-    1
+  if(
+    !force &&
+    likeStateCache.has(
+      cacheKey
+    )
+  ){
+    return likeStateCache.get(
+      cacheKey
+    );
+  }
+
+  /*
+    同じ曲への問い合わせが同時に走った場合は
+    1本にまとめる。
+  */
+  if(
+    !force &&
+    likeRequestCache.has(
+      cacheKey
+    )
+  ){
+    return likeRequestCache.get(
+      cacheKey
+    );
+  }
+
+  const request =
+    (async ()=>{
+
+      const {
+        data,
+        error
+      } =
+      await sb
+      .from(
+        "likes"
+      )
+      .select(
+        "id"
+      )
+      .eq(
+        "user_id",
+        currentSession.user.id
+      )
+      .eq(
+        "song_id",
+        songId
+      )
+      .limit(
+        1
+      );
+
+      if(error){
+
+        console.error(
+          "Like check error:",
+          error
+        );
+
+        return false;
+      }
+
+      const liked =
+        !!(
+          data &&
+          data.length
+        );
+
+      likeStateCache.set(
+        cacheKey,
+        liked
+      );
+
+      return liked;
+
+    })();
+
+  likeRequestCache.set(
+    cacheKey,
+    request
   );
 
+  try{
 
-  if(error){
+    return await request;
 
-    console.error(
-      "Like check error:",
-      error
+  }
+  finally{
+
+    likeRequestCache.delete(
+      cacheKey
     );
 
-
-    return false;
-
   }
 
-
-  return !!(
-    data &&
-    data.length
-  );
-
 }
-
 
 async function updateLikeButton(){
 
@@ -2070,6 +2138,10 @@ async function toggleLike(){
 
   }
 
+  likeStateCache.set(
+    String(currentSong.id),
+    !liked
+  );
 
   await updateLikeButton();
 
@@ -2113,6 +2185,12 @@ function pushHistory(
    PLAY SONG
 ========================= */
 
+let renderedSongId =
+  null;
+
+let renderedHighlightMode =
+  null;
+
 async function playSong(
   song,
   addToHistory=true,
@@ -2124,6 +2202,31 @@ async function playSong(
 
   const renderOnly =
     !!options.renderOnly;
+
+  const incomingSongId =
+    Number(
+      song?.id
+    );
+
+  /*
+    同じ曲・同じ表示モードへの状態通知なら
+    DOMを丸ごと作り直さない。
+  */
+  if(
+    renderOnly &&
+    Number(renderedSongId) ===
+      incomingSongId &&
+    renderedHighlightMode ===
+      highlightMode
+  ){
+
+    currentSong =
+      song;
+
+    updateNavigationButtons();
+
+    return;
+  }
 
 
   currentSong =
@@ -2302,6 +2405,12 @@ async function playSong(
       ＋ プレイリストに追加
     </button>`;
 
+  renderedSongId =
+    incomingSongId;
+
+  renderedHighlightMode =
+    highlightMode;
+
 
   document
   .getElementById(
@@ -2456,7 +2565,11 @@ async function playSong(
   }
 
 
-  await updateLikeButton();
+  /*
+    いいね確認は再生開始を待たせず裏で更新。
+  */
+  updateLikeButton()
+  .catch(()=>{});
 
 }
 
