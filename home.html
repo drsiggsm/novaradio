@@ -442,6 +442,25 @@ label{
   cursor:pointer;
 }
 
+.full-listen-button{
+  width:100%;
+  margin-top:14px;
+  padding:17px;
+  border-radius:15px;
+  border:0;
+  background:linear-gradient(90deg,#ff3d9a,#8b36ff,#159df5);
+  color:#fff;
+  font-weight:900;
+  font-size:17px;
+  cursor:pointer;
+  box-shadow:0 8px 28px #7b25ff33;
+}
+
+.full-listen-button:hover{
+  filter:brightness(1.07);
+}
+
+
 .like-button{
   border:1px solid #4a3558;
   background:#171325;
@@ -2096,8 +2115,16 @@ function pushHistory(
 
 async function playSong(
   song,
-  addToHistory=true
+  addToHistory=true,
+  options={}
 ){
+
+  const highlightMode =
+    !!options.highlight;
+
+  const renderOnly =
+    !!options.renderOnly;
+
 
   currentSong =
     song;
@@ -2168,7 +2195,11 @@ async function playSong(
 
   now.innerHTML =
     `<div class="now-label">
-      NOW PLAYING
+      ${
+        highlightMode
+          ? "⚡ HIGHLIGHT PLAYING"
+          : "NOW PLAYING"
+      }
     </div>
 
     <div class="now-cover">
@@ -2243,6 +2274,18 @@ async function playSong(
 
     </div>
 
+    ${
+      highlightMode
+        ? `<button
+            class="full-listen-button"
+            id="fullListenButton"
+            type="button"
+          >
+            ▶ フルで聴く
+          </button>`
+        : ""
+    }
+
     <button
       class="like-button"
       id="likeButton"
@@ -2278,6 +2321,87 @@ async function playSong(
     "click",
     openPlaylistModal
   );
+
+
+  const fullListenButton =
+    document.getElementById(
+      "fullListenButton"
+    );
+
+  if(fullListenButton){
+
+    fullListenButton.addEventListener(
+      "click",
+      ()=>{
+
+        if(!currentSong){
+          return;
+        }
+
+        /*
+          ハイライトを解除して
+          同じ曲を0:00から通常再生する。
+        */
+        if(isInsideNovaApp()){
+
+          window.parent.postMessage(
+            {
+              type:"NOVARADIO_PLAY",
+              song:currentSong,
+              queue:currentQueue,
+              index:currentQueue.findIndex(
+                item=>
+                  Number(item.id) ===
+                  Number(currentSong.id)
+              ),
+              highlight:false
+            },
+            "*"
+          );
+
+          /*
+            見た目は即座に通常表示へ。
+            実際の再生は親の共通プレイヤーが担当。
+          */
+          playSong(
+            currentSong,
+            false,
+            {
+              highlight:false,
+              renderOnly:true
+            }
+          );
+
+          return;
+        }
+
+        /*
+          Home単体で開いている場合も
+          0秒から通常再生へ切り替える。
+        */
+        const localAudio =
+          document.getElementById(
+            "audioPlayer"
+          );
+
+        if(localAudio){
+          try{
+            localAudio.currentTime = 0;
+          }catch(e){}
+        }
+
+        playSong(
+          currentSong,
+          false,
+          {
+            highlight:false
+          }
+        );
+
+      }
+    );
+
+  }
 
 
   document
@@ -2326,14 +2450,19 @@ async function playSong(
   updateNavigationButtons();
 
 
-  if(
-    !sendPlayToNovaApp(
-      song
-    )
-  ){
-    playSongInFixedPlayer(
-      song
-    );
+  if(!renderOnly){
+
+    if(
+      !sendPlayToNovaApp(
+        song,
+        highlightMode
+      )
+    ){
+      playSongInFixedPlayer(
+        song
+      );
+    }
+
   }
 
 
@@ -3066,6 +3195,77 @@ window.addEventListener(
 
 
 /* =========================
+   共通プレイヤー状態同期
+========================= */
+
+window.addEventListener(
+  "message",
+  event=>{
+
+    const data =
+      event.data ||
+      {};
+
+    if(
+      data.type !==
+      "NOVARADIO_PLAYER_STATE"
+    ){
+      return;
+    }
+
+    if(
+      !data.song ||
+      !data.song.id
+    ){
+      return;
+    }
+
+    const incomingId =
+      Number(
+        data.song.id
+      );
+
+    const currentId =
+      Number(
+        currentSong?.id
+      );
+
+    const incomingHighlight =
+      !!data.highlight;
+
+    /*
+      曲が自動で次へ進んだ時や、
+      フル再生へ切り替えた時に
+      HomeのNOW PLAYING表示も追従させる。
+    */
+    if(
+      incomingId !== currentId ||
+      (
+        document.querySelector(
+          ".full-listen-button"
+        ) !== null
+      ) !== incomingHighlight
+    ){
+
+      playSong(
+        data.song,
+        false,
+        {
+          highlight:
+            incomingHighlight,
+
+          renderOnly:
+            true
+        }
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================
    PLAYLIST MODAL
 ========================= */
 
@@ -3782,45 +3982,15 @@ document
       ];
 
     /*
-      共通プレイヤー内なら親へ直接送る。
-      これでハイライトモードONの状態で再生開始。
-    */
-    if(isInsideNovaApp()){
-
-      window.parent.postMessage(
-        {
-          type:"NOVARADIO_PLAY",
-          song:randomSong,
-          queue:currentQueue,
-          index:currentQueue.findIndex(
-            item=>
-              Number(item.id) ===
-              Number(randomSong.id)
-          ),
-          highlight:true
-        },
-        "*"
-      );
-
-      currentSong =
-        randomSong;
-
-      historySongs.push(
-        randomSong
-      );
-
-      historyIndex =
-        0;
-
-      return;
-    }
-
-    /*
-      app.htmlを通さずHome単体で開いた場合は
-      通常再生にフォールバック。
+      通常再生と同じNOW PLAYING表示を出しつつ、
+      親の共通プレイヤーにはhighlight:trueで送る。
     */
     await playSong(
-      randomSong
+      randomSong,
+      true,
+      {
+        highlight:true
+      }
     );
 
   }
