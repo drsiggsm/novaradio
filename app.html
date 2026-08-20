@@ -780,6 +780,29 @@ let state = {
 let playRequestId =
   0;
 
+
+/*
+  下プレイヤーのいいね状態キャッシュ。
+*/
+const playerLikeCache =
+  new Map();
+
+const playerLikeRequestCache =
+  new Map();
+
+/*
+  次曲の音源を裏で軽く先読みする。
+  実再生用audioとは別なので現在曲は止めない。
+*/
+const nextTrackPreloader =
+  new Audio();
+
+nextTrackPreloader.preload =
+  "auto";
+
+let preloadedAudioUrl =
+  "";
+
 let isSeeking =
   false;
 
@@ -954,6 +977,11 @@ frame.addEventListener(
 
 function renderSong(song){
 
+  const previousId =
+    Number(
+      state.song?.id
+    );
+
   state.song =
     song;
 
@@ -973,15 +1001,52 @@ function renderSong(song){
     song.cover_url ||
     "";
 
-  cover.innerHTML =
-    c
-      ? `<img src="${escapeAttribute(c)}" alt="">`
-      : "🎵";
+  const existingImg =
+    cover.querySelector(
+      "img"
+    );
 
-  timeText.textContent =
-    "0:00 / 0:00";
+  const existingSrc =
+    existingImg
+      ? existingImg.getAttribute(
+          "src"
+        ) || ""
+      : "";
 
-  updateLikeMenu();
+  /*
+    同じジャケットならimg DOMを作り直さない。
+  */
+  if(
+    c &&
+    existingSrc !== c
+  ){
+
+    cover.innerHTML =
+      `<img src="${escapeAttribute(c)}" alt="">`;
+
+  }
+  else if(
+    !c &&
+    cover.textContent !== "🎵"
+  ){
+
+    cover.innerHTML =
+      "🎵";
+
+  }
+
+  if(
+    previousId !==
+    Number(song.id)
+  ){
+
+    timeText.textContent =
+      "0:00 / 0:00";
+
+  }
+
+  updateLikeMenu()
+  .catch(()=>{});
 
 }
 
@@ -1211,10 +1276,17 @@ async function playSong(
       song.audio_url;
 
     /*
-      preload=auto と組み合わせて
-      新しい曲の読込を明示的に開始。
+      先読み済みURLならブラウザキャッシュを使わせ、
+      余計なload呼び出しを避ける。
     */
-    audio.load();
+    if(
+      preloadedAudioUrl !==
+      String(song.audio_url)
+    ){
+
+      audio.load();
+
+    }
 
   }
 
@@ -1342,6 +1414,8 @@ async function playSong(
 
   notifyFrameState();
 
+  preloadLikelyNextTrack();
+
 }
 
 
@@ -1459,6 +1533,99 @@ function cycleRepeat(){
       : state.repeat === "all"
       ? "one"
       : "off"
+  );
+
+}
+
+
+/* =========================
+   次曲の軽量プリロード
+========================= */
+
+function preloadLikelyNextTrack(){
+
+  if(
+    !state.queue.length ||
+    state.shuffle
+  ){
+    return;
+  }
+
+  let currentIndex =
+    state.index;
+
+  if(
+    currentIndex < 0
+  ){
+
+    currentIndex =
+      state.queue.findIndex(
+        song=>
+          Number(song.id) ===
+          Number(state.song?.id)
+      );
+
+  }
+
+  if(
+    currentIndex < 0
+  ){
+    return;
+  }
+
+  const nextIndex =
+    (
+      currentIndex + 1
+    ) %
+    state.queue.length;
+
+  const nextSong =
+    state.queue[
+      nextIndex
+    ];
+
+  const url =
+    String(
+      nextSong?.audio_url ||
+      ""
+    );
+
+  if(
+    !url ||
+    url === preloadedAudioUrl ||
+    url === audio.getAttribute("src")
+  ){
+    return;
+  }
+
+  preloadedAudioUrl =
+    url;
+
+  /*
+    少し遅らせて現在曲の再生開始を優先。
+  */
+  setTimeout(
+    ()=>{
+
+      try{
+
+        nextTrackPreloader.src =
+          url;
+
+        nextTrackPreloader.load();
+
+      }
+      catch(error){
+
+        console.warn(
+          "Next track preload failed:",
+          error
+        );
+
+      }
+
+    },
+    250
   );
 
 }
@@ -2122,7 +2289,8 @@ audio.addEventListener(
 ========================= */
 
 async function isSongLiked(
-  songId
+  songId,
+  force=false
 ){
 
   if(
@@ -2132,40 +2300,95 @@ async function isSongLiked(
     return false;
   }
 
-  const {
-    data,
-    error
-  } =
-  await sb
-  .from("likes")
-  .select("id")
-  .eq(
-    "user_id",
-    currentSession.user.id
-  )
-  .eq(
-    "song_id",
-    songId
-  )
-  .limit(1);
+  const cacheKey =
+    String(songId);
 
-  if(error){
-
-    console.warn(
-      "Like check error:",
-      error
+  if(
+    !force &&
+    playerLikeCache.has(
+      cacheKey
+    )
+  ){
+    return playerLikeCache.get(
+      cacheKey
     );
-
-    return false;
   }
 
-  return !!(
-    data &&
-    data.length
+  if(
+    !force &&
+    playerLikeRequestCache.has(
+      cacheKey
+    )
+  ){
+    return playerLikeRequestCache.get(
+      cacheKey
+    );
+  }
+
+  const request =
+    (async ()=>{
+
+      const {
+        data,
+        error
+      } =
+      await sb
+      .from("likes")
+      .select("id")
+      .eq(
+        "user_id",
+        currentSession.user.id
+      )
+      .eq(
+        "song_id",
+        songId
+      )
+      .limit(1);
+
+      if(error){
+
+        console.warn(
+          "Like check error:",
+          error
+        );
+
+        return false;
+      }
+
+      const liked =
+        !!(
+          data &&
+          data.length
+        );
+
+      playerLikeCache.set(
+        cacheKey,
+        liked
+      );
+
+      return liked;
+
+    })();
+
+  playerLikeRequestCache.set(
+    cacheKey,
+    request
   );
 
-}
+  try{
 
+    return await request;
+
+  }
+  finally{
+
+    playerLikeRequestCache.delete(
+      cacheKey
+    );
+
+  }
+
+}
 
 async function updateLikeMenu(){
 
@@ -2318,6 +2541,11 @@ async function toggleCurrentLike(){
       );
 
     }
+
+    playerLikeCache.set(
+      String(state.song.id),
+      !liked
+    );
 
     await updateLikeMenu();
 
