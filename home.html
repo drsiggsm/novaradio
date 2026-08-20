@@ -2281,7 +2281,7 @@ async function playSong(
             id="fullListenButton"
             type="button"
           >
-            ▶ フルで聴く
+            ▶ この曲をフルで聴く
           </button>`
         : ""
     }
@@ -2339,45 +2339,31 @@ async function playSong(
         }
 
         /*
-          ハイライトを解除して
-          同じ曲を0:00から通常再生する。
+          ハイライトモード自体は維持したまま、
+          現在の曲だけ0:00から最後までフル再生する。
+          曲が終わったら親プレイヤー側で
+          自動的に次曲の30秒ハイライトへ復帰する。
         */
         if(isInsideNovaApp()){
 
           window.parent.postMessage(
             {
-              type:"NOVARADIO_PLAY",
-              song:currentSong,
-              queue:currentQueue,
-              index:currentQueue.findIndex(
-                item=>
-                  Number(item.id) ===
-                  Number(currentSong.id)
-              ),
-              highlight:false
+              type:"NOVARADIO_FULL_CURRENT"
             },
             "*"
           );
 
-          /*
-            見た目は即座に通常表示へ。
-            実際の再生は親の共通プレイヤーが担当。
-          */
-          playSong(
-            currentSong,
-            false,
-            {
-              highlight:false,
-              renderOnly:true
-            }
-          );
+          fullListenButton.textContent =
+            "🎧 この曲をフル再生中";
+
+          fullListenButton.disabled =
+            true;
 
           return;
         }
 
         /*
-          Home単体で開いている場合も
-          0秒から通常再生へ切り替える。
+          Home単体で開いた場合の簡易フォールバック。
         */
         const localAudio =
           document.getElementById(
@@ -2385,18 +2371,22 @@ async function playSong(
           );
 
         if(localAudio){
+
           try{
             localAudio.currentTime = 0;
-          }catch(e){}
-        }
-
-        playSong(
-          currentSong,
-          false,
-          {
-            highlight:false
           }
-        );
+          catch(e){}
+
+          localAudio
+          .play()
+          .catch(()=>{});
+
+          fullListenButton.textContent =
+            "🎧 この曲をフル再生中";
+
+          fullListenButton.disabled =
+            true;
+        }
 
       }
     );
@@ -3233,18 +3223,16 @@ window.addEventListener(
     const incomingHighlight =
       !!data.highlight;
 
+    const incomingFullTrack =
+      !!data.fullTrack;
+
     /*
-      曲が自動で次へ進んだ時や、
-      フル再生へ切り替えた時に
-      HomeのNOW PLAYING表示も追従させる。
+      曲が自動で次へ進んだ時に
+      HomeのNOW PLAYING表示も追従。
+      ハイライト中の「この曲だけフル」状態も反映する。
     */
     if(
-      incomingId !== currentId ||
-      (
-        document.querySelector(
-          ".full-listen-button"
-        ) !== null
-      ) !== incomingHighlight
+      incomingId !== currentId
     ){
 
       playSong(
@@ -3258,6 +3246,37 @@ window.addEventListener(
             true
         }
       );
+
+    }
+
+    const fullButton =
+      document.getElementById(
+        "fullListenButton"
+      );
+
+    if(fullButton){
+
+      if(
+        incomingHighlight &&
+        incomingFullTrack
+      ){
+
+        fullButton.textContent =
+          "🎧 この曲をフル再生中";
+
+        fullButton.disabled =
+          true;
+
+      }
+      else{
+
+        fullButton.textContent =
+          "▶ この曲をフルで聴く";
+
+        fullButton.disabled =
+          false;
+
+      }
 
     }
 
