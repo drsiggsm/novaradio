@@ -763,7 +763,9 @@ let state = {
 
   shuffle:false,
 
-  repeat:"off"
+  repeat:"off",
+
+  highlight:false
 
 };
 
@@ -775,6 +777,12 @@ let isSeeking =
 
 let seekRatio =
   0;
+
+let highlightStartTime =
+  0;
+
+const HIGHLIGHT_SECONDS =
+  30;
 
 
 /* =========================
@@ -1226,6 +1234,9 @@ async function playSong(
 
   }
 
+  highlightStartTime =
+    0;
+
   await startPlayback(
     requestId
   );
@@ -1254,6 +1265,9 @@ function notifyFrameState(){
 
         repeat:
           state.repeat,
+
+        highlight:
+          state.highlight,
 
         song:
           state.song,
@@ -1844,6 +1858,17 @@ audio.addEventListener(
     playPause.textContent =
       "⏸";
 
+    if(
+      state.highlight
+    ){
+      highlightStartTime =
+        Number.isFinite(
+          audio.currentTime
+        )
+          ? audio.currentTime
+          : 0;
+    }
+
   }
 );
 
@@ -1873,7 +1898,39 @@ audio.addEventListener(
 
 audio.addEventListener(
   "timeupdate",
-  updateProgressUI
+  ()=>{
+
+    updateProgressUI();
+
+    if(
+      state.highlight &&
+      !audio.paused &&
+      Number.isFinite(
+        audio.currentTime
+      ) &&
+      (
+        audio.currentTime -
+        highlightStartTime
+      ) >=
+      HIGHLIGHT_SECONDS
+    ){
+
+      /*
+        30秒到達で次の曲へ。
+        ended扱いにはしないので、
+        repeat oneでも同じ曲に留まらない。
+      */
+      highlightStartTime =
+        audio.currentTime +
+        999999;
+
+      playNext(
+        false
+      );
+
+    }
+
+  }
 );
 
 
@@ -2564,6 +2621,16 @@ window.addEventListener(
             );
 
       if(
+        typeof data.highlight ===
+        "boolean"
+      ){
+
+        state.highlight =
+          data.highlight;
+
+      }
+
+      if(
         typeof data.shuffle ===
         "boolean"
       ){
@@ -2670,6 +2737,26 @@ window.addEventListener(
       data.type ===
       "NOVARADIO_GET_PLAYER_STATE"
     ){
+
+      notifyFrameState();
+
+    }
+
+
+    if(
+      data.type ===
+      "NOVARADIO_SET_HIGHLIGHT"
+    ){
+
+      state.highlight =
+        !!data.value;
+
+      highlightStartTime =
+        Number.isFinite(
+          audio.currentTime
+        )
+          ? audio.currentTime
+          : 0;
 
       notifyFrameState();
 
