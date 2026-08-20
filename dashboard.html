@@ -342,11 +342,96 @@ input[type="file"]{
   font-size:28px;
 }
 
+
 .song-cover img{
   width:100%;
   height:100%;
   object-fit:cover;
   display:block;
+}
+
+/* =========================
+   HIGHLIGHT EDITOR
+========================= */
+
+.highlight-box{
+  margin-top:12px;
+  padding:18px;
+  border:1px solid #3b3f70;
+  border-radius:18px;
+  background:#080b1d;
+}
+
+.highlight-box.hidden{
+  display:none;
+}
+
+.highlight-title{
+  font-weight:800;
+  margin-bottom:7px;
+}
+
+.highlight-help{
+  color:#9da2c0;
+  font-size:13px;
+  line-height:1.6;
+  margin-bottom:14px;
+}
+
+.highlight-audio{
+  width:100%;
+  margin-bottom:14px;
+}
+
+.highlight-range{
+  width:100%;
+  padding:0;
+  accent-color:#7b25ff;
+}
+
+.highlight-time{
+  margin-top:9px;
+  color:#fff;
+  font-size:14px;
+  font-weight:800;
+}
+
+.highlight-time span{
+  color:#56b6ff;
+}
+
+.highlight-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:12px;
+}
+
+.highlight-mini{
+  border:1px solid #3a416d;
+  background:#171a31;
+  color:#fff;
+  border-radius:13px;
+  padding:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.highlight-mini.primary{
+  border-color:transparent;
+  background:linear-gradient(90deg,#ff3d9a,#8b36ff);
+}
+
+.highlight-badge{
+  display:inline-block;
+  margin-top:8px;
+  padding:6px 9px;
+  border-radius:999px;
+  border:1px solid #6b3b8f;
+  background:#241636;
+  color:#e6c7ff;
+  font-size:12px;
+  font-weight:700;
 }
 
 @media(max-width:600px){
@@ -363,6 +448,10 @@ input[type="file"]{
   }
 
   .song-actions{
+    grid-template-columns:1fr;
+  }
+
+  .highlight-buttons{
     grid-template-columns:1fr;
   }
 }
@@ -547,6 +636,66 @@ input[type="file"]{
         </div>
       </div>
 
+      <div
+        class="field highlight-box hidden"
+        id="uploadHighlightBox"
+      >
+
+        <div class="highlight-title">
+          ⚡ 30秒ハイライト開始位置
+        </div>
+
+        <div class="highlight-help">
+          曲を聴きながら、NovaRadioの30秒ハイライトで
+          最初に聴かせたい位置を決められます。
+        </div>
+
+        <audio
+          class="highlight-audio"
+          id="uploadHighlightAudio"
+          controls
+          preload="metadata"
+        ></audio>
+
+        <input
+          class="highlight-range"
+          id="highlightStart"
+          type="range"
+          min="0"
+          max="0"
+          value="0"
+          step="0.1"
+        >
+
+        <div class="highlight-time">
+          開始位置：
+          <span id="highlightStartText">0:00</span>
+          〜
+          <span id="highlightEndText">0:30</span>
+        </div>
+
+        <div class="highlight-buttons">
+
+          <button
+            class="highlight-mini"
+            id="highlightUseCurrent"
+            type="button"
+          >
+            📍 今の再生位置を開始位置にする
+          </button>
+
+          <button
+            class="highlight-mini primary"
+            id="highlightPreview"
+            type="button"
+          >
+            ⚡ 30秒をプレビュー
+          </button>
+
+        </div>
+
+      </div>
+
       <button
         class="main-button"
         id="upload"
@@ -660,6 +809,62 @@ input[type="file"]{
       >
     </div>
 
+    <div class="field highlight-box">
+
+      <div class="highlight-title">
+        ⚡ 30秒ハイライト開始位置
+      </div>
+
+      <div class="highlight-help">
+        アップロード済みの曲も、聴きながら開始位置を変更できます。
+      </div>
+
+      <audio
+        class="highlight-audio"
+        id="editHighlightAudio"
+        controls
+        preload="metadata"
+      ></audio>
+
+      <input
+        class="highlight-range"
+        id="editHighlightStart"
+        type="range"
+        min="0"
+        max="0"
+        value="0"
+        step="0.1"
+      >
+
+      <div class="highlight-time">
+        開始位置：
+        <span id="editHighlightStartText">0:00</span>
+        〜
+        <span id="editHighlightEndText">0:30</span>
+      </div>
+
+      <div class="highlight-buttons">
+
+        <button
+          class="highlight-mini"
+          id="editHighlightUseCurrent"
+          type="button"
+        >
+          📍 今の再生位置を開始位置にする
+        </button>
+
+        <button
+          class="highlight-mini primary"
+          id="editHighlightPreview"
+          type="button"
+        >
+          ⚡ 30秒をプレビュー
+        </button>
+
+      </div>
+
+    </div>
+
     <div class="modal-actions">
 
       <button
@@ -732,6 +937,58 @@ const coverPreview =
 
 const editModal =
   document.getElementById("editModal");
+
+
+const audioFile =
+  document.getElementById("audioFile");
+
+const uploadHighlightBox =
+  document.getElementById("uploadHighlightBox");
+
+const uploadHighlightAudio =
+  document.getElementById("uploadHighlightAudio");
+
+const highlightStart =
+  document.getElementById("highlightStart");
+
+const highlightStartText =
+  document.getElementById("highlightStartText");
+
+const highlightEndText =
+  document.getElementById("highlightEndText");
+
+const highlightUseCurrent =
+  document.getElementById("highlightUseCurrent");
+
+const highlightPreview =
+  document.getElementById("highlightPreview");
+
+const editHighlightAudio =
+  document.getElementById("editHighlightAudio");
+
+const editHighlightStart =
+  document.getElementById("editHighlightStart");
+
+const editHighlightStartText =
+  document.getElementById("editHighlightStartText");
+
+const editHighlightEndText =
+  document.getElementById("editHighlightEndText");
+
+const editHighlightUseCurrent =
+  document.getElementById("editHighlightUseCurrent");
+
+const editHighlightPreview =
+  document.getElementById("editHighlightPreview");
+
+let uploadAudioObjectUrl =
+  null;
+
+let highlightPreviewTimer =
+  null;
+
+let editHighlightPreviewTimer =
+  null;
 
 async function init(){
 
@@ -893,6 +1150,523 @@ function updateSelectedText(){
 }
 
 
+
+/* =========================
+   HIGHLIGHT HELPERS
+========================= */
+
+function formatTime(
+  seconds
+){
+
+  const value =
+    Number.isFinite(
+      Number(seconds)
+    )
+      ? Math.max(
+          0,
+          Number(seconds)
+        )
+      : 0;
+
+  const minutes =
+    Math.floor(
+      value / 60
+    );
+
+  const secs =
+    Math.floor(
+      value % 60
+    );
+
+  return (
+    minutes +
+    ":" +
+    String(secs)
+    .padStart(
+      2,
+      "0"
+    )
+  );
+}
+
+
+function getHighlightMax(
+  duration
+){
+
+  if(
+    !Number.isFinite(duration) ||
+    duration <= 30
+  ){
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    duration - 30
+  );
+}
+
+
+function clampHighlightStart(
+  value,
+  duration
+){
+
+  const numeric =
+    Number(value) || 0;
+
+  return Math.max(
+    0,
+    Math.min(
+      numeric,
+      getHighlightMax(
+        duration
+      )
+    )
+  );
+}
+
+
+function updateUploadHighlightText(){
+
+  const start =
+    Number(
+      highlightStart.value
+    ) || 0;
+
+  highlightStartText.textContent =
+    formatTime(start);
+
+  highlightEndText.textContent =
+    formatTime(
+      start + 30
+    );
+
+}
+
+
+function updateEditHighlightText(){
+
+  const start =
+    Number(
+      editHighlightStart.value
+    ) || 0;
+
+  editHighlightStartText.textContent =
+    formatTime(start);
+
+  editHighlightEndText.textContent =
+    formatTime(
+      start + 30
+    );
+
+}
+
+
+function stopHighlightPreview(
+  audio,
+  timerName
+){
+
+  if(
+    timerName === "upload"
+  ){
+
+    clearTimeout(
+      highlightPreviewTimer
+    );
+
+    highlightPreviewTimer =
+      null;
+
+  }
+  else{
+
+    clearTimeout(
+      editHighlightPreviewTimer
+    );
+
+    editHighlightPreviewTimer =
+      null;
+
+  }
+
+  if(audio){
+    audio.pause();
+  }
+
+}
+
+
+function startThirtySecondPreview(
+  audio,
+  start,
+  timerName
+){
+
+  if(
+    !audio ||
+    !audio.src
+  ){
+    return;
+  }
+
+  stopHighlightPreview(
+    audio,
+    timerName
+  );
+
+  const playFrom =
+    Number(start) || 0;
+
+  const begin =
+    ()=>{
+
+      try{
+
+        audio.currentTime =
+          Math.min(
+            playFrom,
+            Math.max(
+              0,
+              (
+                Number.isFinite(
+                  audio.duration
+                )
+                  ? audio.duration
+                  : playFrom
+              ) - 0.1
+            )
+          );
+
+      }
+      catch(error){
+
+        console.warn(
+          "Highlight seek failed:",
+          error
+        );
+
+      }
+
+      audio
+      .play()
+      .catch(()=>{});
+
+      const stopAt =
+        playFrom + 30;
+
+      const onTime =
+        ()=>{
+
+          if(
+            audio.currentTime >=
+            stopAt
+          ){
+
+            audio.pause();
+
+            audio.removeEventListener(
+              "timeupdate",
+              onTime
+            );
+
+          }
+
+        };
+
+      audio.addEventListener(
+        "timeupdate",
+        onTime
+      );
+
+      const timer =
+        setTimeout(
+          ()=>{
+
+            audio.pause();
+
+            audio.removeEventListener(
+              "timeupdate",
+              onTime
+            );
+
+          },
+          30500
+        );
+
+      if(
+        timerName === "upload"
+      ){
+
+        highlightPreviewTimer =
+          timer;
+
+      }
+      else{
+
+        editHighlightPreviewTimer =
+          timer;
+
+      }
+
+    };
+
+  if(
+    audio.readyState >= 1
+  ){
+
+    begin();
+
+  }
+  else{
+
+    audio.addEventListener(
+      "loadedmetadata",
+      begin,
+      {
+        once:true
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================
+   UPLOAD AUDIO / HIGHLIGHT
+========================= */
+
+audioFile.addEventListener(
+  "change",
+  ()=>{
+
+    const file =
+      audioFile.files[0];
+
+    stopHighlightPreview(
+      uploadHighlightAudio,
+      "upload"
+    );
+
+    if(
+      uploadAudioObjectUrl
+    ){
+
+      URL.revokeObjectURL(
+        uploadAudioObjectUrl
+      );
+
+      uploadAudioObjectUrl =
+        null;
+
+    }
+
+    if(!file){
+
+      uploadHighlightBox
+      .classList.add(
+        "hidden"
+      );
+
+      uploadHighlightAudio
+      .removeAttribute(
+        "src"
+      );
+
+      highlightStart.max =
+        "0";
+
+      highlightStart.value =
+        "0";
+
+      updateUploadHighlightText();
+
+      return;
+
+    }
+
+    uploadAudioObjectUrl =
+      URL.createObjectURL(
+        file
+      );
+
+    uploadHighlightAudio.src =
+      uploadAudioObjectUrl;
+
+    uploadHighlightAudio.load();
+
+    uploadHighlightBox
+    .classList.remove(
+      "hidden"
+    );
+
+    highlightStart.value =
+      "0";
+
+    updateUploadHighlightText();
+
+  }
+);
+
+
+uploadHighlightAudio.addEventListener(
+  "loadedmetadata",
+  ()=>{
+
+    const max =
+      getHighlightMax(
+        uploadHighlightAudio.duration
+      );
+
+    highlightStart.max =
+      String(max);
+
+    highlightStart.value =
+      String(
+        clampHighlightStart(
+          highlightStart.value,
+          uploadHighlightAudio.duration
+        )
+      );
+
+    updateUploadHighlightText();
+
+  }
+);
+
+
+highlightStart.addEventListener(
+  "input",
+  updateUploadHighlightText
+);
+
+
+highlightUseCurrent.addEventListener(
+  "click",
+  ()=>{
+
+    if(
+      !Number.isFinite(
+        uploadHighlightAudio.duration
+      )
+    ){
+      return;
+    }
+
+    const value =
+      clampHighlightStart(
+        uploadHighlightAudio.currentTime,
+        uploadHighlightAudio.duration
+      );
+
+    highlightStart.value =
+      String(value);
+
+    updateUploadHighlightText();
+
+  }
+);
+
+
+highlightPreview.addEventListener(
+  "click",
+  ()=>{
+
+    startThirtySecondPreview(
+      uploadHighlightAudio,
+      Number(
+        highlightStart.value
+      ) || 0,
+      "upload"
+    );
+
+  }
+);
+
+
+/* =========================
+   EDIT HIGHLIGHT
+========================= */
+
+editHighlightAudio.addEventListener(
+  "loadedmetadata",
+  ()=>{
+
+    const max =
+      getHighlightMax(
+        editHighlightAudio.duration
+      );
+
+    editHighlightStart.max =
+      String(max);
+
+    editHighlightStart.value =
+      String(
+        clampHighlightStart(
+          editHighlightStart.value,
+          editHighlightAudio.duration
+        )
+      );
+
+    updateEditHighlightText();
+
+  }
+);
+
+
+editHighlightStart.addEventListener(
+  "input",
+  updateEditHighlightText
+);
+
+
+editHighlightUseCurrent.addEventListener(
+  "click",
+  ()=>{
+
+    if(
+      !Number.isFinite(
+        editHighlightAudio.duration
+      )
+    ){
+      return;
+    }
+
+    const value =
+      clampHighlightStart(
+        editHighlightAudio.currentTime,
+        editHighlightAudio.duration
+      );
+
+    editHighlightStart.value =
+      String(value);
+
+    updateEditHighlightText();
+
+  }
+);
+
+
+editHighlightPreview.addEventListener(
+  "click",
+  ()=>{
+
+    startThirtySecondPreview(
+      editHighlightAudio,
+      Number(
+        editHighlightStart.value
+      ) || 0,
+      "edit"
+    );
+
+  }
+);
+
+
 coverFile.addEventListener(
   "change",
   ()=>{
@@ -984,6 +1758,11 @@ uploadButton.addEventListener(
       .getElementById("songKey")
       .value
       .trim();
+
+    const highlightStartValue =
+      Number(
+        highlightStart.value
+      ) || 0;
 
     const file =
       document
@@ -1217,6 +1996,9 @@ uploadButton.addEventListener(
         key:
           key || null,
 
+        highlight_start:
+          highlightStartValue,
+
         audio_url:
           audioUrl,
 
@@ -1386,6 +2168,27 @@ async function loadMySongs(){
                   escapeHtml(song.key)
                 : ""
             }
+
+            <div class="highlight-badge">
+              ⚡ Highlight:
+              ${escapeHtml(
+                formatTime(
+                  Number(
+                    song.highlight_start
+                  ) || 0
+                )
+              )}
+              〜
+              ${escapeHtml(
+                formatTime(
+                  (
+                    Number(
+                      song.highlight_start
+                    ) || 0
+                  ) + 30
+                )
+              )}
+            </div>
           </div>
         </div>
 
@@ -1556,6 +2359,25 @@ function openEditModal(
   .value =
     song.key || "";
 
+  stopHighlightPreview(
+    editHighlightAudio,
+    "edit"
+  );
+
+  editHighlightStart.value =
+    String(
+      Number(
+        song.highlight_start
+      ) || 0
+    );
+
+  editHighlightAudio.src =
+    song.audio_url || "";
+
+  editHighlightAudio.load();
+
+  updateEditHighlightText();
+
   editModal.classList.add(
     "show"
   );
@@ -1567,6 +2389,13 @@ document
 .addEventListener(
   "click",
   ()=>{
+
+    stopHighlightPreview(
+      editHighlightAudio,
+      "edit"
+    );
+
+    editHighlightAudio.pause();
 
     editModal.classList.remove(
       "show"
@@ -1631,6 +2460,11 @@ document
       .value
       .trim();
 
+    const highlightStartValue =
+      Number(
+        editHighlightStart.value
+      ) || 0;
+
     if(
       !title ||
       !artist ||
@@ -1667,7 +2501,10 @@ document
           : null,
 
       key:
-        key || null
+        key || null,
+
+      highlight_start:
+        highlightStartValue
 
     })
     .eq(
@@ -1689,6 +2526,13 @@ document
       return;
 
     }
+
+    stopHighlightPreview(
+      editHighlightAudio,
+      "edit"
+    );
+
+    editHighlightAudio.pause();
 
     editModal.classList.remove(
       "show"
@@ -1773,6 +2617,44 @@ function resetUploadForm(){
   .getElementById("audioFile")
   .value =
     "";
+
+  stopHighlightPreview(
+    uploadHighlightAudio,
+    "upload"
+  );
+
+  uploadHighlightAudio.pause();
+
+  uploadHighlightAudio
+  .removeAttribute(
+    "src"
+  );
+
+  if(
+    uploadAudioObjectUrl
+  ){
+
+    URL.revokeObjectURL(
+      uploadAudioObjectUrl
+    );
+
+    uploadAudioObjectUrl =
+      null;
+
+  }
+
+  uploadHighlightBox
+  .classList.add(
+    "hidden"
+  );
+
+  highlightStart.max =
+    "0";
+
+  highlightStart.value =
+    "0";
+
+  updateUploadHighlightText();
 
   coverFile.value =
     "";
