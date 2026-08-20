@@ -803,6 +803,14 @@ nextTrackPreloader.preload =
 let preloadedAudioUrl =
   "";
 
+
+/*
+  Safariなどで ended が遅れたり取りこぼされた時にも
+  「この曲だけフル」から確実にハイライトへ戻すためのガード。
+*/
+let isReturningFromFullTrack =
+  false;
+
 let isSeeking =
   false;
 
@@ -2067,6 +2075,59 @@ progress.addEventListener(
 
 
 /* =========================
+   この曲だけフル → ハイライト復帰
+========================= */
+
+function returnToHighlightAfterFullTrack(){
+
+  if(
+    !state.highlight ||
+    !state.fullTrack ||
+    isReturningFromFullTrack
+  ){
+    return false;
+  }
+
+  isReturningFromFullTrack =
+    true;
+
+  /*
+    先にfullTrackを解除してから次曲を再生する。
+    これで次のplaySongは必ずhighlight_startから始まる。
+  */
+  state.fullTrack =
+    false;
+
+  highlightStartTime =
+    0;
+
+  notifyFrameState();
+
+  /*
+    今の曲ではなく次の曲へ。
+    falseにすることでrepeat one等の影響も受けない。
+  */
+  playNext(
+    false
+  );
+
+  /*
+    playNext/playSongの開始を待たず、
+    少し後にガードだけ解除。
+  */
+  setTimeout(
+    ()=>{
+      isReturningFromFullTrack =
+        false;
+    },
+    600
+  );
+
+  return true;
+}
+
+
+/* =========================
    Audioイベント
 ========================= */
 
@@ -2172,6 +2233,33 @@ audio.addEventListener(
 
     updateProgressUI();
 
+    /*
+      「この曲だけフル」で曲末まで来たら、
+      endedイベントを待たずにハイライトへ復帰する保険。
+      Safari等でendedが不安定なケース対策。
+    */
+    if(
+      state.highlight &&
+      state.fullTrack &&
+      !isReturningFromFullTrack &&
+      Number.isFinite(
+        audio.duration
+      ) &&
+      audio.duration > 0 &&
+      Number.isFinite(
+        audio.currentTime
+      ) &&
+      (
+        audio.duration -
+        audio.currentTime
+      ) <= 0.35
+    ){
+
+      returnToHighlightAfterFullTrack();
+
+      return;
+    }
+
     if(
       state.highlight &&
       !state.fullTrack &&
@@ -2210,24 +2298,12 @@ audio.addEventListener(
   ()=>{
 
     /*
-      ハイライト中に「この曲だけフルで聴く」を
-      選んでいた場合は、曲終了後に
-      ハイライトモードへ自動復帰して次曲へ。
+      「この曲だけフル」だった場合は、
+      ハイライトモードを維持したまま次曲へ。
     */
     if(
-      state.highlight &&
-      state.fullTrack
+      returnToHighlightAfterFullTrack()
     ){
-
-      state.fullTrack =
-        false;
-
-      notifyFrameState();
-
-      playNext(
-        false
-      );
-
       return;
     }
 
@@ -3144,6 +3220,9 @@ window.addEventListener(
 
       state.fullTrack =
         true;
+
+      isReturningFromFullTrack =
+        false;
 
       highlightStartTime =
         0;
