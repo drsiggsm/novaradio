@@ -255,6 +255,31 @@ header{
   align-items:center;
 }
 
+.playlist-quick-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+
+.playlist-quick-actions button{
+  flex:1;
+  padding:11px 12px;
+  border-radius:12px;
+  border:1px solid #343b67;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.quick-play{
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  border:0 !important;
+}
+
+.quick-shuffle{
+  background:#171a31;
+}
+
 .playlist-open{
   flex:1;
   min-width:0;
@@ -1462,6 +1487,24 @@ async function loadPlaylists(){
           🗑️
         </button>
 
+      </div>
+
+      <div class="playlist-quick-actions">
+
+        <button
+          type="button"
+          class="quick-play"
+        >
+          ▶️ 再生
+        </button>
+
+        <button
+          type="button"
+          class="quick-shuffle"
+        >
+          🔀 シャッフル
+        </button>
+
       </div>`;
 
 
@@ -1478,6 +1521,62 @@ async function loadPlaylists(){
         await openPlaylist(
           playlist
         );
+
+      }
+    );
+
+
+    item
+    .querySelector(
+      ".quick-play"
+    )
+    .addEventListener(
+      "click",
+      async event=>{
+
+        event.stopPropagation();
+
+        await openPlaylist(
+          playlist
+        );
+
+        if(currentPlaylistSongs.length){
+
+          playlistShuffleEnabled = false;
+          updatePlaylistControlLabels();
+          buildPlaylistOrder();
+          playlistPlayIndex = 0;
+          playPlaylistIndex();
+
+        }
+
+      }
+    );
+
+
+    item
+    .querySelector(
+      ".quick-shuffle"
+    )
+    .addEventListener(
+      "click",
+      async event=>{
+
+        event.stopPropagation();
+
+        await openPlaylist(
+          playlist
+        );
+
+        if(currentPlaylistSongs.length){
+
+          playlistShuffleEnabled = true;
+          updatePlaylistControlLabels();
+          buildPlaylistOrder();
+          playlistPlayIndex = 0;
+          playPlaylistIndex();
+
+        }
 
       }
     );
