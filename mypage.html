@@ -423,10 +423,63 @@ header{
 
 .playlist-now-playing{
   margin:-5px 0 16px;
-  padding:11px 14px;
+  padding:13px 14px;
   border:1px solid #343b67;
-  border-radius:13px;
+  border-radius:16px;
   background:#080b1d;
+  color:#adb1c9;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.playlist-now-cover{
+  width:70px;
+  height:70px;
+  flex:0 0 70px;
+  border-radius:14px;
+  object-fit:cover;
+  display:block;
+  border:1px solid #343b67;
+  background:#11152a;
+}
+
+.playlist-now-cover-placeholder{
+  width:70px;
+  height:70px;
+  flex:0 0 70px;
+  border-radius:14px;
+  border:1px solid #343b67;
+  background:#11152a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+}
+
+.playlist-now-meta{
+  min-width:0;
+  flex:1;
+}
+
+.playlist-now-label{
+  color:#8f94b2;
+  font-size:12px;
+  margin-bottom:5px;
+}
+
+.playlist-now-title{
+  color:#fff;
+  font-size:16px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.playlist-now-artist{
+  margin-top:4px;
   color:#adb1c9;
   font-size:13px;
 }
@@ -596,6 +649,7 @@ header{
       <div
         class="detail-title"
         id="playlistDetailTitle"
+        style="display:none"
       >
         プレイリスト
       </div>
@@ -2615,15 +2669,48 @@ function playPlaylistIndex(){
       );
   }
 
-  playlistNowPlaying.textContent =
-    `🎧 再生中：${
-      song.title || "Untitled"
-    } — ${
-      song.artist || "Unknown Artist"
-    }`;
+  const coverUrl =
+    safeHttpUrl(
+      song.cover_url
+    );
+
+  playlistNowPlaying.innerHTML =
+    `${
+      coverUrl
+        ? `<img
+            class="playlist-now-cover"
+            src="${escapeHtml(coverUrl)}"
+            alt="${escapeHtml(
+              (song.title || "ジャケット") + " のジャケット"
+            )}"
+          >`
+        : `<div class="playlist-now-cover-placeholder">
+            🎵
+          </div>`
+    }
+
+    <div class="playlist-now-meta">
+      <div class="playlist-now-label">
+        🎧 再生中
+      </div>
+
+      <div class="playlist-now-title">
+        ${escapeHtml(
+          song.title ||
+          "Untitled"
+        )}
+      </div>
+
+      <div class="playlist-now-artist">
+        ${escapeHtml(
+          song.artist ||
+          "Unknown Artist"
+        )}
+      </div>
+    </div>`;
 
   playlistNowPlaying.style.display =
-    "block";
+    "flex";
 
   const audio =
     document.createElement(
