@@ -327,6 +327,35 @@ label{
   text-align:center;
 }
 
+
+.now-cover{
+  width:min(320px,78vw);
+  aspect-ratio:1 / 1;
+  margin:0 auto 22px;
+  border-radius:24px;
+  overflow:hidden;
+  border:1px solid #30355e;
+  background:
+    linear-gradient(
+      135deg,
+      #171a31,
+      #080b1d
+    );
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:72px;
+  color:#8f95b5;
+  box-shadow:0 18px 50px #0006;
+}
+
+.now-cover img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
 .now-label{
   color:#9da2c0;
   font-size:13px;
@@ -634,6 +663,11 @@ audio{
 
   .player-nav{
     grid-template-columns:1fr 1fr;
+  }
+
+  .now-cover{
+    width:min(260px,76vw);
+    border-radius:20px;
   }
 
   .card{
@@ -1710,6 +1744,12 @@ async function playSong(
     );
 
 
+  const coverUrl =
+    safeHttpUrl(
+      song.cover_url
+    );
+
+
   const artistClass =
     song.user_id
       ? "now-artist clickable"
@@ -1719,6 +1759,21 @@ async function playSong(
   now.innerHTML =
     `<div class="now-label">
       NOW PLAYING
+    </div>
+
+    <div class="now-cover">
+      ${
+        coverUrl
+          ? `<img
+              src="${escapeHtml(
+                coverUrl
+              )}"
+              alt="${escapeHtml(
+                (song.title || "ジャケット") + " のジャケット"
+              )}"
+            >`
+          : "🎵"
+      }
     </div>
 
     <div class="now-title">
