@@ -366,6 +366,62 @@ header{
   background:linear-gradient(90deg,#7b25ff,#159df5);
 }
 
+
+/* プレイリスト連続再生コントロール */
+.playlist-player-controls{
+  display:grid;
+  grid-template-columns:1.4fr 1fr 1fr;
+  gap:10px;
+  margin:0 0 18px;
+}
+
+.playlist-player-controls button{
+  padding:13px 10px;
+  border:1px solid #343b67;
+  border-radius:14px;
+  background:#171a31;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.playlist-player-controls .playlist-play-all{
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  border:0;
+}
+
+.playlist-player-controls button.active{
+  border-color:#8b36ff;
+  box-shadow:0 0 0 1px #8b36ff inset;
+  background:#24204a;
+}
+
+.playlist-now-playing{
+  margin:-5px 0 16px;
+  padding:11px 14px;
+  border:1px solid #343b67;
+  border-radius:13px;
+  background:#080b1d;
+  color:#adb1c9;
+  font-size:13px;
+}
+
+.playlist-song.is-playing{
+  border-color:#7b25ff;
+  box-shadow:0 0 0 1px #7b25ff inset;
+}
+
+.playlist-song.is-playing .playlist-song-title::before{
+  content:"▶ ";
+  color:#a96cff;
+}
+
+@media(max-width:600px){
+  .playlist-player-controls{
+    grid-template-columns:1fr;
+  }
+}
+
 @media(max-width:600px){
 
   .logo{
@@ -530,6 +586,40 @@ header{
     </div>
 
     <div
+      class="playlist-player-controls"
+      id="playlistPlayerControls"
+      style="display:none"
+    >
+      <button
+        type="button"
+        class="playlist-play-all"
+        id="playlistPlayAll"
+      >
+        ▶️ 全曲再生
+      </button>
+
+      <button
+        type="button"
+        id="playlistShuffle"
+      >
+        🔀 シャッフル OFF
+      </button>
+
+      <button
+        type="button"
+        id="playlistRepeat"
+      >
+        🔁 リピート OFF
+      </button>
+    </div>
+
+    <div
+      class="playlist-now-playing"
+      id="playlistNowPlaying"
+      style="display:none"
+    ></div>
+
+    <div
       id="playlistSongs"
       class="playlist-song-list"
     >
@@ -636,6 +726,15 @@ let currentSession =
 let currentPlaylistId =
   null;
 
+/* プレイリストプレイヤー状態 */
+let currentPlaylistSongs = [];
+let playlistPlayOrder = [];
+let playlistPlayIndex = -1;
+let playlistShuffleEnabled = false;
+/* "off" → "all" → "one" */
+let playlistRepeatMode = "off";
+let activePlaylistAudio = null;
+
 
 const loading =
   document.getElementById(
@@ -680,6 +779,31 @@ const playlistDetailTitle =
 const playlistSongs =
   document.getElementById(
     "playlistSongs"
+  );
+
+const playlistPlayerControls =
+  document.getElementById(
+    "playlistPlayerControls"
+  );
+
+const playlistPlayAll =
+  document.getElementById(
+    "playlistPlayAll"
+  );
+
+const playlistShuffle =
+  document.getElementById(
+    "playlistShuffle"
+  );
+
+const playlistRepeat =
+  document.getElementById(
+    "playlistRepeat"
+  );
+
+const playlistNowPlaying =
+  document.getElementById(
+    "playlistNowPlaying"
   );
 
 const profileAvatar =
@@ -1546,6 +1670,13 @@ async function openPlaylist(
   currentPlaylistId =
     playlist.id;
 
+  stopPlaylistPlayback();
+  currentPlaylistSongs = [];
+  playlistPlayOrder = [];
+  playlistPlayIndex = -1;
+  playlistPlayerControls.style.display = "none";
+  playlistNowPlaying.style.display = "none";
+
 
   playlistDetailTitle.textContent =
     "📚 " +
@@ -1662,6 +1793,32 @@ async function openPlaylist(
       )
     );
 
+
+  currentPlaylistSongs =
+    relations
+    .map(relation=>{
+      const song = songMap.get(
+        Number(relation.song_id)
+      );
+      return song
+        ? {song, relation}
+        : null;
+    })
+    .filter(Boolean);
+
+  playlistPlayOrder =
+    currentPlaylistSongs.map(
+      (_, index)=>index
+    );
+
+  playlistPlayIndex = -1;
+
+  playlistPlayerControls.style.display =
+    currentPlaylistSongs.length
+      ? "grid"
+      : "none";
+
+  updatePlaylistControlLabels();
 
   playlistSongs.innerHTML =
     "";
@@ -1996,10 +2153,14 @@ function createSongItem(
     "click",
     ()=>{
 
-      toggleAudio(
-        item,
-        song
-      );
+      if(type === "playlist"){
+        playPlaylistFromSong(song.id);
+      }else{
+        toggleAudio(
+          item,
+          song
+        );
+      }
 
     }
   );
@@ -2133,6 +2294,353 @@ function toggleAudio(
 }
 
 
+
+/* =========================
+   プレイリスト連続再生
+========================= */
+
+playlistPlayAll.addEventListener(
+  "click",
+  ()=>{
+    if(!currentPlaylistSongs.length){
+      return;
+    }
+
+    buildPlaylistOrder();
+
+    playlistPlayIndex = 0;
+    playPlaylistIndex();
+  }
+);
+
+
+playlistShuffle.addEventListener(
+  "click",
+  ()=>{
+    playlistShuffleEnabled =
+      !playlistShuffleEnabled;
+
+    updatePlaylistControlLabels();
+  }
+);
+
+
+playlistRepeat.addEventListener(
+  "click",
+  ()=>{
+    if(playlistRepeatMode === "off"){
+      playlistRepeatMode = "all";
+    }
+    else if(playlistRepeatMode === "all"){
+      playlistRepeatMode = "one";
+    }
+    else{
+      playlistRepeatMode = "off";
+    }
+
+    updatePlaylistControlLabels();
+  }
+);
+
+
+function updatePlaylistControlLabels(){
+
+  playlistShuffle.textContent =
+    playlistShuffleEnabled
+      ? "🔀 シャッフル ON"
+      : "🔀 シャッフル OFF";
+
+  playlistShuffle.classList.toggle(
+    "active",
+    playlistShuffleEnabled
+  );
+
+  if(playlistRepeatMode === "all"){
+    playlistRepeat.textContent =
+      "🔁 全曲リピート";
+  }
+  else if(playlistRepeatMode === "one"){
+    playlistRepeat.textContent =
+      "🔂 1曲リピート";
+  }
+  else{
+    playlistRepeat.textContent =
+      "🔁 リピート OFF";
+  }
+
+  playlistRepeat.classList.toggle(
+    "active",
+    playlistRepeatMode !== "off"
+  );
+
+}
+
+
+function buildPlaylistOrder(){
+
+  playlistPlayOrder =
+    currentPlaylistSongs.map(
+      (_, index)=>index
+    );
+
+  if(playlistShuffleEnabled){
+
+    for(
+      let i =
+        playlistPlayOrder.length - 1;
+      i > 0;
+      i--
+    ){
+
+      const j =
+        Math.floor(
+          Math.random() * (i + 1)
+        );
+
+      [
+        playlistPlayOrder[i],
+        playlistPlayOrder[j]
+      ] = [
+        playlistPlayOrder[j],
+        playlistPlayOrder[i]
+      ];
+
+    }
+
+  }
+
+}
+
+
+function playPlaylistFromSong(
+  songId
+){
+
+  if(!currentPlaylistSongs.length){
+    return;
+  }
+
+  const clickedIndex =
+    currentPlaylistSongs.findIndex(
+      entry=>
+        Number(entry.song.id) ===
+        Number(songId)
+    );
+
+  if(clickedIndex < 0){
+    return;
+  }
+
+  buildPlaylistOrder();
+
+  /* 手動で選んだ曲は必ず最初に再生 */
+  playlistPlayOrder =
+    playlistPlayOrder.filter(
+      index=>index !== clickedIndex
+    );
+
+  playlistPlayOrder.unshift(
+    clickedIndex
+  );
+
+  playlistPlayIndex = 0;
+
+  playPlaylistIndex();
+
+}
+
+
+function playPlaylistIndex(){
+
+  if(
+    playlistPlayIndex < 0 ||
+    playlistPlayIndex >=
+      playlistPlayOrder.length
+  ){
+    return;
+  }
+
+  const sourceIndex =
+    playlistPlayOrder[
+      playlistPlayIndex
+    ];
+
+  const entry =
+    currentPlaylistSongs[
+      sourceIndex
+    ];
+
+  if(!entry){
+    return;
+  }
+
+  const song =
+    entry.song;
+
+  if(!song.audio_url){
+
+    playlistPlayIndex++;
+
+    if(
+      playlistPlayIndex <
+      playlistPlayOrder.length
+    ){
+      playPlaylistIndex();
+    }
+
+    return;
+  }
+
+  stopPlaylistPlayback(false);
+
+  document
+  .querySelectorAll(
+    ".playlist-song"
+  )
+  .forEach(
+    card=>
+      card.classList.remove(
+        "is-playing"
+      )
+  );
+
+  const cards =
+    Array.from(
+      playlistSongs.children
+    );
+
+  if(cards[sourceIndex]){
+    cards[sourceIndex]
+      .classList.add(
+        "is-playing"
+      );
+  }
+
+  playlistNowPlaying.textContent =
+    `🎧 再生中：${
+      song.title || "Untitled"
+    } — ${
+      song.artist || "Unknown Artist"
+    }`;
+
+  playlistNowPlaying.style.display =
+    "block";
+
+  const audio =
+    document.createElement(
+      "audio"
+    );
+
+  audio.className =
+    "song-audio playlist-active-audio";
+
+  audio.controls =
+    true;
+
+  audio.autoplay =
+    true;
+
+  audio.src =
+    song.audio_url;
+
+  activePlaylistAudio =
+    audio;
+
+  if(cards[sourceIndex]){
+    cards[sourceIndex]
+      .appendChild(audio);
+  }else{
+    playlistSongs
+      .appendChild(audio);
+  }
+
+  audio.addEventListener(
+    "ended",
+    handlePlaylistEnded
+  );
+
+  audio
+  .play()
+  .catch(()=>{});
+
+}
+
+
+function handlePlaylistEnded(){
+
+  if(playlistRepeatMode === "one"){
+    if(activePlaylistAudio){
+      activePlaylistAudio.currentTime = 0;
+      activePlaylistAudio
+        .play()
+        .catch(()=>{});
+    }
+    return;
+  }
+
+  playlistPlayIndex++;
+
+  if(
+    playlistPlayIndex <
+    playlistPlayOrder.length
+  ){
+    playPlaylistIndex();
+    return;
+  }
+
+  if(playlistRepeatMode === "all"){
+
+    buildPlaylistOrder();
+
+    playlistPlayIndex = 0;
+
+    playPlaylistIndex();
+
+    return;
+  }
+
+  stopPlaylistPlayback();
+
+}
+
+
+function stopPlaylistPlayback(
+  clearLabel=true
+){
+
+  if(activePlaylistAudio){
+
+    activePlaylistAudio.pause();
+
+    activePlaylistAudio.remove();
+
+    activePlaylistAudio =
+      null;
+
+  }
+
+  document
+  .querySelectorAll(
+    ".playlist-song.is-playing"
+  )
+  .forEach(
+    card=>
+      card.classList.remove(
+        "is-playing"
+      )
+  );
+
+  if(clearLabel){
+    playlistNowPlaying.style.display =
+      "none";
+
+    playlistNowPlaying.textContent =
+      "";
+  }
+
+}
+
+
 /* =========================
    いいね解除
 ========================= */
@@ -2198,6 +2706,11 @@ document
 
     currentPlaylistId =
       null;
+
+    stopPlaylistPlayback();
+    currentPlaylistSongs = [];
+    playlistPlayOrder = [];
+    playlistPlayIndex = -1;
 
 
     playlistDetail.classList.remove(
