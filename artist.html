@@ -1,642 +1,406 @@
 <!doctype html>
 <html lang="ja">
-
 <head>
-
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NovaRadio - Artist</title>
 
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1"
->
-
-<title>
-  NovaRadio - Artist
-</title>
-
-
-<script
-  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 *{
   box-sizing:border-box;
 }
 
-
 body{
-
   margin:0;
-
   min-height:100vh;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
-
-  background:
-    radial-gradient(
-      circle at 50% 0,
-      #211b50,
-      #080a18 55%,
-      #050611
-    );
-
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  background:radial-gradient(circle at 50% 0,#211b50,#080a18 55%,#050611);
   color:#fff;
-
 }
-
 
 .wrap{
-
-  width:min(
-    980px,
-    94vw
-  );
-
+  width:min(980px,94vw);
   margin:auto;
-
-  padding:
-    40px
-    0
-    90px;
-
+  padding:40px 0 90px;
 }
-
-
-/* =========================
-   HEADER
-========================= */
 
 header{
-
   display:flex;
-
-  justify-content:
-    space-between;
-
+  justify-content:space-between;
   align-items:center;
-
-  margin-bottom:
-    34px;
-
+  margin-bottom:34px;
 }
-
 
 .logo{
-
-  font-size:
-    32px;
-
-  font-weight:
-    800;
-
+  font-size:32px;
+  font-weight:800;
 }
-
 
 .back{
-
   color:#fff;
-
   text-decoration:none;
-
-  padding:
-    11px
-    16px;
-
-  background:
-    #101228;
-
-  border:
-    1px solid #343b67;
-
-  border-radius:
-    14px;
-
-  transition:
-    .15s;
-
+  padding:11px 16px;
+  background:#101228;
+  border:1px solid #343b67;
+  border-radius:14px;
 }
-
-
-.back:hover{
-
-  border-color:
-    #7b25ff;
-
-}
-
-
-/* =========================
-   PROFILE
-========================= */
 
 .profile{
-
   text-align:center;
-
-  padding:
-    42px
-    24px;
-
-  margin-bottom:
-    24px;
-
-  background:
-    #101228e8;
-
-  border:
-    1px solid #30355e;
-
-  border-radius:
-    28px;
-
+  padding:42px 24px;
+  margin-bottom:24px;
+  background:#101228e8;
+  border:1px solid #30355e;
+  border-radius:28px;
 }
-
 
 .avatar{
-
-  width:
-    120px;
-
-  height:
-    120px;
-
+  width:120px;
+  height:120px;
   margin:auto;
-
-  border-radius:
-    50%;
-
+  border-radius:50%;
   display:flex;
-
   align-items:center;
-
   justify-content:center;
-
-  font-size:
-    48px;
-
+  font-size:48px;
   overflow:hidden;
-
-  background:
-    linear-gradient(
-      135deg,
-      #7b25ff,
-      #159df5
-    );
-
+  background:linear-gradient(135deg,#7b25ff,#159df5);
 }
-
 
 .avatar img{
-
-  width:
-    100%;
-
-  height:
-    100%;
-
-  object-fit:
-    cover;
-
+  width:100%;
+  height:100%;
+  object-fit:cover;
   display:block;
-
 }
-
 
 .artist-name{
-
-  margin-top:
-    18px;
-
-  font-size:
-    32px;
-
-  font-weight:
-    800;
-
+  margin-top:18px;
+  font-size:32px;
+  font-weight:800;
 }
-
 
 .bio{
-
-  max-width:
-    620px;
-
-  margin:
-    14px
-    auto
-    0;
-
-  color:
-    #aeb0c8;
-
-  line-height:
-    1.7;
-
-  white-space:
-    pre-wrap;
-
+  max-width:620px;
+  margin:14px auto 0;
+  color:#aeb0c8;
+  line-height:1.7;
+  white-space:pre-wrap;
 }
-
 
 .links{
-
   display:flex;
-
   flex-wrap:wrap;
-
   justify-content:center;
-
-  gap:
-    9px;
-
-  margin-top:
-    18px;
-
+  gap:9px;
+  margin-top:18px;
 }
-
 
 .link{
-
   display:inline-flex;
-
   align-items:center;
-
   justify-content:center;
-
-  padding:
-    10px
-    14px;
-
-  border-radius:
-    999px;
-
-  border:
-    1px solid #343b67;
-
-  background:
-    #171a31;
-
-  color:
-    #fff;
-
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid #343b67;
+  background:#171a31;
+  color:#fff;
   text-decoration:none;
-
-  font-size:
-    13px;
-
-  font-weight:
-    800;
-
-  transition:
-    .15s;
-
+  font-size:13px;
+  font-weight:800;
 }
-
 
 .link:hover{
-
-  border-color:
-    #7b25ff;
-
-  transform:
-    translateY(-1px);
-
+  border-color:#7b25ff;
 }
-
-
-/* =========================
-   CARD
-========================= */
 
 .card{
-
-  background:
-    #101228e8;
-
-  border:
-    1px solid #30355e;
-
-  border-radius:
-    24px;
-
-  padding:
-    25px;
-
-  margin-bottom:
-    18px;
-
+  background:#101228e8;
+  border:1px solid #30355e;
+  border-radius:24px;
+  padding:25px;
+  margin-bottom:18px;
 }
-
 
 .card h2{
-
-  margin:
-    0
-    0
-    18px;
-
-  font-size:
-    22px;
-
+  margin:0 0 18px;
+  font-size:22px;
 }
-
-
-/* =========================
-   SONGS
-========================= */
 
 .song-list{
-
   display:grid;
-
-  gap:
-    12px;
-
+  gap:12px;
 }
-
 
 .song{
-
-  padding:
-    18px;
-
-  border-radius:
-    18px;
-
-  background:
-    #080b1d;
-
-  border:
-    1px solid #30355e;
-
+  padding:18px;
+  border-radius:18px;
+  background:#080b1d;
+  border:1px solid #30355e;
 }
 
+
+.song-main{
+  display:grid;
+  grid-template-columns:92px 1fr;
+  gap:16px;
+  align-items:center;
+}
+
+.song-cover{
+  width:92px;
+  height:92px;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid #30355e;
+  background:linear-gradient(135deg,#171a31,#080b1d);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#8f95b5;
+  font-size:30px;
+}
+
+.song-cover img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
 
 .song-title{
-
-  font-size:
-    18px;
-
-  font-weight:
-    800;
-
+  font-size:18px;
+  font-weight:800;
 }
-
-
-.song-artist{
-
-  margin-top:
-    5px;
-
-  color:
-    #adb1c9;
-
-  font-size:
-    14px;
-
-}
-
 
 .song-meta{
-
-  margin-top:
-    7px;
-
-  font-size:
-    13px;
-
-  color:
-    #858baa;
-
+  margin-top:7px;
+  font-size:13px;
+  color:#858baa;
 }
-
 
 .song-buttons{
-
   display:grid;
-
-  grid-template-columns:
-    1fr
-    1fr;
-
-  gap:
-    8px;
-
-  margin-top:
-    14px;
-
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-top:14px;
 }
-
 
 .song-buttons button{
-
-  padding:
-    12px;
-
-  border:
-    0;
-
-  border-radius:
-    13px;
-
-  color:
-    #fff;
-
-  font-weight:
-    800;
-
+  padding:12px;
+  border:0;
+  border-radius:13px;
+  color:#fff;
+  font-weight:800;
   cursor:pointer;
-
 }
-
 
 .play-song{
-
-  background:
-    #242842;
-
+  background:#242842;
 }
-
-
-.play-song:hover{
-
-  background:
-    #303653;
-
-}
-
 
 .like-song{
-
-  background:
-    #171325;
-
-  border:
-    1px solid #4a3558 !important;
-
+  background:#171325;
+  border:1px solid #4a3558 !important;
 }
-
-
-.like-song:hover{
-
-  border-color:
-    #a34b6a !important;
-
-}
-
 
 .like-song.liked{
-
-  background:
-    #542237;
-
-  border-color:
-    #a34b6a !important;
-
+  background:#542237;
+  border-color:#a34b6a !important;
 }
 
+.playlist-song{
+  background:#17223a;
+  border:1px solid #35527a !important;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#000c;
+  z-index:100;
+  padding:20px;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:min(520px,95vw);
+  max-height:82vh;
+  overflow:auto;
+  background:#101228;
+  border:1px solid #30355e;
+  border-radius:24px;
+  padding:25px;
+}
+
+.modal-title{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:18px;
+}
+
+.playlist-list{
+  display:grid;
+  gap:10px;
+}
+
+.playlist-choice{
+  width:100%;
+  padding:15px;
+  border-radius:14px;
+  border:1px solid #343b67;
+  background:#080b1d;
+  color:#fff;
+  text-align:left;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.playlist-choice:hover{
+  border-color:#7b25ff;
+}
+
+.new-playlist-button{
+  width:100%;
+  margin-top:15px;
+  padding:15px;
+  border:0;
+  border-radius:14px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  color:#fff;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.modal-close{
+  width:100%;
+  margin-top:12px;
+  padding:14px;
+  border:1px solid #343b67;
+  border-radius:14px;
+  background:#242842;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.create-area{
+  display:none;
+  margin-top:18px;
+  padding-top:18px;
+  border-top:1px solid #30355e;
+}
+
+.create-area.show{
+  display:block;
+}
+
+.create-input{
+  width:100%;
+  padding:15px;
+  border-radius:14px;
+  border:1px solid #353b67;
+  background:#080b1d;
+  color:#fff;
+  font-size:16px;
+}
+
+.create-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.create-buttons button{
+  padding:13px;
+  border:0;
+  border-radius:13px;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.cancel-create{
+  background:#242842;
+}
+
+.save-create{
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+}
 
 .song-audio{
-
-  width:
-    100%;
-
-  margin-top:
-    14px;
-
+  width:100%;
+  margin-top:14px;
 }
-
-
-/* =========================
-   EMPTY / LOADING
-========================= */
 
 .empty,
 .loading{
-
-  padding:
-    28px;
-
+  padding:28px;
   text-align:center;
-
-  color:
-    #8f93ad;
-
+  color:#8f93ad;
 }
-
 
 .error{
-
-  padding:
-    20px;
-
-  border-radius:
-    16px;
-
-  background:
-    #351c28;
-
-  border:
-    1px solid #633846;
-
-  color:
-    #ffd7e5;
-
+  padding:20px;
+  border-radius:16px;
+  background:#351c28;
+  border:1px solid #633846;
+  color:#ffd7e5;
   text-align:center;
-
 }
 
-
-/* =========================
-   MOBILE
-========================= */
-
-@media(
-  max-width:600px
-){
-
-  .wrap{
-
-    padding-top:
-      24px;
-
-  }
-
+@media(max-width:600px){
 
   .logo{
-
-    font-size:
-      27px;
-
+    font-size:27px;
   }
-
 
   .artist-name{
-
-    font-size:
-      27px;
-
+    font-size:27px;
   }
-
 
   .avatar{
-
-    width:
-      100px;
-
-    height:
-      100px;
-
+    width:100px;
+    height:100px;
   }
-
 
   .song-buttons{
-
-    grid-template-columns:
-      1fr;
-
+    grid-template-columns:1fr;
   }
 
+  .song-main{
+    grid-template-columns:74px 1fr;
+  }
 
-  .profile{
-
-    padding:
-      34px
-      18px;
-
+  .song-cover{
+    width:74px;
+    height:74px;
   }
 
 }
-
 </style>
-
 </head>
-
 
 <body>
 
-
 <main class="wrap">
-
-
-<!-- =========================
-     HEADER
-========================= -->
 
 <header>
 
   <div class="logo">
     NovaRadio
   </div>
-
 
   <a
     class="back"
@@ -648,34 +412,20 @@ header{
 </header>
 
 
-<!-- =========================
-     LOADING
-========================= -->
-
 <div
   id="loading"
   class="loading"
 >
-
   アーティスト情報を読み込んでいます…
-
 </div>
 
-
-<!-- =========================
-     CONTENT
-========================= -->
 
 <div
   id="content"
   style="display:none"
 >
 
-
-  <!-- PROFILE -->
-
   <section class="profile">
-
 
     <div
       class="avatar"
@@ -684,7 +434,6 @@ header{
       👤
     </div>
 
-
     <div
       class="artist-name"
       id="artistName"
@@ -692,13 +441,11 @@ header{
       Artist
     </div>
 
-
     <div
       class="bio"
       id="artistBio"
       style="display:none"
     ></div>
-
 
     <div
       class="links"
@@ -706,55 +453,107 @@ header{
       style="display:none"
     ></div>
 
-
   </section>
 
 
-  <!-- SONGS -->
-
   <section class="card">
-
 
     <h2>
       🎵 このアーティストの曲
     </h2>
 
-
     <div
       class="song-list"
       id="songList"
     >
-
       <div class="empty">
         曲を読み込んでいます…
       </div>
-
     </div>
-
 
   </section>
 
-
 </div>
 
-
 </main>
+
+<div
+  class="modal"
+  id="playlistModal"
+>
+  <div class="modal-box">
+
+    <div class="modal-title">
+      📚 プレイリストに追加
+    </div>
+
+    <div
+      class="playlist-list"
+      id="playlistList"
+    >
+      <div class="empty">
+        読み込んでいます…
+      </div>
+    </div>
+
+    <button
+      class="new-playlist-button"
+      id="showCreatePlaylist"
+      type="button"
+    >
+      ＋ 新しいプレイリストを作る
+    </button>
+
+    <div
+      class="create-area"
+      id="createPlaylistArea"
+    >
+      <input
+        class="create-input"
+        id="newPlaylistName"
+        type="text"
+        maxlength="50"
+        placeholder="プレイリスト名"
+      >
+
+      <div class="create-buttons">
+        <button
+          class="cancel-create"
+          id="cancelCreatePlaylist"
+          type="button"
+        >
+          キャンセル
+        </button>
+
+        <button
+          class="save-create"
+          id="saveNewPlaylist"
+          type="button"
+        >
+          作成して追加
+        </button>
+      </div>
+    </div>
+
+    <button
+      class="modal-close"
+      id="closePlaylistModal"
+      type="button"
+    >
+      閉じる
+    </button>
+
+  </div>
+</div>
 
 
 <script>
 
-
-/* =========================
-   SUPABASE
-========================= */
-
 const SUPABASE_URL =
   "https://melsoikvhwzvzswlimsi.supabase.co";
 
-
 const SUPABASE_KEY =
   "sb_publishable_IOPT_ffm1Hp2bS3n3slD8w_3lmBaUdm";
-
 
 const sb =
   supabase.createClient(
@@ -763,67 +562,71 @@ const sb =
   );
 
 
-/* =========================
-   STATE
-========================= */
-
 let currentSession =
   null;
-
 
 let artistUserId =
   null;
 
+let playlistTargetSong =
+  null;
 
-/* =========================
-   DOM
-========================= */
 
 const loading =
   document.getElementById(
     "loading"
   );
 
-
 const content =
   document.getElementById(
     "content"
   );
-
 
 const artistAvatar =
   document.getElementById(
     "artistAvatar"
   );
 
-
 const artistName =
   document.getElementById(
     "artistName"
   );
-
 
 const artistBio =
   document.getElementById(
     "artistBio"
   );
 
-
 const artistLinks =
   document.getElementById(
     "artistLinks"
   );
-
 
 const songList =
   document.getElementById(
     "songList"
   );
 
+const playlistModal =
+  document.getElementById(
+    "playlistModal"
+  );
 
-/* =========================
-   INIT
-========================= */
+const playlistList =
+  document.getElementById(
+    "playlistList"
+  );
+
+const createPlaylistArea =
+  document.getElementById(
+    "createPlaylistArea"
+  );
+
+const newPlaylistName =
+  document.getElementById(
+    "newPlaylistName"
+  );
+
 
 async function init(){
 
@@ -839,41 +642,23 @@ async function init(){
     );
 
 
-  if(
-    !artistUserId
-  ){
+  if(!artistUserId){
 
     loading.innerHTML =
       `<div class="error">
-
         アーティストIDが指定されていません。
-
       </div>`;
 
     return;
-
   }
 
 
   const {
     data:{
       session
-    },
-    error:sessionError
+    }
   } =
   await sb.auth.getSession();
-
-
-  if(
-    sessionError
-  ){
-
-    console.error(
-      "Session error:",
-      sessionError
-    );
-
-  }
 
 
   currentSession =
@@ -884,12 +669,8 @@ async function init(){
     await loadArtistProfile();
 
 
-  if(
-    !success
-  ){
-
+  if(!success){
     return;
-
   }
 
 
@@ -899,7 +680,6 @@ async function init(){
   loading.style.display =
     "none";
 
-
   content.style.display =
     "block";
 
@@ -907,7 +687,7 @@ async function init(){
 
 
 /* =========================
-   PROFILE
+   プロフィール
 ========================= */
 
 async function loadArtistProfile(){
@@ -917,9 +697,7 @@ async function loadArtistProfile(){
     error
   } =
   await sb
-  .from(
-    "profiles"
-  )
+  .from("profiles")
   .select(
     "artist_name,avatar_url,bio,instagram_url,x_url,tiktok_url,youtube_url,website_url"
   )
@@ -927,30 +705,18 @@ async function loadArtistProfile(){
     "user_id",
     artistUserId
   )
-  .limit(
-    1
-  );
+  .limit(1);
 
 
-  if(
-    error
-  ){
+  if(error){
 
     loading.innerHTML =
       `<div class="error">
-
-        プロフィール取得に失敗しました。
-
-        <br><br>
-
-        ${escapeHtml(
-          error.message
-        )}
-
+        プロフィール取得に失敗しました。<br><br>
+        ${escapeHtml(error.message)}
       </div>`;
 
     return false;
-
   }
 
 
@@ -961,13 +727,10 @@ async function loadArtistProfile(){
 
     loading.innerHTML =
       `<div class="error">
-
         このアーティストのプロフィールはまだありません。
-
       </div>`;
 
     return false;
-
   }
 
 
@@ -980,10 +743,6 @@ async function loadArtistProfile(){
     "Unknown Artist";
 
 
-  document.title =
-    `${profile.artist_name || "Artist"} - NovaRadio`;
-
-
   renderAvatar(
     profile.avatar_url ||
     null
@@ -992,32 +751,18 @@ async function loadArtistProfile(){
 
   const bioText =
     String(
-      profile.bio ||
-      ""
+      profile.bio || ""
     )
     .trim();
 
 
-  if(
-    bioText
-  ){
+  if(bioText){
 
     artistBio.textContent =
       bioText;
 
-
     artistBio.style.display =
       "block";
-
-  }
-  else{
-
-    artistBio.textContent =
-      "";
-
-
-    artistBio.style.display =
-      "none";
 
   }
 
@@ -1032,10 +777,6 @@ async function loadArtistProfile(){
 }
 
 
-/* =========================
-   AVATAR
-========================= */
-
 function renderAvatar(
   url
 ){
@@ -1044,15 +785,12 @@ function renderAvatar(
     "";
 
 
-  if(
-    !url
-  ){
+  if(!url){
 
     artistAvatar.textContent =
       "👤";
 
     return;
-
   }
 
 
@@ -1070,17 +808,12 @@ function renderAvatar(
     "プロフィール画像";
 
 
-  image.referrerPolicy =
-    "no-referrer";
-
-
   image.addEventListener(
     "error",
     ()=>{
 
       artistAvatar.innerHTML =
         "";
-
 
       artistAvatar.textContent =
         "👤";
@@ -1096,10 +829,6 @@ function renderAvatar(
 }
 
 
-/* =========================
-   SNS LINKS
-========================= */
-
 function renderLinks(
   profile
 ){
@@ -1111,72 +840,33 @@ function renderLinks(
   const links = [
 
     {
-
-      label:
-        "Instagram",
-
-      emoji:
-        "📸",
-
-      url:
-        profile.instagram_url
-
+      label:"Instagram",
+      emoji:"📸",
+      url:profile.instagram_url
     },
 
-
     {
-
-      label:
-        "X",
-
-      emoji:
-        "𝕏",
-
-      url:
-        profile.x_url
-
+      label:"X",
+      emoji:"𝕏",
+      url:profile.x_url
     },
 
-
     {
-
-      label:
-        "TikTok",
-
-      emoji:
-        "🎵",
-
-      url:
-        profile.tiktok_url
-
+      label:"TikTok",
+      emoji:"🎵",
+      url:profile.tiktok_url
     },
 
-
     {
-
-      label:
-        "YouTube",
-
-      emoji:
-        "▶️",
-
-      url:
-        profile.youtube_url
-
+      label:"YouTube",
+      emoji:"▶️",
+      url:profile.youtube_url
     },
 
-
     {
-
-      label:
-        "Website",
-
-      emoji:
-        "🌐",
-
-      url:
-        profile.website_url
-
+      label:"Website",
+      emoji:"🌐",
+      url:profile.website_url
     }
 
   ];
@@ -1191,12 +881,8 @@ function renderLinks(
         );
 
 
-      if(
-        !url
-      ){
-
+      if(!url){
         return;
-
       }
 
 
@@ -1243,29 +929,55 @@ function renderLinks(
 
 
 /* =========================
-   LOAD SONGS
+   曲一覧
 ========================= */
 
 async function loadArtistSongs(){
 
   songList.innerHTML =
     `<div class="empty">
-
       曲を読み込んでいます…
-
     </div>`;
 
 
-  /*
-    ここが今回の重要ポイント。
+  const {
+    data:profileData,
+    error:profileError
+  } =
+  await sb
+  .from("profiles")
+  .select("artist_name")
+  .eq(
+    "user_id",
+    artistUserId
+  )
+  .limit(1);
 
-    artist名ではなく
-    songs.user_id と
-    URLの artistUserId を比較する。
 
-    これならアーティスト名を変更しても
-    曲との紐付けが壊れない。
-  */
+  if(profileError){
+
+    songList.innerHTML =
+      `<div class="error">
+        アーティスト情報を取得できませんでした。
+      </div>`;
+
+    return;
+  }
+
+
+  const targetArtistName =
+    profileData?.[0]?.artist_name;
+
+
+  if(!targetArtistName){
+
+    songList.innerHTML =
+      `<div class="empty">
+        まだ曲はありません。
+      </div>`;
+
+    return;
+  }
 
 
   const {
@@ -1273,15 +985,11 @@ async function loadArtistSongs(){
     error
   } =
   await sb
-  .from(
-    "songs"
-  )
-  .select(
-    "*"
-  )
+  .from("songs")
+  .select("*")
   .eq(
-    "user_id",
-    artistUserId
+    "artist",
+    targetArtistName
   )
   .order(
     "created_at",
@@ -1291,25 +999,15 @@ async function loadArtistSongs(){
   );
 
 
-  if(
-    error
-  ){
+  if(error){
 
     songList.innerHTML =
       `<div class="error">
-
-        曲の取得に失敗しました。
-
-        <br><br>
-
-        ${escapeHtml(
-          error.message
-        )}
-
+        曲の取得に失敗しました。<br><br>
+        ${escapeHtml(error.message)}
       </div>`;
 
     return;
-
   }
 
 
@@ -1320,13 +1018,10 @@ async function loadArtistSongs(){
 
     songList.innerHTML =
       `<div class="empty">
-
-        このアーティストの曲はまだありません 🎧
-
+        このアーティストの曲はまだありません。
       </div>`;
 
     return;
-
   }
 
 
@@ -1355,7 +1050,7 @@ async function loadArtistSongs(){
 
 
 /* =========================
-   SONG ITEM
+   曲カード
 ========================= */
 
 async function createSongItem(
@@ -1384,49 +1079,57 @@ async function createSongItem(
     );
 
 
+  const coverUrl =
+    safeHttpUrl(
+      song.cover_url
+    );
+
+
   item.innerHTML =
-    `
+    `<div class="song-main">
 
-    <div class="song-title">
+      <div class="song-cover">
+        ${
+          coverUrl
+            ? `<img
+                src="${escapeHtml(
+                  coverUrl
+                )}"
+                alt="${escapeHtml(
+                  (song.title || "ジャケット") + " のジャケット"
+                )}"
+              >`
+            : "🎵"
+        }
+      </div>
 
-      ${escapeHtml(
-        song.title ||
-        "Untitled"
-      )}
+      <div>
+        <div class="song-title">
+          ${escapeHtml(
+            song.title ||
+            "Untitled"
+          )}
+        </div>
+
+        <div class="song-meta">
+          ${escapeHtml(
+            genreText
+          )}
+
+          ${
+            moodText
+              ? " · " +
+                escapeHtml(
+                  moodText
+                )
+              : ""
+          }
+        </div>
+      </div>
 
     </div>
-
-
-    <div class="song-artist">
-
-      ${escapeHtml(
-        song.artist ||
-        "Unknown Artist"
-      )}
-
-    </div>
-
-
-    <div class="song-meta">
-
-      ${escapeHtml(
-        genreText
-      )}
-
-      ${
-        moodText
-          ? " · " +
-            escapeHtml(
-              moodText
-            )
-          : ""
-      }
-
-    </div>
-
 
     <div class="song-buttons">
-
 
       <button
         type="button"
@@ -1435,7 +1138,6 @@ async function createSongItem(
         ▶️ 再生
       </button>
 
-
       <button
         type="button"
         class="like-song"
@@ -1443,15 +1145,15 @@ async function createSongItem(
         🤍 いいね
       </button>
 
+      <button
+        type="button"
+        class="playlist-song"
+      >
+        ＋ プレイリスト
+      </button>
 
-    </div>
+    </div>`;
 
-    `;
-
-
-  /* =========================
-     PLAY
-  ========================= */
 
   item
   .querySelector(
@@ -1470,23 +1172,33 @@ async function createSongItem(
   );
 
 
-  /* =========================
-     LIKE
-  ========================= */
-
   const likeButton =
     item.querySelector(
       ".like-song"
     );
 
 
-  if(
-    !currentSession
-  ){
+  const playlistButton =
+    item.querySelector(
+      ".playlist-song"
+    );
+
+
+  if(!currentSession){
+
+    playlistButton.textContent =
+      "🔒 ログインで追加";
+
+    playlistButton.addEventListener(
+      "click",
+      ()=>{
+        location.href =
+          "index.html";
+      }
+    );
 
     likeButton.textContent =
       "🔒 ログインでいいね";
-
 
     likeButton.addEventListener(
       "click",
@@ -1502,6 +1214,16 @@ async function createSongItem(
     return item;
 
   }
+
+
+  playlistButton.addEventListener(
+    "click",
+    ()=>{
+      openPlaylistModal(
+        song
+      );
+    }
+  );
 
 
   await updateLikeButton(
@@ -1529,19 +1251,15 @@ async function createSongItem(
 
 
 /* =========================
-   CHECK LIKE
+   いいね
 ========================= */
 
 async function isLiked(
   songId
 ){
 
-  if(
-    !currentSession
-  ){
-
+  if(!currentSession){
     return false;
-
   }
 
 
@@ -1550,12 +1268,8 @@ async function isLiked(
     error
   } =
   await sb
-  .from(
-    "likes"
-  )
-  .select(
-    "id"
-  )
+  .from("likes")
+  .select("id")
   .eq(
     "user_id",
     currentSession.user.id
@@ -1564,23 +1278,17 @@ async function isLiked(
     "song_id",
     songId
   )
-  .limit(
-    1
-  );
+  .limit(1);
 
 
-  if(
-    error
-  ){
+  if(error){
 
     console.error(
       "Like check error:",
       error
     );
 
-
     return false;
-
   }
 
 
@@ -1591,10 +1299,6 @@ async function isLiked(
 
 }
 
-
-/* =========================
-   UPDATE LIKE BUTTON
-========================= */
 
 async function updateLikeButton(
   button,
@@ -1607,24 +1311,19 @@ async function updateLikeButton(
     );
 
 
-  if(
-    liked
-  ){
+  if(liked){
 
     button.textContent =
       "❤️ いいね済み";
-
 
     button.classList.add(
       "liked"
     );
 
-  }
-  else{
+  }else{
 
     button.textContent =
       "🤍 いいね";
-
 
     button.classList.remove(
       "liked"
@@ -1635,21 +1334,13 @@ async function updateLikeButton(
 }
 
 
-/* =========================
-   TOGGLE LIKE
-========================= */
-
 async function toggleLike(
   button,
   songId
 ){
 
-  if(
-    !currentSession
-  ){
-
+  if(!currentSession){
     return;
-
   }
 
 
@@ -1659,17 +1350,13 @@ async function toggleLike(
     );
 
 
-  if(
-    liked
-  ){
+  if(liked){
 
     const {
       error
     } =
     await sb
-    .from(
-      "likes"
-    )
+    .from("likes")
     .delete()
     .eq(
       "user_id",
@@ -1681,30 +1368,23 @@ async function toggleLike(
     );
 
 
-    if(
-      error
-    ){
+    if(error){
 
       alert(
         "いいね解除に失敗しました：" +
         error.message
       );
 
-
       return;
-
     }
 
-  }
-  else{
+  }else{
 
     const {
       error
     } =
     await sb
-    .from(
-      "likes"
-    )
+    .from("likes")
     .insert({
 
       user_id:
@@ -1716,18 +1396,14 @@ async function toggleLike(
     });
 
 
-    if(
-      error
-    ){
+    if(error){
 
       alert(
         "いいねに失敗しました：" +
         error.message
       );
 
-
       return;
-
     }
 
   }
@@ -1742,7 +1418,424 @@ async function toggleLike(
 
 
 /* =========================
-   AUDIO
+   プレイリスト
+========================= */
+
+async function openPlaylistModal(
+  song
+){
+
+  if(!currentSession){
+    location.href =
+      "index.html";
+    return;
+  }
+
+  playlistTargetSong =
+    song;
+
+  playlistModal.classList.add(
+    "show"
+  );
+
+  createPlaylistArea.classList.remove(
+    "show"
+  );
+
+  newPlaylistName.value =
+    "";
+
+  await loadPlaylistChoices();
+
+}
+
+
+async function loadPlaylistChoices(){
+
+  playlistList.innerHTML =
+    `<div class="empty">
+      プレイリストを読み込んでいます…
+    </div>`;
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("playlists")
+  .select("*")
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .order(
+    "created_at",
+    {
+      ascending:false
+    }
+  );
+
+  if(error){
+
+    playlistList.innerHTML =
+      `<div class="error">
+        プレイリストを取得できませんでした。<br><br>
+        ${escapeHtml(
+          error.message
+        )}
+      </div>`;
+
+    return;
+  }
+
+  playlistList.innerHTML =
+    "";
+
+  if(
+    !data ||
+    !data.length
+  ){
+
+    playlistList.innerHTML =
+      `<div class="empty">
+        まだプレイリストがありません。<br>
+        下のボタンから作成できます 🎧
+      </div>`;
+
+    return;
+  }
+
+  data.forEach(
+    playlist=>{
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.className =
+        "playlist-choice";
+
+      button.textContent =
+        "📚 " +
+        (
+          playlist.name ||
+          "無題のプレイリスト"
+        );
+
+      button.addEventListener(
+        "click",
+        ()=>{
+          addSongToPlaylist(
+            playlist
+          );
+        }
+      );
+
+      playlistList.appendChild(
+        button
+      );
+
+    }
+  );
+
+}
+
+
+async function addSongToPlaylist(
+  playlist
+){
+
+  if(
+    !playlistTargetSong ||
+    !currentSession
+  ){
+    return;
+  }
+
+  const {
+    data:existing,
+    error:checkError
+  } =
+  await sb
+  .from("playlist_songs")
+  .select("id")
+  .eq(
+    "playlist_id",
+    playlist.id
+  )
+  .eq(
+    "song_id",
+    playlistTargetSong.id
+  )
+  .eq(
+    "user_id",
+    currentSession.user.id
+  )
+  .limit(1);
+
+  if(checkError){
+
+    alert(
+      "確認に失敗しました：" +
+      checkError.message
+    );
+
+    return;
+  }
+
+  if(
+    existing &&
+    existing.length
+  ){
+
+    alert(
+      "この曲はすでにそのプレイリストに入っています。"
+    );
+
+    return;
+  }
+
+  const {
+    error
+  } =
+  await sb
+  .from("playlist_songs")
+  .insert({
+
+    playlist_id:
+      playlist.id,
+
+    song_id:
+      playlistTargetSong.id,
+
+    user_id:
+      currentSession.user.id
+
+  });
+
+  if(error){
+
+    alert(
+      "プレイリストへの追加に失敗しました：" +
+      error.message
+    );
+
+    return;
+  }
+
+  alert(
+    `「${playlistTargetSong.title}」を「${playlist.name}」に追加しました！`
+  );
+
+  playlistModal.classList.remove(
+    "show"
+  );
+
+}
+
+
+async function createPlaylistAndAddSong(){
+
+  if(
+    !playlistTargetSong ||
+    !currentSession
+  ){
+    return;
+  }
+
+  const name =
+    newPlaylistName
+    .value
+    .trim();
+
+  if(!name){
+
+    alert(
+      "プレイリスト名を入力してください。"
+    );
+
+    return;
+  }
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("playlists")
+  .insert({
+
+    user_id:
+      currentSession.user.id,
+
+    name:
+      name
+
+  })
+  .select("*")
+  .single();
+
+  if(error){
+
+    alert(
+      "プレイリスト作成に失敗しました：" +
+      error.message
+    );
+
+    return;
+  }
+
+  const {
+    error:addError
+  } =
+  await sb
+  .from("playlist_songs")
+  .insert({
+
+    playlist_id:
+      data.id,
+
+    song_id:
+      playlistTargetSong.id,
+
+    user_id:
+      currentSession.user.id
+
+  });
+
+  if(addError){
+
+    alert(
+      "プレイリストは作成できましたが、曲の追加に失敗しました：" +
+      addError.message
+    );
+
+    return;
+  }
+
+  alert(
+    `「${data.name}」を作成して「${playlistTargetSong.title}」を追加しました！`
+  );
+
+  playlistModal.classList.remove(
+    "show"
+  );
+
+  createPlaylistArea.classList.remove(
+    "show"
+  );
+
+  newPlaylistName.value =
+    "";
+
+}
+
+
+document
+.getElementById(
+  "showCreatePlaylist"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    createPlaylistArea.classList.add(
+      "show"
+    );
+
+    setTimeout(
+      ()=>{
+        newPlaylistName.focus();
+      },
+      100
+    );
+
+  }
+);
+
+
+document
+.getElementById(
+  "cancelCreatePlaylist"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    createPlaylistArea.classList.remove(
+      "show"
+    );
+
+    newPlaylistName.value =
+      "";
+
+  }
+);
+
+
+document
+.getElementById(
+  "saveNewPlaylist"
+)
+.addEventListener(
+  "click",
+  createPlaylistAndAddSong
+);
+
+
+newPlaylistName.addEventListener(
+  "keydown",
+  event=>{
+
+    if(
+      event.key ===
+      "Enter"
+    ){
+      createPlaylistAndAddSong();
+    }
+
+  }
+);
+
+
+document
+.getElementById(
+  "closePlaylistModal"
+)
+.addEventListener(
+  "click",
+  ()=>{
+
+    playlistModal.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+playlistModal.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      event.target ===
+      playlistModal
+    ){
+
+      playlistModal.classList.remove(
+        "show"
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================
+   再生
 ========================= */
 
 function toggleAudio(
@@ -1756,40 +1849,24 @@ function toggleAudio(
     );
 
 
-  /*
-    同じ曲の再生ボタンを
-    もう一度押したら閉じる
-  */
-
-  if(
-    old
-  ){
+  if(old){
 
     old.pause();
-
     old.remove();
 
     return;
-
   }
 
 
-  if(
-    !song.audio_url
-  ){
+  if(!song.audio_url){
 
     alert(
       "この曲には音源がありません。"
     );
 
     return;
-
   }
 
-
-  /*
-    他の曲が鳴っていたら停止
-  */
 
   document
   .querySelectorAll(
@@ -1799,7 +1876,6 @@ function toggleAudio(
     audio=>{
 
       audio.pause();
-
       audio.remove();
 
     }
@@ -1824,10 +1900,6 @@ function toggleAudio(
     true;
 
 
-  audio.preload =
-    "metadata";
-
-
   audio.src =
     song.audio_url;
 
@@ -1839,53 +1911,36 @@ function toggleAudio(
 
   audio
   .play()
-  .catch(
-    ()=>{}
-  );
+  .catch(()=>{});
 
 }
 
 
 /* =========================
-   FORMAT TAGS
+   Helpers
 ========================= */
 
 function formatTags(
   value
 ){
 
-  if(
-    !value
-  ){
-
+  if(!value){
     return "";
-
   }
 
 
   return String(
     value
   )
-  .split(
-    ","
-  )
+  .split(",")
   .map(
-    value=>
-      value.trim()
+    value=>value.trim()
   )
-  .filter(
-    Boolean
-  )
-  .join(
-    " / "
-  );
+  .filter(Boolean)
+  .join(" / ");
 
 }
 
-
-/* =========================
-   SAFE URL
-========================= */
 
 function safeHttpUrl(
   value
@@ -1893,18 +1948,13 @@ function safeHttpUrl(
 
   const raw =
     String(
-      value ||
-      ""
+      value || ""
     )
     .trim();
 
 
-  if(
-    !raw
-  ){
-
+  if(!raw){
     return null;
-
   }
 
 
@@ -1938,17 +1988,12 @@ function safeHttpUrl(
 }
 
 
-/* =========================
-   ESCAPE HTML
-========================= */
-
 function escapeHtml(
   value
 ){
 
   return String(
-    value ??
-    ""
+    value ?? ""
   )
   .replaceAll(
     "&",
@@ -1974,16 +2019,9 @@ function escapeHtml(
 }
 
 
-/* =========================
-   START
-========================= */
-
 init();
-
 
 </script>
 
-
 </body>
-
 </html>
