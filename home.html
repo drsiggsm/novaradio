@@ -633,6 +633,205 @@ audio{
 }
 
 
+
+/* =========================
+   FIXED MINI PLAYER
+========================= */
+
+body{
+  padding-bottom:118px;
+}
+
+.fixed-player{
+  position:fixed;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  width:min(940px,94vw);
+  z-index:90;
+
+  display:none;
+
+  padding:10px 14px 8px;
+
+  border:1px solid #3a3f70;
+  border-radius:20px;
+
+  background:#0b0e20f2;
+
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+
+  box-shadow:
+    0 18px 60px #000a;
+}
+
+.fixed-player.show{
+  display:block;
+}
+
+.fixed-player-main{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:14px;
+  align-items:center;
+}
+
+.fixed-track{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+}
+
+.fixed-cover{
+  width:54px;
+  height:54px;
+  flex:0 0 54px;
+
+  border-radius:11px;
+  overflow:hidden;
+
+  border:1px solid #343b67;
+
+  background:#15182e;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:22px;
+}
+
+.fixed-cover img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.fixed-info{
+  min-width:0;
+}
+
+.fixed-title{
+  font-size:14px;
+  font-weight:800;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.fixed-artist{
+  margin-top:3px;
+
+  color:#9ba0bd;
+  font-size:12px;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.fixed-controls{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.fixed-control{
+  width:38px;
+  height:38px;
+
+  border:1px solid #343b67;
+  border-radius:50%;
+
+  background:#171a31;
+  color:#fff;
+
+  font-size:15px;
+  font-weight:800;
+
+  cursor:pointer;
+}
+
+.fixed-control.main{
+  width:44px;
+  height:44px;
+
+  border:0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7b25ff,
+      #159df5
+    );
+
+  font-size:18px;
+}
+
+.fixed-progress-row{
+  display:grid;
+  grid-template-columns:42px 1fr 42px;
+  gap:9px;
+  align-items:center;
+
+  margin-top:6px;
+}
+
+.fixed-time{
+  color:#8f94b2;
+  font-size:11px;
+  text-align:center;
+}
+
+.fixed-seek{
+  width:100%;
+  cursor:pointer;
+  accent-color:#7b25ff;
+}
+
+/* NOW PLAYING内の標準audioバーは使わない */
+#audioPlayer{
+  display:none !important;
+}
+
+@media(max-width:600px){
+
+  body{
+    padding-bottom:132px;
+  }
+
+  .fixed-player{
+    bottom:8px;
+    padding:9px 10px 8px;
+    border-radius:16px;
+  }
+
+  .fixed-player-main{
+    gap:8px;
+  }
+
+  .fixed-cover{
+    width:46px;
+    height:46px;
+    flex-basis:46px;
+  }
+
+  .fixed-control{
+    width:34px;
+    height:34px;
+  }
+
+  .fixed-control.main{
+    width:40px;
+    height:40px;
+  }
+
+}
+
 /* =========================
    MOBILE
 ========================= */
@@ -1005,6 +1204,115 @@ audio{
 </main>
 
 
+<!-- 画面下固定プレイヤー -->
+<div
+  class="fixed-player"
+  id="fixedPlayer"
+>
+  <div class="fixed-player-main">
+
+    <div class="fixed-track">
+
+      <div
+        class="fixed-cover"
+        id="fixedCover"
+      >
+        🎵
+      </div>
+
+      <div class="fixed-info">
+
+        <div
+          class="fixed-title"
+          id="fixedTitle"
+        >
+          曲を選択
+        </div>
+
+        <div
+          class="fixed-artist"
+          id="fixedArtist"
+        >
+          NovaRadio
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="fixed-controls">
+
+      <button
+        type="button"
+        class="fixed-control"
+        id="fixedPrev"
+        title="前の曲"
+      >
+        ⏮
+      </button>
+
+      <button
+        type="button"
+        class="fixed-control main"
+        id="fixedPlayPause"
+        title="再生 / 一時停止"
+      >
+        ▶
+      </button>
+
+      <button
+        type="button"
+        class="fixed-control"
+        id="fixedNext"
+        title="次の曲"
+      >
+        ⏭
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="fixed-progress-row">
+
+    <div
+      class="fixed-time"
+      id="fixedCurrentTime"
+    >
+      0:00
+    </div>
+
+    <input
+      class="fixed-seek"
+      id="fixedSeek"
+      type="range"
+      min="0"
+      max="100"
+      value="0"
+      step="0.1"
+      aria-label="再生位置"
+    >
+
+    <div
+      class="fixed-time"
+      id="fixedDuration"
+    >
+      0:00
+    </div>
+
+  </div>
+
+
+  <audio
+    id="globalAudio"
+    preload="metadata"
+  ></audio>
+
+</div>
+
+
 <div
   class="modal"
   id="playlistModal"
@@ -1170,6 +1478,62 @@ const createPlaylistArea =
 const newPlaylistName =
   document.getElementById(
     "newPlaylistName"
+  );
+
+
+const fixedPlayer =
+  document.getElementById(
+    "fixedPlayer"
+  );
+
+const fixedCover =
+  document.getElementById(
+    "fixedCover"
+  );
+
+const fixedTitle =
+  document.getElementById(
+    "fixedTitle"
+  );
+
+const fixedArtist =
+  document.getElementById(
+    "fixedArtist"
+  );
+
+const fixedPrev =
+  document.getElementById(
+    "fixedPrev"
+  );
+
+const fixedPlayPause =
+  document.getElementById(
+    "fixedPlayPause"
+  );
+
+const fixedNext =
+  document.getElementById(
+    "fixedNext"
+  );
+
+const fixedSeek =
+  document.getElementById(
+    "fixedSeek"
+  );
+
+const fixedCurrentTime =
+  document.getElementById(
+    "fixedCurrentTime"
+  );
+
+const fixedDuration =
+  document.getElementById(
+    "fixedDuration"
+  );
+
+const globalAudio =
+  document.getElementById(
+    "globalAudio"
   );
 
 
@@ -1812,12 +2176,7 @@ async function playSong(
 
     <audio
       id="audioPlayer"
-      controls
-      autoplay
       preload="metadata"
-      src="${escapeHtml(
-        song.audio_url
-      )}"
     ></audio>
 
     <div class="player-nav">
@@ -1921,22 +2280,8 @@ async function playSong(
   updateNavigationButtons();
 
 
-  const audio =
-    document.getElementById(
-      "audioPlayer"
-    );
-
-
-  audio.addEventListener(
-    "ended",
-    playNextSong
-  );
-
-
-  audio
-  .play()
-  .catch(
-    ()=>{}
+  playSongInFixedPlayer(
+    song
   );
 
 
@@ -2075,6 +2420,547 @@ async function playNextSong(){
   );
 
 }
+
+
+
+/* =========================
+   FIXED PLAYER
+========================= */
+
+function formatTime(
+  seconds
+){
+
+  if(
+    !Number.isFinite(
+      seconds
+    )
+  ){
+    return "0:00";
+  }
+
+  const minutes =
+    Math.floor(
+      seconds / 60
+    );
+
+  const secs =
+    Math.floor(
+      seconds % 60
+    );
+
+  return (
+    minutes +
+    ":" +
+    String(secs)
+    .padStart(
+      2,
+      "0"
+    )
+  );
+
+}
+
+
+function playSongInFixedPlayer(
+  song,
+  restoreTime=null
+){
+
+  if(
+    !song ||
+    !song.audio_url
+  ){
+    return;
+  }
+
+
+  fixedPlayer.classList.add(
+    "show"
+  );
+
+
+  const coverUrl =
+    safeHttpUrl(
+      song.cover_url
+    );
+
+
+  fixedCover.innerHTML =
+    coverUrl
+      ? `<img
+          src="${escapeHtml(
+            coverUrl
+          )}"
+          alt="${escapeHtml(
+            (song.title || "ジャケット") +
+            " のジャケット"
+          )}"
+        >`
+      : "🎵";
+
+
+  fixedTitle.textContent =
+    song.title ||
+    "Untitled";
+
+
+  fixedArtist.textContent =
+    song.artist ||
+    "Unknown Artist";
+
+
+  const currentSrc =
+    globalAudio.getAttribute(
+      "src"
+    );
+
+
+  if(
+    currentSrc !==
+    song.audio_url
+  ){
+
+    globalAudio.src =
+      song.audio_url;
+
+    globalAudio.load();
+
+  }
+
+
+  if(
+    restoreTime !== null &&
+    Number.isFinite(
+      restoreTime
+    ) &&
+    restoreTime > 0
+  ){
+
+    const setRestoreTime =
+      ()=>{
+
+        if(
+          Number.isFinite(
+            globalAudio.duration
+          )
+        ){
+
+          globalAudio.currentTime =
+            Math.min(
+              restoreTime,
+              Math.max(
+                0,
+                globalAudio.duration - 0.25
+              )
+            );
+
+        }
+
+      };
+
+
+    if(
+      globalAudio.readyState >= 1
+    ){
+      setRestoreTime();
+    }
+    else{
+
+      globalAudio.addEventListener(
+        "loadedmetadata",
+        setRestoreTime,
+        {
+          once:true
+        }
+      );
+
+    }
+
+  }
+
+
+  globalAudio
+  .play()
+  .then(
+    ()=>{
+      fixedPlayPause.textContent =
+        "⏸";
+    }
+  )
+  .catch(
+    ()=>{
+      fixedPlayPause.textContent =
+        "▶";
+    }
+  );
+
+
+  savePlayerState();
+
+}
+
+
+function savePlayerState(){
+
+  if(!currentSong){
+    return;
+  }
+
+
+  const state = {
+
+    song:
+      currentSong,
+
+    queue:
+      currentQueue,
+
+    history:
+      historySongs,
+
+    historyIndex:
+      historyIndex,
+
+    currentTime:
+      Number(
+        globalAudio.currentTime ||
+        0
+      ),
+
+    wasPlaying:
+      !globalAudio.paused,
+
+    savedAt:
+      Date.now()
+
+  };
+
+
+  try{
+
+    localStorage.setItem(
+      "novaradio_player_state",
+      JSON.stringify(
+        state
+      )
+    );
+
+  }
+  catch(error){
+
+    console.warn(
+      "Player state save failed:",
+      error
+    );
+
+  }
+
+}
+
+
+async function restorePlayerState(){
+
+  let raw;
+
+  try{
+
+    raw =
+      localStorage.getItem(
+        "novaradio_player_state"
+      );
+
+  }
+  catch{
+
+    return;
+
+  }
+
+
+  if(!raw){
+    return;
+  }
+
+
+  try{
+
+    const state =
+      JSON.parse(
+        raw
+      );
+
+
+    if(
+      !state ||
+      !state.song ||
+      !state.song.audio_url
+    ){
+      return;
+    }
+
+
+    currentSong =
+      state.song;
+
+
+    currentQueue =
+      Array.isArray(
+        state.queue
+      )
+        ? state.queue
+        : [];
+
+
+    historySongs =
+      Array.isArray(
+        state.history
+      )
+        ? state.history
+        : [];
+
+
+    historyIndex =
+      Number.isInteger(
+        state.historyIndex
+      )
+        ? state.historyIndex
+        : historySongs.length - 1;
+
+
+    await playSong(
+      currentSong,
+      false
+    );
+
+
+    if(
+      Number.isFinite(
+        state.currentTime
+      )
+    ){
+
+      const applyTime =
+        ()=>{
+
+          globalAudio.currentTime =
+            Math.min(
+              state.currentTime,
+              Number.isFinite(
+                globalAudio.duration
+              )
+                ? Math.max(
+                    0,
+                    globalAudio.duration - 0.25
+                  )
+                : state.currentTime
+            );
+
+        };
+
+
+      if(
+        globalAudio.readyState >= 1
+      ){
+        applyTime();
+      }
+      else{
+
+        globalAudio.addEventListener(
+          "loadedmetadata",
+          applyTime,
+          {
+            once:true
+          }
+        );
+
+      }
+
+    }
+
+
+    if(!state.wasPlaying){
+
+      globalAudio.pause();
+
+      fixedPlayPause.textContent =
+        "▶";
+
+    }
+
+
+    updateNavigationButtons();
+
+  }
+  catch(error){
+
+    console.warn(
+      "Player state restore failed:",
+      error
+    );
+
+  }
+
+}
+
+
+fixedPlayPause.addEventListener(
+  "click",
+  ()=>{
+
+    if(!currentSong){
+      return;
+    }
+
+
+    if(globalAudio.paused){
+
+      globalAudio
+      .play()
+      .catch(()=>{});
+
+    }
+    else{
+
+      globalAudio.pause();
+
+    }
+
+  }
+);
+
+
+fixedPrev.addEventListener(
+  "click",
+  playPreviousSong
+);
+
+
+fixedNext.addEventListener(
+  "click",
+  playNextSong
+);
+
+
+globalAudio.addEventListener(
+  "play",
+  ()=>{
+
+    fixedPlayPause.textContent =
+      "⏸";
+
+    savePlayerState();
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "pause",
+  ()=>{
+
+    fixedPlayPause.textContent =
+      "▶";
+
+    savePlayerState();
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "loadedmetadata",
+  ()=>{
+
+    fixedDuration.textContent =
+      formatTime(
+        globalAudio.duration
+      );
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "timeupdate",
+  ()=>{
+
+    fixedCurrentTime.textContent =
+      formatTime(
+        globalAudio.currentTime
+      );
+
+
+    if(
+      Number.isFinite(
+        globalAudio.duration
+      ) &&
+      globalAudio.duration > 0
+    ){
+
+      fixedSeek.value =
+        (
+          globalAudio.currentTime /
+          globalAudio.duration
+        ) * 100;
+
+    }
+
+
+    if(
+      Math.floor(
+        globalAudio.currentTime
+      ) % 2 === 0
+    ){
+      savePlayerState();
+    }
+
+  }
+);
+
+
+globalAudio.addEventListener(
+  "ended",
+  async ()=>{
+
+    savePlayerState();
+
+    await playNextSong();
+
+  }
+);
+
+
+fixedSeek.addEventListener(
+  "input",
+  ()=>{
+
+    if(
+      !Number.isFinite(
+        globalAudio.duration
+      ) ||
+      globalAudio.duration <= 0
+    ){
+      return;
+    }
+
+
+    globalAudio.currentTime =
+      (
+        Number(
+          fixedSeek.value
+        ) / 100
+      ) *
+      globalAudio.duration;
+
+  }
+);
+
+
+window.addEventListener(
+  "beforeunload",
+  savePlayerState
+);
 
 
 /* =========================
@@ -3099,7 +3985,17 @@ document
    START
 ========================= */
 
-checkLogin();
+(async ()=>{
+
+  await checkLogin();
+
+  if(currentSession){
+
+    await restorePlayerState();
+
+  }
+
+})();
 
 
 </script>
