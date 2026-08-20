@@ -771,25 +771,51 @@ input[type="file"]{
 
     <div class="field">
       <label>ジャンル</label>
-      <input
-        id="editGenre"
-        type="text"
-        placeholder="Hip Hop,R&B"
+
+      <div
+        class="options"
+        id="editGenreOptions"
       >
-      <div class="file-info">
-        複数の場合はカンマ区切り
+        <button type="button" class="option" data-value="Hip Hop">Hip Hop</button>
+        <button type="button" class="option" data-value="R&B">R&B</button>
+        <button type="button" class="option" data-value="Pop">Pop</button>
+        <button type="button" class="option" data-value="Trap">Trap</button>
+        <button type="button" class="option" data-value="Rock">Rock</button>
+        <button type="button" class="option" data-value="Lo-Fi">Lo-Fi</button>
+        <button type="button" class="option" data-value="Electronic">Electronic</button>
+        <button type="button" class="option" data-value="Pluggnb">Pluggnb</button>
+        <button type="button" class="option" data-value="Other">Other</button>
+      </div>
+
+      <div
+        class="selected-box"
+        id="editGenreSelected"
+      >
+        <b>選択中：</b>
+        <span>まだ選択されていません</span>
       </div>
     </div>
 
     <div class="field">
       <label>Mood</label>
-      <input
-        id="editMood"
-        type="text"
-        placeholder="Chill,Emotional"
+
+      <div
+        class="options"
+        id="editMoodOptions"
       >
-      <div class="file-info">
-        複数の場合はカンマ区切り
+        <button type="button" class="option" data-value="Chill">Chill</button>
+        <button type="button" class="option" data-value="Dark">Dark</button>
+        <button type="button" class="option" data-value="Happy">Happy</button>
+        <button type="button" class="option" data-value="Emotional">Emotional</button>
+        <button type="button" class="option" data-value="Energetic">Energetic</button>
+      </div>
+
+      <div
+        class="selected-box"
+        id="editMoodSelected"
+      >
+        <b>選択中：</b>
+        <span>指定なし</span>
       </div>
     </div>
 
@@ -907,6 +933,13 @@ let currentSession = null;
 
 const selectedGenres = [];
 const selectedMoods = [];
+
+/*
+  編集モーダル専用。
+  アップロード画面側の選択状態とは分けて管理する。
+*/
+const editSelectedGenres = [];
+const editSelectedMoods = [];
 
 const loading =
   document.getElementById("loading");
@@ -2320,6 +2353,112 @@ function playManagedSong(
 
 }
 
+function updateEditSelectedText(){
+
+  const genreText =
+    document.querySelector(
+      "#editGenreSelected span"
+    );
+
+  const moodText =
+    document.querySelector(
+      "#editMoodSelected span"
+    );
+
+  if(genreText){
+    genreText.textContent =
+      editSelectedGenres.length
+        ? editSelectedGenres.join(" / ")
+        : "まだ選択されていません";
+  }
+
+  if(moodText){
+    moodText.textContent =
+      editSelectedMoods.length
+        ? editSelectedMoods.join(" / ")
+        : "指定なし";
+  }
+
+}
+
+function syncEditOptionButtons(){
+
+  document
+  .querySelectorAll(
+    "#editGenreOptions .option"
+  )
+  .forEach(button=>{
+
+    button.classList.toggle(
+      "selected",
+      editSelectedGenres.includes(
+        button.dataset.value
+      )
+    );
+
+  });
+
+  document
+  .querySelectorAll(
+    "#editMoodOptions .option"
+  )
+  .forEach(button=>{
+
+    button.classList.toggle(
+      "selected",
+      editSelectedMoods.includes(
+        button.dataset.value
+      )
+    );
+
+  });
+
+}
+
+document
+.querySelectorAll(
+  "#editGenreOptions .option"
+)
+.forEach(button=>{
+
+  button.addEventListener(
+    "click",
+    ()=>{
+
+      toggleSelection(
+        button,
+        editSelectedGenres
+      );
+
+      updateEditSelectedText();
+
+    }
+  );
+
+});
+
+document
+.querySelectorAll(
+  "#editMoodOptions .option"
+)
+.forEach(button=>{
+
+  button.addEventListener(
+    "click",
+    ()=>{
+
+      toggleSelection(
+        button,
+        editSelectedMoods
+      );
+
+      updateEditSelectedText();
+
+    }
+  );
+
+});
+
 function openEditModal(
   song
 ){
@@ -2339,15 +2478,35 @@ function openEditModal(
   .value =
     song.artist || "";
 
-  document
-  .getElementById("editGenre")
-  .value =
-    song.genre || "";
+  /*
+    保存済みのGenre / Moodを
+    編集モーダルのボタン選択状態へ復元する。
+  */
+  editSelectedGenres.length = 0;
+  editSelectedMoods.length = 0;
 
-  document
-  .getElementById("editMood")
-  .value =
-    song.mood || "";
+  String(song.genre || "")
+  .split(",")
+  .map(value=>value.trim())
+  .filter(Boolean)
+  .forEach(value=>{
+    if(!editSelectedGenres.includes(value)){
+      editSelectedGenres.push(value);
+    }
+  });
+
+  String(song.mood || "")
+  .split(",")
+  .map(value=>value.trim())
+  .filter(Boolean)
+  .forEach(value=>{
+    if(!editSelectedMoods.includes(value)){
+      editSelectedMoods.push(value);
+    }
+  });
+
+  syncEditOptionButtons();
+  updateEditSelectedText();
 
   document
   .getElementById("editBpm")
@@ -2438,16 +2597,10 @@ document
       .trim();
 
     const genre =
-      document
-      .getElementById("editGenre")
-      .value
-      .trim();
+      editSelectedGenres.join(",");
 
     const mood =
-      document
-      .getElementById("editMood")
-      .value
-      .trim();
+      editSelectedMoods.join(",");
 
     const bpm =
       document
