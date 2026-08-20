@@ -163,7 +163,6 @@ body{
   ユーザー登録は3項目だけ。
 </div>
 
-
 <section class="card">
 
 <div class="tabs">
@@ -186,7 +185,6 @@ body{
 
 </div>
 
-
 <!-- 登録 -->
 
 <div id="rp">
@@ -204,7 +202,6 @@ body{
 
 </div>
 
-
 <div class="field">
 
 <label>
@@ -219,7 +216,6 @@ body{
 
 </div>
 
-
 <div class="field">
 
 <label>
@@ -233,7 +229,6 @@ body{
 >
 
 </div>
-
 
 <div class="terms">
 
@@ -259,7 +254,6 @@ body{
 
 </div>
 
-
 <button
   type="button"
   class="submit"
@@ -269,7 +263,6 @@ body{
 </button>
 
 </div>
-
 
 <!-- ログイン -->
 
@@ -292,7 +285,6 @@ body{
 
 </div>
 
-
 <div class="field">
 
 <label>
@@ -307,7 +299,6 @@ body{
 
 </div>
 
-
 <button
   type="button"
   class="submit"
@@ -318,12 +309,10 @@ body{
 
 </div>
 
-
 <div
   id="status"
   class="status"
 ></div>
-
 
 <p
   style="
@@ -335,11 +324,9 @@ body{
   登録後、確認メールのリンクをクリックしてください。
 </p>
 
-
 </section>
 
 </main>
-
 
 <script>
 
@@ -355,6 +342,12 @@ const sb =
     SUPABASE_KEY
   );
 
+/* app.html のURLを現在地基準で作る */
+const APP_URL =
+  new URL(
+    "app.html",
+    location.href
+  ).href;
 
 const rt =
   document.getElementById("rt");
@@ -371,7 +364,6 @@ const lp =
 const status =
   document.getElementById("status");
 
-
 const artist =
   document.getElementById("artist");
 
@@ -387,7 +379,6 @@ const agree =
 const signup =
   document.getElementById("signup");
 
-
 const le =
   document.getElementById("le");
 
@@ -396,7 +387,6 @@ const lpw =
 
 const login =
   document.getElementById("login");
-
 
 function msg(
   text,
@@ -412,6 +402,37 @@ function msg(
 
 }
 
+/* すでにログイン済みならapp.htmlへ */
+async function redirectIfLoggedIn(){
+
+  try{
+
+    const {
+      data:{
+        session
+      }
+    } =
+    await sb.auth.getSession();
+
+    if(session){
+
+      location.replace(
+        APP_URL
+      );
+
+    }
+
+  }
+  catch(error){
+
+    console.warn(
+      "ログイン状態の確認に失敗しました:",
+      error
+    );
+
+  }
+
+}
 
 /* 登録タブ */
 
@@ -441,7 +462,6 @@ rt.addEventListener(
   }
 );
 
-
 /* ログインタブ */
 
 lt.addEventListener(
@@ -470,7 +490,6 @@ lt.addEventListener(
   }
 );
 
-
 /* 新規登録 */
 
 signup.addEventListener(
@@ -486,7 +505,6 @@ signup.addEventListener(
     const p =
       pw.value;
 
-
     if(
       !a ||
       !e ||
@@ -500,7 +518,6 @@ signup.addEventListener(
 
     }
 
-
     if(
       p.length < 8
     ){
@@ -511,7 +528,6 @@ signup.addEventListener(
       );
 
     }
-
 
     if(
       !agree.checked
@@ -524,21 +540,17 @@ signup.addEventListener(
 
     }
 
-
     signup.disabled =
       true;
 
     signup.textContent =
       "登録中…";
 
-
     msg(
       "登録処理を開始しています…"
     );
 
-
     try{
-
 
       const r =
         await sb.auth.signUp({
@@ -549,9 +561,9 @@ signup.addEventListener(
 
           options:{
 
+            /* 確認メール後もapp.htmlへ */
             emailRedirectTo:
-              location.origin +
-              location.pathname,
+              APP_URL,
 
             data:{
 
@@ -563,25 +575,20 @@ signup.addEventListener(
 
         });
 
-
       if(r.error){
 
         throw r.error;
 
       }
 
-
       msg(
         "登録リクエストを受け付けました。確認メールを受信箱（迷惑メールも含む）から開いてください。"
       );
 
-
       pw.value = "";
-
 
     }
     catch(x){
-
 
       msg(
         "登録に失敗しました：" +
@@ -589,24 +596,19 @@ signup.addEventListener(
         true
       );
 
-
     }
     finally{
-
 
       signup.disabled =
         false;
 
-
       signup.textContent =
         "無料で登録";
-
 
     }
 
   }
 );
-
 
 /* ログイン */
 
@@ -620,7 +622,6 @@ login.addEventListener(
     const p =
       lpw.value;
 
-
     if(
       !e ||
       !p
@@ -633,17 +634,13 @@ login.addEventListener(
 
     }
 
-
     login.disabled =
       true;
-
 
     login.textContent =
       "ログイン中…";
 
-
     try{
-
 
       const r =
         await sb.auth.signInWithPassword({
@@ -654,26 +651,23 @@ login.addEventListener(
 
         });
 
-
       if(r.error){
 
         throw r.error;
 
       }
 
-
       msg(
         "ログインしました。"
       );
 
-
-      location.href =
-        "home.html";
-
+      /* ここが重要：home.htmlではなくapp.htmlへ */
+      location.replace(
+        APP_URL
+      );
 
     }
     catch(x){
-
 
       msg(
         "ログインに失敗しました：" +
@@ -681,23 +675,22 @@ login.addEventListener(
         true
       );
 
-
     }
     finally{
-
 
       login.disabled =
         false;
 
-
       login.textContent =
         "ログイン";
-
 
     }
 
   }
 );
+
+/* 起動時 */
+redirectIfLoggedIn();
 
 </script>
 
