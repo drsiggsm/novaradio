@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NovaRadio - Artist Studio</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -632,7 +633,7 @@ input[type="file"]{
           accept=".wav,.mp3,audio/wav,audio/mpeg"
         >
         <div class="file-info">
-          WAV / MP3
+          WAV / MP3 ・ WAVはアップロード時に再生用MP3（256kbps）へ自動変換
         </div>
       </div>
 
@@ -1765,6 +1766,401 @@ coverFile.addEventListener(
   }
 );
 
+
+/* =========================
+   軽量な再生用MP3を作る
+========================= */
+
+function float32ToInt16(
+  input
+){
+
+  const output =
+    new Int16Array(
+      input.length
+    );
+
+  for(
+    let i = 0;
+    i < input.length;
+    i++
+  ){
+
+    const sample =
+      Math.max(
+        -1,
+        Math.min(
+          1,
+          input[i]
+        )
+      );
+
+    output[i] =
+      sample < 0
+        ? sample * 32768
+        : sample * 32767;
+
+  }
+
+  return output;
+
+}
+
+
+async function resampleAudioBuffer(
+  sourceBuffer,
+  targetSampleRate=44100
+){
+
+  if(
+    sourceBuffer.sampleRate ===
+    targetSampleRate
+  ){
+    return sourceBuffer;
+  }
+
+  const OfflineContext =
+    window.OfflineAudioContext ||
+    window.webkitOfflineAudioContext;
+
+  if(!OfflineContext){
+
+    throw new Error(
+      "このブラウザでは高サンプルレートWAVの変換に対応できません。44.1kHzまたは48kHzの音源をお試しください。"
+    );
+
+  }
+
+  const channels =
+    Math.min(
+      2,
+      Math.max(
+        1,
+        sourceBuffer.numberOfChannels
+      )
+    );
+
+  const frameCount =
+    Math.ceil(
+      sourceBuffer.duration *
+      targetSampleRate
+    );
+
+  const context =
+    new OfflineContext(
+      channels,
+      frameCount,
+      targetSampleRate
+    );
+
+  const source =
+    context.createBufferSource();
+
+  source.buffer =
+    sourceBuffer;
+
+  source.connect(
+    context.destination
+  );
+
+  source.start(0);
+
+  return await context.startRendering();
+
+}
+
+
+async function convertWavToMp3(
+  file,
+  bitrate=256
+){
+
+  if(
+    !window.lamejs ||
+    !window.lamejs.Mp3Encoder
+  ){
+
+    throw new Error(
+      "MP3変換ライブラリを読み込めませんでした。ページを再読み込みしてもう一度お試しください。"
+    );
+
+  }
+
+  progress.textContent =
+    "WAVを再生用MP3へ変換しています… 🎧";
+
+  const AudioContextClass =
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+  if(!AudioContextClass){
+
+    throw new Error(
+      "このブラウザではWAV変換に対応していません。"
+    );
+
+  }
+
+  const audioContext =
+    new AudioContextClass();
+
+  let decodedBuffer;
+
+  try{
+
+    const arrayBuffer =
+      await file.arrayBuffer();
+
+    decodedBuffer =
+      await audioContext.decodeAudioData(
+        arrayBuffer.slice(0)
+      );
+
+  }
+  finally{
+
+    try{
+      await audioContext.close();
+    }
+    catch(error){}
+
+  }
+
+  /*
+    MP3で安定しやすいサンプルレートへ。
+    44.1 / 48kHzはそのまま。
+    それ以外は44.1kHzへ変換。
+  */
+  let audioBuffer =
+    decodedBuffer;
+
+  if(
+    ![
+      44100,
+      48000
+    ].includes(
+      decodedBuffer.sampleRate
+    )
+  ){
+
+    progress.textContent =
+      "音源を44.1kHzへ最適化しています… 🎧";
+
+    audioBuffer =
+      await resampleAudioBuffer(
+        decodedBuffer,
+        44100
+      );
+
+  }
+
+  const channels =
+    Math.min(
+      2,
+      Math.max(
+        1,
+        audioBuffer.numberOfChannels
+      )
+    );
+
+  const sampleRate =
+    audioBuffer.sampleRate;
+
+  const encoder =
+    new lamejs.Mp3Encoder(
+      channels,
+      sampleRate,
+      bitrate
+    );
+
+  const left =
+    float32ToInt16(
+      audioBuffer.getChannelData(0)
+    );
+
+  const right =
+    channels === 2
+      ? float32ToInt16(
+          audioBuffer.getChannelData(1)
+        )
+      : null;
+
+  const blockSize =
+    1152;
+
+  const mp3Chunks =
+    [];
+
+  const totalSamples =
+    left.length;
+
+  for(
+    let offset = 0;
+    offset < totalSamples;
+    offset += blockSize
+  ){
+
+    const leftChunk =
+      left.subarray(
+        offset,
+        Math.min(
+          offset + blockSize,
+          totalSamples
+        )
+      );
+
+    let encoded;
+
+    if(
+      channels === 2
+    ){
+
+      const rightChunk =
+        right.subarray(
+          offset,
+          Math.min(
+            offset + blockSize,
+            totalSamples
+          )
+        );
+
+      encoded =
+        encoder.encodeBuffer(
+          leftChunk,
+          rightChunk
+        );
+
+    }
+    else{
+
+      encoded =
+        encoder.encodeBuffer(
+          leftChunk
+        );
+
+    }
+
+    if(
+      encoded &&
+      encoded.length
+    ){
+
+      mp3Chunks.push(
+        new Int8Array(
+          encoded
+        )
+      );
+
+    }
+
+    /*
+      長い曲でも画面を固めにくくするため、
+      ときどきブラウザへ処理を返す。
+    */
+    if(
+      offset %
+      (
+        blockSize *
+        300
+      ) === 0
+    ){
+
+      const percent =
+        Math.min(
+          99,
+          Math.round(
+            offset /
+            totalSamples *
+            100
+          )
+        );
+
+      progress.textContent =
+        `WAVをMP3へ変換中… ${percent}% 🎧`;
+
+      await new Promise(
+        resolve=>
+          setTimeout(
+            resolve,
+            0
+          )
+      );
+
+    }
+
+  }
+
+  const flushed =
+    encoder.flush();
+
+  if(
+    flushed &&
+    flushed.length
+  ){
+
+    mp3Chunks.push(
+      new Int8Array(
+        flushed
+      )
+    );
+
+  }
+
+  if(
+    !mp3Chunks.length
+  ){
+
+    throw new Error(
+      "MP3への変換に失敗しました。別のWAVまたはMP3をお試しください。"
+    );
+
+  }
+
+  const blob =
+    new Blob(
+      mp3Chunks,
+      {
+        type:"audio/mpeg"
+      }
+    );
+
+  const baseName =
+    file.name
+    .replace(
+      /\.[^.]+$/,
+      ""
+    );
+
+  return new File(
+    [
+      blob
+    ],
+    `${baseName}.mp3`,
+    {
+      type:"audio/mpeg",
+      lastModified:
+        Date.now()
+    }
+  );
+
+}
+
+
+function formatFileSizeMB(
+  bytes
+){
+
+  return (
+    bytes /
+    (
+      1024 *
+      1024
+    )
+  ).toFixed(1);
+
+}
+
+
 uploadButton.addEventListener(
   "click",
   async ()=>{
@@ -1905,8 +2301,49 @@ uploadButton.addEventListener(
 
       }
 
+      if(
+        file.size >
+        250 * 1024 * 1024
+      ){
+
+        throw new Error(
+          "音源ファイルは250MB以下にしてください。"
+        );
+
+      }
+
+      /*
+        WAVはブラウザ内で256kbps MP3へ変換してから
+        Supabaseへアップロードする。
+        元WAVはStorageへ送らないので、
+        Storage容量と再生時のEgressを大幅に節約できる。
+      */
+      let playbackFile =
+        file;
+
+      if(
+        extension === "wav"
+      ){
+
+        playbackFile =
+          await convertWavToMp3(
+            file,
+            256
+          );
+
+        progress.textContent =
+          `変換完了 ${formatFileSizeMB(file.size)}MB → ${formatFileSizeMB(playbackFile.size)}MB。アップロード中… 🚀`;
+
+      }
+      else{
+
+        progress.textContent =
+          "軽量な再生用MP3をアップロードしています… 🚀";
+
+      }
+
       const safeFileName =
-        `${currentSession.user.id}_${Date.now()}.${extension}`;
+        `${currentSession.user.id}_${Date.now()}_${crypto.randomUUID()}.mp3`;
 
       const {
         data:uploadData,
@@ -1917,17 +2354,15 @@ uploadButton.addEventListener(
       .from("songs")
       .upload(
         safeFileName,
-        file,
+        playbackFile,
         {
-          cacheControl:"3600",
+          /*
+            ファイル名は毎回UUID付きで変更されるため
+            1年間ブラウザ/CDNキャッシュして安全。
+          */
+          cacheControl:"31536000",
           upsert:false,
-          contentType:
-            file.type ||
-            (
-              extension === "mp3"
-                ? "audio/mpeg"
-                : "audio/wav"
-            )
+          contentType:"audio/mpeg"
         }
       );
 
@@ -1977,7 +2412,7 @@ uploadButton.addEventListener(
           safeCoverName,
           cover,
           {
-            cacheControl:"3600",
+            cacheControl:"31536000",
             upsert:false,
             contentType:cover.type
           }
@@ -2060,7 +2495,7 @@ uploadButton.addEventListener(
       }
 
       showStatus(
-        "アップロード完了！🔥 NovaRadioに曲が登録されました。",
+        "アップロード完了！🔥 再生用の軽量音源でNovaRadioに登録されました。",
         false
       );
 
@@ -2087,6 +2522,9 @@ uploadButton.addEventListener(
 
       progress.style.display =
         "none";
+
+      progress.textContent =
+        "アップロードしています… 🎧";
 
     }
 
