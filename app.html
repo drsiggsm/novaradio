@@ -811,6 +811,69 @@ let preloadedAudioUrl =
 let isReturningFromFullTrack =
   false;
 
+/*
+  30秒ハイライト専用タイマー。
+  timeupdateだけに頼らず、必ず次曲へ進む。
+*/
+let highlightSkipTimer =
+  null;
+
+function clearHighlightSkipTimer(){
+
+  if(
+    highlightSkipTimer !== null
+  ){
+
+    clearTimeout(
+      highlightSkipTimer
+    );
+
+    highlightSkipTimer =
+      null;
+
+  }
+
+}
+
+function scheduleHighlightSkip(){
+
+  clearHighlightSkipTimer();
+
+  if(
+    !state.highlight ||
+    state.fullTrack
+  ){
+    return;
+  }
+
+  highlightSkipTimer =
+    setTimeout(
+      ()=>{
+
+        highlightSkipTimer =
+          null;
+
+        /*
+          30秒経過時点でもハイライト状態なら
+          強制的に次曲へ。
+        */
+        if(
+          state.highlight &&
+          !state.fullTrack
+        ){
+
+          playNext(
+            false
+          );
+
+        }
+
+      },
+      HIGHLIGHT_SECONDS * 1000
+    );
+
+}
+
 let isSeeking =
   false;
 
@@ -1227,6 +1290,11 @@ async function playSong(
   restart=false
 ){
 
+  /*
+    前の曲の30秒タイマーを必ず破棄。
+  */
+  clearHighlightSkipTimer();
+
   if(
     !song ||
     !song.audio_url
@@ -1471,6 +1539,13 @@ async function playSong(
   await startPlayback(
     requestId
   );
+
+  /*
+    ハイライト曲なら、再生開始後から30秒で
+    必ず次へ進むタイマーをセット。
+    「この曲だけフル」の間はセットしない。
+  */
+  scheduleHighlightSkip();
 
   notifyFrameState();
 
@@ -2150,6 +2225,8 @@ function returnToHighlightAfterFullTrack(){
   state.fullTrack =
     false;
 
+  clearHighlightSkipTimer();
+
   highlightStartTime =
     0;
 
@@ -2250,6 +2327,8 @@ audio.addEventListener(
         )
           ? audio.currentTime
           : 0;
+
+      scheduleHighlightSkip();
     }
 
   }
@@ -2262,6 +2341,13 @@ audio.addEventListener(
 
     playPause.textContent =
       "▶";
+
+    if(
+      state.highlight &&
+      !state.fullTrack
+    ){
+      clearHighlightSkipTimer();
+    }
 
   }
 );
@@ -2312,34 +2398,10 @@ audio.addEventListener(
       return;
     }
 
-    if(
-      state.highlight &&
-      !state.fullTrack &&
-      !audio.paused &&
-      Number.isFinite(
-        audio.currentTime
-      ) &&
-      (
-        audio.currentTime -
-        highlightStartTime
-      ) >=
-      HIGHLIGHT_SECONDS
-    ){
-
-      /*
-        30秒到達で次の曲へ。
-        ended扱いにはしないので、
-        repeat oneでも同じ曲に留まらない。
-      */
-      highlightStartTime =
-        audio.currentTime +
-        999999;
-
-      playNext(
-        false
-      );
-
-    }
+    /*
+      30秒自動スキップは専用setTimeoutで管理。
+      timeupdateはUI更新とフル曲終了保険だけ担当する。
+    */
 
   }
 );
@@ -3117,6 +3179,8 @@ window.addEventListener(
         state.fullTrack =
           false;
 
+        clearHighlightSkipTimer();
+
       }
 
       if(
@@ -3272,6 +3336,8 @@ window.addEventListener(
 
       state.fullTrack =
         true;
+
+      clearHighlightSkipTimer();
 
       isReturningFromFullTrack =
         false;
