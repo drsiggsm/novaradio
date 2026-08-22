@@ -5069,8 +5069,31 @@ document
     await sb.auth.signOut();
 
 
-    location.href =
-      "index.html";
+    /*
+      home.html は app.html の iframe 内で動くことがある。
+      iframe 自身だけを index.html へ移動すると、
+      その中から再び app.html を開いた時に
+      app.html が二重に入れ子になる。
+
+      必ず一番外側の画面を index.html へ戻す。
+    */
+    if(
+      window.parent &&
+      window.parent !== window
+    ){
+
+      window.parent.location.replace(
+        "index.html"
+      );
+
+    }
+    else{
+
+      location.replace(
+        "index.html"
+      );
+
+    }
 
   }
 );
