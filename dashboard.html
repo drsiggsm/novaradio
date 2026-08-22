@@ -456,6 +456,21 @@ input[type="file"]{
     grid-template-columns:1fr;
   }
 }
+
+/* ===== Genre categories ===== */
+.genre-groups{display:grid;gap:12px}
+.genre-group{border:1px solid rgba(116,130,205,.34);border-radius:18px;background:rgba(5,8,28,.24);overflow:hidden}
+.genre-category-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px}
+.genre-category-toggle{width:100%;border:0;background:transparent;color:#f5f6ff;font:inherit;font-weight:800;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left}
+.genre-category-row .genre-category-toggle{width:48px;justify-content:center;border:1px solid rgba(116,130,205,.34);border-radius:14px;padding:0}
+.genre-category-select{width:100%;justify-content:flex-start;font-weight:850}
+.genre-children{display:none;flex-wrap:wrap;gap:10px;padding:0 14px 14px}
+.genre-children.open{display:flex}
+.genre-category-toggle[aria-expanded="true"] .genre-chevron,
+.genre-category-row .genre-category-toggle[aria-expanded="true"]{transform:rotate(180deg)}
+.genre-limit-note{margin-top:10px;color:#9ea6c7;font-size:.9rem}
+@media(min-width:760px){.genre-groups{grid-template-columns:repeat(2,minmax(0,1fr))}.genre-group:last-child:nth-child(odd){grid-column:1/-1}}
+
 </style>
 </head>
 
@@ -533,20 +548,82 @@ input[type="file"]{
 
         <label>🎵 ジャンル *</label>
 
-        <div
-          class="options"
-          id="genreOptions"
-        >
-          <button type="button" class="option" data-value="Hip Hop">Hip Hop</button>
-          <button type="button" class="option" data-value="R&B">R&B</button>
-          <button type="button" class="option" data-value="Pop">Pop</button>
-          <button type="button" class="option" data-value="Trap">Trap</button>
-          <button type="button" class="option" data-value="Rock">Rock</button>
-          <button type="button" class="option" data-value="Lo-Fi">Lo-Fi</button>
-          <button type="button" class="option" data-value="Electronic">Electronic</button>
-          <button type="button" class="option" data-value="Pluggnb">Pluggnb</button>
-          <button type="button" class="option" data-value="Other">Other</button>
-        </div>
+        <div class="genre-groups" id="genreOptions">
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="true">
+<span>Hip Hop / R&B</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children open">
+<button type="button" class="option genre-child" data-value="Hip Hop">Hip Hop</button>
+<button type="button" class="option genre-child" data-value="Trap">Trap</button>
+<button type="button" class="option genre-child" data-value="Pluggnb">Pluggnb</button>
+<button type="button" class="option genre-child" data-value="Rage">Rage</button>
+<button type="button" class="option genre-child" data-value="Drill">Drill</button>
+<button type="button" class="option genre-child" data-value="Boom Bap">Boom Bap</button>
+<button type="button" class="option genre-child" data-value="R&B">R&B</button>
+<button type="button" class="option genre-child" data-value="Soul">Soul</button>
+<button type="button" class="option genre-child" data-value="Neo Soul">Neo Soul</button>
+<button type="button" class="option genre-child" data-value="Jersey Club">Jersey Club</button>
+</div>
+</div>
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="false">
+<span>Electronic / Dance</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="House">House</button>
+<button type="button" class="option genre-child" data-value="Techno">Techno</button>
+<button type="button" class="option genre-child" data-value="UK Garage">UK Garage</button>
+<button type="button" class="option genre-child" data-value="Drum & Bass">Drum & Bass</button>
+<button type="button" class="option genre-child" data-value="Amapiano">Amapiano</button>
+<button type="button" class="option genre-child" data-value="Future Bass">Future Bass</button>
+<button type="button" class="option genre-child" data-value="Hardstyle">Hardstyle</button>
+<button type="button" class="option genre-child" data-value="Ambient">Ambient</button>
+</div>
+</div>
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="false">
+<span>Pop</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Pop">Pop</button>
+<button type="button" class="option genre-child" data-value="Indie Pop">Indie Pop</button>
+<button type="button" class="option genre-child" data-value="Hyperpop">Hyperpop</button>
+<button type="button" class="option genre-child" data-value="Synth-Pop">Synth-Pop</button>
+<button type="button" class="option genre-child" data-value="J-Pop">J-Pop</button>
+<button type="button" class="option genre-child" data-value="K-Pop">K-Pop</button>
+<button type="button" class="option genre-child" data-value="Afrobeats">Afrobeats</button>
+</div>
+</div>
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="false">
+<span>Rock / Alternative</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Rock">Rock</button>
+<button type="button" class="option genre-child" data-value="Indie Rock">Indie Rock</button>
+<button type="button" class="option genre-child" data-value="Alternative">Alternative</button>
+<button type="button" class="option genre-child" data-value="Punk">Punk</button>
+<button type="button" class="option genre-child" data-value="Metal">Metal</button>
+<button type="button" class="option genre-child" data-value="Emo">Emo</button>
+</div>
+</div>
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="false">
+<span>Other</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Jazz">Jazz</button>
+<button type="button" class="option genre-child" data-value="Funk">Funk</button>
+<button type="button" class="option genre-child" data-value="Reggae">Reggae</button>
+<button type="button" class="option genre-child" data-value="Dancehall">Dancehall</button>
+<button type="button" class="option genre-child" data-value="Acoustic">Acoustic</button>
+<button type="button" class="option genre-child" data-value="Lo-Fi">Lo-Fi</button>
+<button type="button" class="option genre-child" data-value="Vocaloid">Vocaloid</button>
+<button type="button" class="option genre-child" data-value="Other">Other</button>
+</div>
+</div>
+</div>
 
         <div
           class="selected-info"
@@ -555,6 +632,7 @@ input[type="file"]{
           <strong>選択中：</strong>
           まだ選択されていません
         </div>
+        <div class="genre-limit-note">ジャンルは最大3つまで選択できます。</div>
 
       </div>
 
@@ -773,20 +851,82 @@ input[type="file"]{
     <div class="field">
       <label>ジャンル</label>
 
-      <div
-        class="options"
-        id="editGenreOptions"
-      >
-        <button type="button" class="option" data-value="Hip Hop">Hip Hop</button>
-        <button type="button" class="option" data-value="R&B">R&B</button>
-        <button type="button" class="option" data-value="Pop">Pop</button>
-        <button type="button" class="option" data-value="Trap">Trap</button>
-        <button type="button" class="option" data-value="Rock">Rock</button>
-        <button type="button" class="option" data-value="Lo-Fi">Lo-Fi</button>
-        <button type="button" class="option" data-value="Electronic">Electronic</button>
-        <button type="button" class="option" data-value="Pluggnb">Pluggnb</button>
-        <button type="button" class="option" data-value="Other">Other</button>
-      </div>
+      <div class="genre-groups" id="editGenreOptions">
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="true">
+<span>Hip Hop / R&B</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children open">
+<button type="button" class="option genre-child" data-value="Hip Hop">Hip Hop</button>
+<button type="button" class="option genre-child" data-value="Trap">Trap</button>
+<button type="button" class="option genre-child" data-value="Pluggnb">Pluggnb</button>
+<button type="button" class="option genre-child" data-value="Rage">Rage</button>
+<button type="button" class="option genre-child" data-value="Drill">Drill</button>
+<button type="button" class="option genre-child" data-value="Boom Bap">Boom Bap</button>
+<button type="button" class="option genre-child" data-value="R&B">R&B</button>
+<button type="button" class="option genre-child" data-value="Soul">Soul</button>
+<button type="button" class="option genre-child" data-value="Neo Soul">Neo Soul</button>
+<button type="button" class="option genre-child" data-value="Jersey Club">Jersey Club</button>
+</div>
+</div>
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="false">
+<span>Electronic / Dance</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="House">House</button>
+<button type="button" class="option genre-child" data-value="Techno">Techno</button>
+<button type="button" class="option genre-child" data-value="UK Garage">UK Garage</button>
+<button type="button" class="option genre-child" data-value="Drum & Bass">Drum & Bass</button>
+<button type="button" class="option genre-child" data-value="Amapiano">Amapiano</button>
+<button type="button" class="option genre-child" data-value="Future Bass">Future Bass</button>
+<button type="button" class="option genre-child" data-value="Hardstyle">Hardstyle</button>
+<button type="button" class="option genre-child" data-value="Ambient">Ambient</button>
+</div>
+</div>
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="false">
+<span>Pop</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Pop">Pop</button>
+<button type="button" class="option genre-child" data-value="Indie Pop">Indie Pop</button>
+<button type="button" class="option genre-child" data-value="Hyperpop">Hyperpop</button>
+<button type="button" class="option genre-child" data-value="Synth-Pop">Synth-Pop</button>
+<button type="button" class="option genre-child" data-value="J-Pop">J-Pop</button>
+<button type="button" class="option genre-child" data-value="K-Pop">K-Pop</button>
+<button type="button" class="option genre-child" data-value="Afrobeats">Afrobeats</button>
+</div>
+</div>
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="false">
+<span>Rock / Alternative</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Rock">Rock</button>
+<button type="button" class="option genre-child" data-value="Indie Rock">Indie Rock</button>
+<button type="button" class="option genre-child" data-value="Alternative">Alternative</button>
+<button type="button" class="option genre-child" data-value="Punk">Punk</button>
+<button type="button" class="option genre-child" data-value="Metal">Metal</button>
+<button type="button" class="option genre-child" data-value="Emo">Emo</button>
+</div>
+</div>
+<div class="genre-group">
+<button type="button" class="genre-category-toggle" aria-expanded="false">
+<span>Other</span><span class="genre-chevron">⌄</span>
+</button>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Jazz">Jazz</button>
+<button type="button" class="option genre-child" data-value="Funk">Funk</button>
+<button type="button" class="option genre-child" data-value="Reggae">Reggae</button>
+<button type="button" class="option genre-child" data-value="Dancehall">Dancehall</button>
+<button type="button" class="option genre-child" data-value="Acoustic">Acoustic</button>
+<button type="button" class="option genre-child" data-value="Lo-Fi">Lo-Fi</button>
+<button type="button" class="option genre-child" data-value="Vocaloid">Vocaloid</button>
+<button type="button" class="option genre-child" data-value="Other">Other</button>
+</div>
+</div>
+</div>
 
       <div
         class="selected-box"
@@ -795,6 +935,7 @@ input[type="file"]{
         <b>選択中：</b>
         <span>まだ選択されていません</span>
       </div>
+      <div class="genre-limit-note">ジャンルは最大3つまで選択できます。</div>
     </div>
 
     <div class="field">
@@ -1082,6 +1223,20 @@ async function init(){
 
 init();
 
+
+function setupGenreCategoryToggles(rootSelector){
+  document.querySelectorAll(`${rootSelector} .genre-category-toggle`).forEach(button=>{
+    button.addEventListener("click",()=>{
+      const children=button.closest(".genre-group").querySelector(".genre-children");
+      const open=!children.classList.contains("open");
+      children.classList.toggle("open",open);
+      button.setAttribute("aria-expanded",String(open));
+    });
+  });
+}
+setupGenreCategoryToggles("#genreOptions");
+setupGenreCategoryToggles("#editGenreOptions");
+
 document
 .querySelectorAll(
   "#genreOptions .option"
@@ -1091,6 +1246,11 @@ document
   button.addEventListener(
     "click",
     ()=>{
+
+      if(!selectedGenres.includes(button.dataset.value) && selectedGenres.length >= 3){
+        showStatus("ジャンルは最大3つまで選択できます。",true);
+        return;
+      }
 
       toggleSelection(
         button,
@@ -2862,6 +3022,11 @@ document
   button.addEventListener(
     "click",
     ()=>{
+
+      if(!editSelectedGenres.includes(button.dataset.value) && editSelectedGenres.length >= 3){
+        alert("ジャンルは最大3つまで選択できます。");
+        return;
+      }
 
       toggleSelection(
         button,
