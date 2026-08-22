@@ -1674,18 +1674,12 @@ async function checkLogin(){
   }
 
 
-  if(!session){
-
-    location.href =
-      "index.html";
-
-    return;
-
-  }
-
-
+  /*
+    聴くだけならログイン不要。
+    未登録ユーザーはゲストとしてHomeを利用できる。
+  */
   currentSession =
-    session;
+    session || null;
 
 
   document
@@ -1693,8 +1687,12 @@ async function checkLogin(){
     "account"
   )
   .textContent =
-    session.user.user_metadata?.artist_name ||
-    "ユーザー";
+    session
+      ? (
+          session.user.user_metadata?.artist_name ||
+          "ユーザー"
+        )
+      : "ゲスト";
 
 }
 
@@ -1953,6 +1951,23 @@ function songMatches(
 }
 
 
+function requireLoginForSavedFeature(
+  featureName
+){
+
+  if(currentSession){
+    return true;
+  }
+
+  alert(
+    `${featureName}を使うには無料登録 / ログインしてください。`
+  );
+
+  return false;
+
+}
+
+
 /* =========================
    LIKE
 ========================= */
@@ -2128,13 +2143,16 @@ async function updateLikeButton(){
 
 async function toggleLike(){
 
-  if(
-    !currentSong ||
-    !currentSession
-  ){
-
+  if(!currentSong){
     return;
+  }
 
+  if(
+    !requireLoginForSavedFeature(
+      "いいね"
+    )
+  ){
+    return;
   }
 
 
@@ -3366,13 +3384,16 @@ window.addEventListener(
 
 async function openPlaylistModal(){
 
-  if(
-    !currentSong ||
-    !currentSession
-  ){
-
+  if(!currentSong){
     return;
+  }
 
+  if(
+    !requireLoginForSavedFeature(
+      "プレイリスト"
+    )
+  ){
+    return;
   }
 
 
@@ -4375,6 +4396,51 @@ document
       true,
       {
         highlight:true
+      }
+    );
+
+  }
+);
+
+
+
+/* =========================
+   ゲスト時の会員機能リンク
+========================= */
+
+document
+.querySelectorAll(
+  'a[href="mypage.html"], a[href="dashboard.html"]'
+)
+.forEach(
+  link=>{
+
+    link.addEventListener(
+      "click",
+      event=>{
+
+        if(currentSession){
+          return;
+        }
+
+        event.preventDefault();
+
+        alert(
+          "My Page / Artist Studioを使うには無料登録 / ログインしてください。"
+        );
+
+        if(
+          window.parent &&
+          window.parent !== window
+        ){
+          window.parent.location.href =
+            "index.html?mode=login";
+        }
+        else{
+          location.href =
+            "index.html?mode=login";
+        }
+
       }
     );
 
