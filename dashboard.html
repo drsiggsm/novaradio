@@ -1437,7 +1437,7 @@ async function loadCurrentPlan(){
   const {data,error} = await sb
     .from("profiles")
     .select("plan,pro_until")
-    .eq("id",currentSession.user.id)
+    .eq("user_id",currentSession.user.id)
     .maybeSingle();
 
   if(error){
@@ -1471,71 +1471,130 @@ function renderAnalyticsAccess(){
 async function loadArtistAnalytics(){
   renderAnalyticsAccess();
 
-  const errorBox = document.getElementById("analyticsError");
+  const errorBox =
+    document.getElementById(
+      "analyticsError"
+    );
+
   errorBox.textContent = "";
 
-  if(!currentSession || !isProActive()) return;
-
-  const artistUserId = currentSession.user.id;
-
-  const [playResult, likeResult] = await Promise.all([
-    sb
-      .from("play_events")
-      .select("event_type,listener_user_id,anonymous_listener_id")
-      .eq("artist_user_id",artistUserId),
-
-    sb
-      .from("likes")
-      .select("song_id,songs!inner(user_id)")
-      .eq("songs.user_id",artistUserId)
-  ]);
-
-  if(playResult.error){
-    console.error("Analytics play_events error:",playResult.error);
-    errorBox.textContent =
-      "再生データを取得できませんでした：" + playResult.error.message;
+  if(
+    !currentSession ||
+    !isProActive()
+  ){
     return;
   }
 
-  if(likeResult.error){
-    console.error("Analytics likes error:",likeResult.error);
-    errorBox.textContent =
-      "いいねデータを取得できませんでした：" + likeResult.error.message;
-    return;
-  }
+  try{
 
-  const events = Array.isArray(playResult.data) ? playResult.data : [];
-  const likes = Array.isArray(likeResult.data) ? likeResult.data : [];
+    /*
+      分析値はテーブルを直接読むのではなく、
+      Supabase側でPRO判定するRPCから取得する。
+      FREEユーザーが画面を改造しても、
+      RPC側でPRO_REQUIREDになる。
+    */
+    const {
+      data,
+      error
+    } =
+    await sb.rpc(
+      "get_my_artist_analytics"
+    );
 
-  const qualified = events.filter(
-    event => event.event_type === "play_qualified"
-  );
-
-  const highlights = events.filter(
-    event => event.event_type === "highlight_complete"
-  );
-
-  const listenerKeys = new Set();
-
-  qualified.forEach(event=>{
-    if(event.listener_user_id){
-      listenerKeys.add("user:" + event.listener_user_id);
-    }else if(event.anonymous_listener_id){
-      listenerKeys.add("anon:" + event.anonymous_listener_id);
+    if(error){
+      throw error;
     }
-  });
 
-  document.getElementById("analyticsPlays").textContent =
-    qualified.length.toLocaleString("ja-JP");
+    const row =
+      Array.isArray(data)
+        ? data[0]
+        : data;
 
-  document.getElementById("analyticsListeners").textContent =
-    listenerKeys.size.toLocaleString("ja-JP");
+    document
+    .getElementById(
+      "analyticsPlays"
+    )
+    .textContent =
+      Number(
+        row?.total_plays || 0
+      )
+      .toLocaleString(
+        "ja-JP"
+      );
 
-  document.getElementById("analyticsHighlights").textContent =
-    highlights.length.toLocaleString("ja-JP");
+    document
+    .getElementById(
+      "analyticsListeners"
+    )
+    .textContent =
+      Number(
+        row?.new_listener_reach || 0
+      )
+      .toLocaleString(
+        "ja-JP"
+      );
 
-  document.getElementById("analyticsLikes").textContent =
-    likes.length.toLocaleString("ja-JP");
+    document
+    .getElementById(
+      "analyticsHighlights"
+    )
+    .textContent =
+      Number(
+        row?.highlight_completes || 0
+      )
+      .toLocaleString(
+        "ja-JP"
+      );
+
+    document
+    .getElementById(
+      "analyticsLikes"
+    )
+    .textContent =
+      Number(
+        row?.likes_count || 0
+      )
+      .toLocaleString(
+        "ja-JP"
+      );
+
+  }
+  catch(error){
+
+    console.error(
+      "Analytics RPC error:",
+      error
+    );
+
+    /*
+      PRO判定が食い違った場合も、
+      数字を見せず安全側へ倒す。
+    */
+    if(
+      String(
+        error?.message || ""
+      ).includes(
+        "PRO_REQUIRED"
+      )
+    ){
+
+      currentPlan = "free";
+      renderAnalyticsAccess();
+
+      errorBox.textContent =
+        "PRO状態を確認できませんでした。ページを再読み込みしてください。";
+
+      return;
+    }
+
+    errorBox.textContent =
+      "分析データを取得できませんでした：" +
+      (
+        error?.message ||
+        error
+      );
+
+  }
 }
 
 function setupGenreCategoryToggles(rootSelector){
