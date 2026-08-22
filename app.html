@@ -1780,6 +1780,24 @@ function playNext(
     return;
   }
 
+  /*
+    ハイライト中の「この曲だけフル」を手動スキップした時は、
+    次曲へ進む前に一時フル状態だけ解除する。
+    highlight自体はtrueのままなので、次曲はhighlight_startから30秒再生。
+    通常のフル再生には影響しない。
+  */
+  if(
+    state.highlight &&
+    state.fullTrack &&
+    !fromEnded
+  ){
+    state.fullTrack = false;
+    clearHighlightSkipTimer();
+    highlightStartTime = 0;
+    isReturningFromFullTrack = false;
+    notifyFrameState();
+  }
+
   if(
     fromEnded &&
     state.repeat === "one"
