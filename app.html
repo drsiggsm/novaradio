@@ -3347,12 +3347,13 @@ window.addEventListener(
       }
 
       /*
-        最軽量ルート:
-        同じaudio要素・同じsrcを維持したまま
-        モードフラグとcurrentTimeだけ変更する。
+        安定版フル切替:
+        同じaudio / 同じsrcは維持する。
+        ただしSafariで「0秒へ飛んだ直後に無音になる」ことがあるため、
+        一度pause → 0秒へseek → seek完了/再生可能を待つ → play
+        の順にする。
 
-        src変更 / load / playSong / renderSong /
-        preloader / metadata待ち は一切行わない。
+        src変更 / load / playSong / renderSong は行わない。
       */
       state.highlight =
         true;
@@ -3368,50 +3369,181 @@ window.addEventListener(
       highlightStartTime =
         0;
 
-      const resumeAfterSeek =
-        audio.paused;
+      /*
+        いま走っている再生を一度止めて、
+        デコーダ/バッファを0秒側へ切り替えやすくする。
+      */
+      try{
+        audio.pause();
+      }
+      catch(e){}
 
-      const seekToStart =
-        ()=>{
-
-          try{
-            audio.currentTime = 0;
-          }
-          catch(error){
-            console.warn(
-              "Full track seek error:",
-              error
-            );
-          }
+      const resumeFullTrack =
+        async ()=>{
 
           /*
-            ハイライトが再生中ならseekだけで再生は継続する。
-            一時停止状態から押された場合だけplayする。
+            すでに別の曲へ移動していたら何もしない。
           */
-          if(resumeAfterSeek){
-            audio.play().catch(()=>{});
+          if(
+            !state.fullTrack ||
+            !state.highlight
+          ){
+            return;
+          }
+
+          try{
+
+            /*
+              0秒側が再生可能になるまで少し待つ。
+              readyState >= 2なら即再生。
+            */
+            if(
+              audio.readyState < 2
+            ){
+
+              await new Promise(
+                resolve=>{
+
+                  let done =
+                    false;
+
+                  const finish =
+                    ()=>{
+
+                      if(done){
+                        return;
+                      }
+
+                      done =
+                        true;
+
+                      clearTimeout(
+                        timer
+                      );
+
+                      audio.removeEventListener(
+                        "canplay",
+                        onReady
+                      );
+
+                      audio.removeEventListener(
+                        "loadeddata",
+                        onReady
+                      );
+
+                      resolve();
+
+                    };
+
+                  const onReady =
+                    ()=>finish();
+
+                  const timer =
+                    setTimeout(
+                      finish,
+                      1400
+                    );
+
+                  audio.addEventListener(
+                    "canplay",
+                    onReady,
+                    {once:true}
+                  );
+
+                  audio.addEventListener(
+                    "loadeddata",
+                    onReady,
+                    {once:true}
+                  );
+
+                }
+              );
+
+            }
+
+            if(
+              !state.fullTrack ||
+              !state.highlight
+            ){
+              return;
+            }
+
+            await audio.play();
+
+          }
+          catch(error){
+
+            console.warn(
+              "Full track resume error:",
+              error
+            );
+
+            /*
+              失敗時はユーザーに再試行可能な状態を残す。
+            */
+            showPlayerStatus(
+              "フル再生の準備に少し時間がかかっています。▶を押すと再開できます。"
+            );
+
           }
 
           notifyFrameState();
 
         };
 
-      /*
-        seekableがまだ無い瞬間だけ待つ。
-        普段のハイライト再生中は即seekされる。
-      */
-      if(
-        audio.seekable &&
-        audio.seekable.length > 0
-      ){
-        seekToStart();
-      }
-      else{
-        audio.addEventListener(
-          "canplay",
-          seekToStart,
-          {once:true}
+      let seekFinished =
+        false;
+
+      const afterSeek =
+        ()=>{
+
+          if(seekFinished){
+            return;
+          }
+
+          seekFinished =
+            true;
+
+          clearTimeout(
+            seekTimer
+          );
+
+          audio.removeEventListener(
+            "seeked",
+            afterSeek
+          );
+
+          resumeFullTrack();
+
+        };
+
+      const seekTimer =
+        setTimeout(
+          afterSeek,
+          900
         );
+
+      audio.addEventListener(
+        "seeked",
+        afterSeek,
+        {once:true}
+      );
+
+      try{
+
+        audio.currentTime =
+          0;
+
+      }
+      catch(error){
+
+        console.warn(
+          "Full track seek error:",
+          error
+        );
+
+        afterSeek();
+
       }
 
     }
