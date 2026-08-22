@@ -2215,6 +2215,14 @@ async function playSong(
   currentSong =
     song;
 
+  /*
+    最近再生した曲として記録。
+    次回のラジオ開始時に一時除外し、同じ曲への偏りを減らす。
+  */
+  rememberRadioSong(
+    song.id
+  );
+
 
   if(addToHistory){
 
@@ -3767,6 +3775,157 @@ playlistModal.addEventListener(
 
 
 /* =========================
+   FAIR / SCALABLE RADIO
+========================= */
+
+/*
+  1000曲以上になっても全曲をブラウザへ取得しない。
+  Supabase側で条件絞り込み + アーティスト公平抽選を行い、
+  1回につき最大40曲だけ受け取る。
+*/
+const RADIO_BATCH_SIZE =
+  40;
+
+const RADIO_RECENT_KEY =
+  "novaradio_recent_song_ids";
+
+const RADIO_RECENT_LIMIT =
+  80;
+
+
+function getRecentRadioSongIds(){
+
+  try{
+
+    const value =
+      JSON.parse(
+        localStorage.getItem(
+          RADIO_RECENT_KEY
+        ) ||
+        "[]"
+      );
+
+    if(!Array.isArray(value)){
+      return [];
+    }
+
+    return value
+    .map(Number)
+    .filter(Number.isFinite)
+    .slice(
+      -RADIO_RECENT_LIMIT
+    );
+
+  }
+  catch(error){
+
+    return [];
+
+  }
+
+}
+
+
+function rememberRadioSong(
+  songId
+){
+
+  const id =
+    Number(songId);
+
+  if(!Number.isFinite(id)){
+    return;
+  }
+
+  const recent =
+    getRecentRadioSongIds()
+    .filter(
+      item=>
+        Number(item) !== id
+    );
+
+  recent.push(id);
+
+  try{
+
+    localStorage.setItem(
+      RADIO_RECENT_KEY,
+      JSON.stringify(
+        recent.slice(
+          -RADIO_RECENT_LIMIT
+        )
+      )
+    );
+
+  }
+  catch(error){}
+
+}
+
+
+async function fetchFairRadioQueue(){
+
+  const recentIds =
+    getRecentRadioSongIds();
+
+  let result =
+    await sb.rpc(
+      "get_fair_radio_queue",
+      {
+        p_genres:
+          selectedGenres,
+
+        p_moods:
+          selectedMoods,
+
+        p_exclude_ids:
+          recentIds,
+
+        p_limit:
+          RADIO_BATCH_SIZE
+      }
+    );
+
+  /*
+    最近聴いた曲を除外した結果が0件なら、
+    除外だけ解除してもう一度取得。
+    曲数が少ない開発初期でもラジオが止まらない。
+  */
+  if(
+    !result.error &&
+    (
+      !result.data ||
+      !result.data.length
+    ) &&
+    recentIds.length
+  ){
+
+    result =
+      await sb.rpc(
+        "get_fair_radio_queue",
+        {
+          p_genres:
+            selectedGenres,
+
+          p_moods:
+            selectedMoods,
+
+          p_exclude_ids:
+            [],
+
+          p_limit:
+            RADIO_BATCH_SIZE
+        }
+      );
+
+  }
+
+  return result;
+
+}
+
+
+/* =========================
    START RADIO
 ========================= */
 
@@ -3798,13 +3957,7 @@ document
       data,
       error
     } =
-    await sb
-    .from(
-      "songs"
-    )
-    .select(
-      "*"
-    );
+    await fetchFairRadioQueue();
 
 
     if(error){
@@ -3828,11 +3981,12 @@ document
     }
 
 
+    /*
+      条件絞り込みと公平抽選はSupabase側で済んでいる。
+      ブラウザには少量のキューだけ届く。
+    */
     currentQueue =
-      (data || [])
-      .filter(
-        songMatches
-      );
+      data || [];
 
 
     if(
@@ -3863,13 +4017,12 @@ document
       -1;
 
 
+    /*
+      RPC側ですでに公平にランダム順になっているので
+      先頭をそのままスタート曲にする。
+    */
     const randomSong =
-      currentQueue[
-        Math.floor(
-          Math.random() *
-          currentQueue.length
-        )
-      ];
+      currentQueue[0];
 
 
     if(isInsideNovaApp()){
@@ -3920,13 +4073,7 @@ document
       data,
       error
     } =
-    await sb
-    .from(
-      "songs"
-    )
-    .select(
-      "*"
-    );
+    await fetchFairRadioQueue();
 
     if(error){
 
@@ -3946,11 +4093,12 @@ document
       return;
     }
 
+    /*
+      条件絞り込みと公平抽選はSupabase側で済んでいる。
+      ブラウザには少量のキューだけ届く。
+    */
     currentQueue =
-      (data || [])
-      .filter(
-        songMatches
-      );
+      data || [];
 
     if(
       !currentQueue.length
@@ -3976,13 +4124,12 @@ document
     historyIndex =
       -1;
 
+    /*
+      RPC側ですでに公平にランダム順になっているので
+      先頭をそのままスタート曲にする。
+    */
     const randomSong =
-      currentQueue[
-        Math.floor(
-          Math.random() *
-          currentQueue.length
-        )
-      ];
+      currentQueue[0];
 
     /*
       通常再生と同じNOW PLAYING表示を出しつつ、
