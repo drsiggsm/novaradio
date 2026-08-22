@@ -1653,9 +1653,14 @@ async function checkLogin(){
 
 function updateConditions(){
 
+  const displayedGenres = [
+    ...selectedGenreCategories.keys(),
+    ...selectedGenres
+  ];
+
   const genreText =
-    selectedGenres.length
-      ? selectedGenres.join(
+    displayedGenres.length
+      ? displayedGenres.join(
           " / "
         )
       : "指定なし";
@@ -1730,14 +1735,14 @@ document.querySelectorAll("#genreOptions .genre-category-select").forEach(button
       selectedGenreCategories.set(category,button.dataset.values.split("|").filter(Boolean));
       button.classList.add("selected");
     }
-    updateSelectionText();
+    updateConditions();
   });
 });
 
 document.querySelectorAll("#genreOptions .genre-child").forEach(button=>{
   button.addEventListener("click",()=>{
     toggleSelection(button,selectedGenres);
-    updateSelectionText();
+    updateConditions();
   });
 });
 
@@ -1865,9 +1870,12 @@ function songMatches(
     );
 
 
+  const effectiveGenres =
+    getEffectiveSelectedGenres();
+
   const genreMatches =
-    !selectedGenres.length ||
-    selectedGenres.some(
+    !effectiveGenres.length ||
+    effectiveGenres.some(
       genre=>
         genres.includes(
           genre
