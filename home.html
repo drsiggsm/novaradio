@@ -914,6 +914,45 @@ body{
 .genre-limit-note{margin-top:10px;color:#9ea6c7;font-size:.9rem}
 @media(min-width:760px){.genre-groups{grid-template-columns:repeat(2,minmax(0,1fr))}.genre-group:last-child:nth-child(odd){grid-column:1/-1}}
 
+
+/* ===== NEW DISCOVERY ===== */
+.new-discovery-wrap{
+  margin-top:14px;
+}
+.new-discovery-button{
+  width:100%;
+  border:1px solid rgba(255,183,77,.32);
+  border-radius:18px;
+  padding:18px 20px;
+  cursor:pointer;
+  font:inherit;
+  font-weight:900;
+  font-size:18px;
+  color:#fff;
+  background:
+    linear-gradient(
+      100deg,
+      rgba(255,111,40,.95),
+      rgba(255,52,153,.94),
+      rgba(122,62,255,.96)
+    );
+  box-shadow:
+    0 12px 28px rgba(255,69,127,.15);
+  transition:
+    transform .18s ease,
+    filter .18s ease;
+}
+.new-discovery-button:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.05);
+}
+.new-discovery-sub{
+  margin-top:8px;
+  text-align:center;
+  color:#9199ba;
+  font-size:13px;
+}
+
 </style>
 
 </head>
@@ -1177,6 +1216,19 @@ body{
       ⚡ 30秒ハイライト
     </button>
 
+  </div>
+
+  <div class="new-discovery-wrap">
+    <button
+      class="new-discovery-button"
+      id="newDiscoveryPlay"
+      type="button"
+    >
+      🆕 NEW DISCOVERY — 新着30秒
+    </button>
+    <div class="new-discovery-sub">
+      ジャンル指定なし。最近アップロードされた曲を30秒ずつ発掘。
+    </div>
   </div>
 
 
@@ -3955,6 +4007,289 @@ async function fetchFairRadioQueue(){
   return result;
 
 }
+
+
+/* =========================
+   NEW DISCOVERY
+========================= */
+
+const NEW_DISCOVERY_FETCH_LIMIT =
+  60;
+
+
+/*
+  新着曲だけを少量取得。
+  全曲は読み込まないので、曲数が増えても軽い。
+*/
+async function fetchNewDiscoveryQueue(){
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("songs")
+  .select("*")
+  .not(
+    "audio_url",
+    "is",
+    null
+  )
+  .order(
+    "created_at",
+    {
+      ascending:false
+    }
+  )
+  .limit(
+    NEW_DISCOVERY_FETCH_LIMIT
+  );
+
+  if(error){
+    return {
+      data:null,
+      error
+    };
+  }
+
+
+  /*
+    新着60曲の中でも、同じアーティストが大量投稿して
+    その人だけで埋まらないように、
+    アーティストごとに山を分けて交互に並べる。
+  */
+  const artistBuckets =
+    new Map();
+
+  for(
+    const song
+    of (data || [])
+  ){
+
+    const artistKey =
+      String(
+        song.user_id ||
+        song.artist ||
+        `song-${song.id}`
+      )
+      .trim()
+      .toLowerCase();
+
+    if(
+      !artistBuckets.has(
+        artistKey
+      )
+    ){
+      artistBuckets.set(
+        artistKey,
+        []
+      );
+    }
+
+    artistBuckets
+    .get(
+      artistKey
+    )
+    .push(
+      song
+    );
+
+  }
+
+
+  /*
+    各アーティスト内でも同時期の投稿順に偏らないよう軽く混ぜる。
+  */
+  for(
+    const bucket
+    of artistBuckets.values()
+  ){
+
+    for(
+      let i =
+        bucket.length - 1;
+      i > 0;
+      i--
+    ){
+
+      const j =
+        Math.floor(
+          Math.random() *
+          (i + 1)
+        );
+
+      [
+        bucket[i],
+        bucket[j]
+      ] =
+      [
+        bucket[j],
+        bucket[i]
+      ];
+
+    }
+
+  }
+
+
+  const queue =
+    [];
+
+  let buckets =
+    Array.from(
+      artistBuckets.values()
+    );
+
+
+  while(
+    buckets.length
+  ){
+
+    /*
+      各ラウンドごとにアーティスト順をランダム化。
+      新着の中で露出機会をなるべく均等にする。
+    */
+    buckets =
+      buckets.sort(
+        ()=>
+          Math.random() -
+          0.5
+      );
+
+    const nextBuckets =
+      [];
+
+    for(
+      const bucket
+      of buckets
+    ){
+
+      const song =
+        bucket.shift();
+
+      if(song){
+        queue.push(
+          song
+        );
+      }
+
+      if(
+        bucket.length
+      ){
+        nextBuckets.push(
+          bucket
+        );
+      }
+
+    }
+
+    buckets =
+      nextBuckets;
+
+  }
+
+
+  return {
+    data:queue,
+    error:null
+  };
+
+}
+
+
+document
+.getElementById(
+  "newDiscoveryPlay"
+)
+.addEventListener(
+  "click",
+  async ()=>{
+
+    const now =
+      document.getElementById(
+        "now"
+      );
+
+    now.innerHTML =
+      `<div class="now-label">
+        NEW DISCOVERY
+      </div>
+
+      <div class="empty">
+        新着曲を探しています… 🆕
+      </div>`;
+
+
+    const {
+      data,
+      error
+    } =
+    await fetchNewDiscoveryQueue();
+
+
+    if(error){
+
+      now.innerHTML =
+        `<div class="now-label">
+          ERROR
+        </div>
+
+        <div class="empty">
+          新着曲の取得に失敗しました。
+          <br><br>
+          ${escapeHtml(
+            error.message
+          )}
+        </div>`;
+
+      return;
+
+    }
+
+
+    currentQueue =
+      data || [];
+
+
+    if(
+      !currentQueue.length
+    ){
+
+      now.innerHTML =
+        `<div class="now-label">
+          NEW DISCOVERY
+        </div>
+
+        <div class="empty">
+          まだ新着曲がありません 🎧
+        </div>`;
+
+      return;
+
+    }
+
+
+    historySongs =
+      [];
+
+    historyIndex =
+      -1;
+
+
+    /*
+      NEW DISCOVERYは必ず30秒ハイライト。
+      ジャンル/Moodの選択状態には影響されない。
+    */
+    await playSong(
+      currentQueue[0],
+      true,
+      {
+        highlight:true
+      }
+    );
+
+  }
+);
 
 
 /* =========================
