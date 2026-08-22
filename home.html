@@ -909,8 +909,8 @@ body{
 .genre-category-select{width:100%;justify-content:flex-start;font-weight:850}
 .genre-children{display:none;flex-wrap:wrap;gap:10px;padding:0 14px 14px}
 .genre-children.open{display:flex}
-.genre-category-toggle[aria-expanded="true"] .genre-chevron,
-.genre-category-row .genre-category-toggle[aria-expanded="true"]{transform:rotate(180deg)}
+.genre-category-toggle[aria-expanded="false"] .genre-chevron,
+.genre-category-row .genre-category-toggle[aria-expanded="false"]{transform:rotate(180deg)}
 .genre-limit-note{margin-top:10px;color:#9ea6c7;font-size:.9rem}
 @media(min-width:760px){.genre-groups{grid-template-columns:repeat(2,minmax(0,1fr))}.genre-group:last-child:nth-child(odd){grid-column:1/-1}}
 
@@ -1006,9 +1006,9 @@ body{
 <div class="genre-group">
 <div class="genre-category-row">
 <button type="button" class="option genre-category-select" data-category="Hip Hop / R&B" data-values="Hip Hop|Trap|Pluggnb|Rage|Drill|Boom Bap|R&B|Soul|Neo Soul|Jersey Club">Hip Hop / R&B</button>
-<button type="button" class="genre-category-toggle" aria-label="Hip Hop / R&Bを展開" aria-expanded="true">⌄</button>
+<button type="button" class="genre-category-toggle" aria-label="Hip Hop / R&Bを展開" aria-expanded="false">⌄</button>
 </div>
-<div class="genre-children open">
+<div class="genre-children">
 <button type="button" class="option genre-child" data-value="Hip Hop">Hip Hop</button>
 <button type="button" class="option genre-child" data-value="Trap">Trap</button>
 <button type="button" class="option genre-child" data-value="Pluggnb">Pluggnb</button>
