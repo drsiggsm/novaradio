@@ -969,6 +969,10 @@ function scheduleHighlightSkip(){
           !state.fullTrack
         ){
 
+          analyticsTick();
+
+          maybeSendAnalyticsEvents();
+
           playNext(
             false
           );
@@ -992,6 +996,398 @@ let highlightStartTime =
 
 const HIGHLIGHT_SECONDS =
   30;
+
+/* =========================
+   再生分析
+========================= */
+
+const ANALYTICS_TOTAL_PLAY_SECONDS =
+  10;
+
+const ANALYTICS_FULL_PLAY_SECONDS =
+  30;
+
+/*
+  1曲の再生中に「実際に流れていた時間」を追跡する。
+  currentTimeだけを見るとシークで水増しできるため、
+  壁時計の経過時間と音源の進行量の両方を使って判定する。
+*/
+let analyticsTracker = {
+  songId:null,
+  totalSeconds:0,
+  highlightSeconds:0,
+  fullSeconds:0,
+  totalSent:false,
+  highlightSent:false,
+  fullSent:false,
+  lastWallMs:null,
+  lastMediaTime:null,
+  lastMode:null
+};
+
+
+function getAnalyticsMode(){
+
+  return (
+    state.highlight &&
+    !state.fullTrack
+  )
+    ? "highlight"
+    : "full";
+
+}
+
+
+function getAnalyticsAudio(){
+
+  return state.fullTrack
+    ? fullAudio
+    : audio;
+
+}
+
+
+function resetAnalyticsTracker(
+  song,
+  force=false
+){
+
+  const songId =
+    Number(
+      song?.id
+    );
+
+  if(
+    !Number.isFinite(songId)
+  ){
+    return;
+  }
+
+  if(
+    !force &&
+    Number(analyticsTracker.songId) ===
+      songId
+  ){
+    return;
+  }
+
+  analyticsTracker = {
+    songId,
+    totalSeconds:0,
+    highlightSeconds:0,
+    fullSeconds:0,
+    totalSent:false,
+    highlightSent:false,
+    fullSent:false,
+    lastWallMs:null,
+    lastMediaTime:null,
+    lastMode:null
+  };
+
+}
+
+
+function resetAnalyticsClock(){
+
+  const activeAudio =
+    getAnalyticsAudio();
+
+  analyticsTracker.lastWallMs =
+    performance.now();
+
+  analyticsTracker.lastMediaTime =
+    Number.isFinite(
+      activeAudio.currentTime
+    )
+      ? activeAudio.currentTime
+      : null;
+
+  analyticsTracker.lastMode =
+    getAnalyticsMode();
+
+}
+
+
+async function recordAnalyticsEvent(
+  songId,
+  eventType
+){
+
+  if(
+    !currentSession ||
+    !Number.isFinite(
+      Number(songId)
+    )
+  ){
+    return;
+  }
+
+  try{
+
+    const {
+      error
+    } =
+    await sb.rpc(
+      "record_play_event",
+      {
+        p_song_id:
+          Number(songId),
+
+        p_event_type:
+          eventType
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+  }
+  catch(error){
+
+    console.warn(
+      "Analytics event error:",
+      eventType,
+      error
+    );
+
+  }
+
+}
+
+
+function maybeSendAnalyticsEvents(){
+
+  const songId =
+    Number(
+      analyticsTracker.songId
+    );
+
+  if(
+    !Number.isFinite(songId)
+  ){
+    return;
+  }
+
+
+  /*
+    総再生:
+    10秒以上、実際に音が流れたら1再生。
+  */
+  if(
+    !analyticsTracker.totalSent &&
+    analyticsTracker.totalSeconds >=
+      ANALYTICS_TOTAL_PLAY_SECONDS
+  ){
+
+    analyticsTracker.totalSent =
+      true;
+
+    recordAnalyticsEvent(
+      songId,
+      "play_qualified"
+    );
+
+  }
+
+
+  /*
+    30秒ハイライト完走:
+    ハイライトとして実際に30秒聴かれた場合。
+  */
+  if(
+    !analyticsTracker.highlightSent &&
+    analyticsTracker.highlightSeconds >=
+      HIGHLIGHT_SECONDS - 0.25
+  ){
+
+    analyticsTracker.highlightSent =
+      true;
+
+    recordAnalyticsEvent(
+      songId,
+      "highlight_complete"
+    );
+
+  }
+
+
+  /*
+    フル再生:
+    通常再生、またはハイライトから
+    「この曲をフル」で30秒以上聴かれた場合。
+  */
+  if(
+    !analyticsTracker.fullSent &&
+    analyticsTracker.fullSeconds >=
+      ANALYTICS_FULL_PLAY_SECONDS
+  ){
+
+    analyticsTracker.fullSent =
+      true;
+
+    recordAnalyticsEvent(
+      songId,
+      "full_qualified"
+    );
+
+  }
+
+}
+
+
+function analyticsTick(){
+
+  if(
+    !state.song ||
+    !currentSession
+  ){
+    return;
+  }
+
+  if(
+    Number(analyticsTracker.songId) !==
+      Number(state.song.id)
+  ){
+
+    resetAnalyticsTracker(
+      state.song,
+      true
+    );
+
+  }
+
+  const activeAudio =
+    getAnalyticsAudio();
+
+  const mode =
+    getAnalyticsMode();
+
+  const now =
+    performance.now();
+
+  const current =
+    Number.isFinite(
+      activeAudio.currentTime
+    )
+      ? activeAudio.currentTime
+      : null;
+
+
+  if(
+    analyticsTracker.lastWallMs === null ||
+    analyticsTracker.lastMediaTime === null ||
+    analyticsTracker.lastMode !== mode
+  ){
+
+    analyticsTracker.lastWallMs =
+      now;
+
+    analyticsTracker.lastMediaTime =
+      current;
+
+    analyticsTracker.lastMode =
+      mode;
+
+    return;
+
+  }
+
+
+  const wallDelta =
+    Math.max(
+      0,
+      (
+        now -
+        analyticsTracker.lastWallMs
+      ) / 1000
+    );
+
+  const mediaDelta =
+    current === null
+      ? 0
+      : current -
+        analyticsTracker.lastMediaTime;
+
+
+  analyticsTracker.lastWallMs =
+    now;
+
+  analyticsTracker.lastMediaTime =
+    current;
+
+  analyticsTracker.lastMode =
+    mode;
+
+
+  if(
+    activeAudio.paused ||
+    activeAudio.ended ||
+    current === null ||
+    mediaDelta <= 0
+  ){
+    return;
+  }
+
+
+  /*
+    大きなcurrentTimeジャンプはシークとみなし、
+    そのジャンプ分は聴取時間として加算しない。
+    バックグラウンド再生などでタイマーが遅れても、
+    wallDeltaとmediaDeltaが同程度なら正常に加算する。
+  */
+  if(
+    mediaDelta >
+      wallDelta * 2 + 1
+  ){
+    return;
+  }
+
+
+  const creditedSeconds =
+    Math.max(
+      0,
+      Math.min(
+        wallDelta,
+        mediaDelta
+      )
+    );
+
+
+  analyticsTracker.totalSeconds +=
+    creditedSeconds;
+
+  if(
+    mode === "highlight"
+  ){
+
+    analyticsTracker.highlightSeconds +=
+      creditedSeconds;
+
+  }
+  else{
+
+    analyticsTracker.fullSeconds +=
+      creditedSeconds;
+
+  }
+
+
+  maybeSendAnalyticsEvents();
+
+}
+
+
+/*
+  500msごとに再生状況を確認。
+  UIや既存の再生ロジックとは独立しているので、
+  プレイヤー挙動を変えずに分析だけ記録する。
+*/
+setInterval(
+  analyticsTick,
+  500
+);
+
 
 
 /* =========================
@@ -1445,6 +1841,12 @@ async function playSong(
   renderSong(
     song
   );
+
+  resetAnalyticsTracker(
+    song
+  );
+
+  resetAnalyticsClock();
 
   const requestId =
     ++playRequestId;
@@ -2237,6 +2639,8 @@ progress.addEventListener(
     isSeeking =
       true;
 
+    resetAnalyticsClock();
+
     previewSeek(
       event
     );
@@ -2299,6 +2703,8 @@ progress.addEventListener(
       audio.currentTime =
         seekRatio *
         audio.duration;
+
+      resetAnalyticsClock();
 
     }
 
@@ -2395,12 +2801,14 @@ function returnToHighlightAfterFullTrack(){
 
 fullAudio.addEventListener("play",()=>{
   playPause.textContent="⏸";
+  resetAnalyticsClock();
 });
 
 fullAudio.addEventListener("pause",()=>{
   if(state.fullTrack){
     playPause.textContent="▶";
   }
+  resetAnalyticsClock();
 });
 
 fullAudio.addEventListener("loadedmetadata",updateProgressUI);
@@ -2482,6 +2890,8 @@ audio.addEventListener(
     playPause.textContent =
       "⏸";
 
+    resetAnalyticsClock();
+
     if(
       state.highlight &&
       !state.fullTrack
@@ -2506,6 +2916,8 @@ audio.addEventListener(
 
     playPause.textContent =
       "▶";
+
+    resetAnalyticsClock();
 
     if(
       state.highlight &&
@@ -3494,6 +3906,8 @@ window.addEventListener(
       */
       state.highlight = true;
       state.fullTrack = true;
+
+      resetAnalyticsClock();
 
       clearHighlightSkipTimer();
       isReturningFromFullTrack = false;
