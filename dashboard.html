@@ -471,6 +471,79 @@ input[type="file"]{
 .genre-limit-note{margin-top:10px;color:#9ea6c7;font-size:.9rem}
 @media(min-width:760px){.genre-groups{grid-template-columns:repeat(2,minmax(0,1fr))}.genre-group:last-child:nth-child(odd){grid-column:1/-1}}
 
+
+/* ===== FREE PLAN UPLOAD LIMIT ===== */
+.upload-quota{
+  margin:0 0 22px;
+  padding:18px 20px;
+  border:1px solid rgba(88,111,191,.42);
+  border-radius:18px;
+  background:rgba(8,12,35,.58);
+}
+.upload-quota-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.upload-quota-title{
+  font-weight:900;
+  font-size:17px;
+}
+.upload-quota-count{
+  font-weight:900;
+  color:#7ec8ff;
+}
+.upload-quota-bar{
+  height:8px;
+  margin-top:13px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(255,255,255,.08);
+}
+.upload-quota-fill{
+  width:0%;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#7b2cff,#20a8ff);
+  transition:width .25s ease;
+}
+.upload-quota-help{
+  margin-top:10px;
+  color:#9fa7c7;
+  font-size:13px;
+  line-height:1.6;
+}
+.upload-quota.locked{
+  border-color:rgba(255,83,133,.52);
+  background:rgba(50,13,31,.46);
+}
+.upload-quota.locked .upload-quota-count{
+  color:#ff8eae;
+}
+.upload-quota.locked .upload-quota-fill{
+  background:linear-gradient(90deg,#ff3e8f,#ff744d);
+}
+.upload-lock-message{
+  display:none;
+  margin:0 0 22px;
+  padding:18px 20px;
+  border:1px solid rgba(255,83,133,.48);
+  border-radius:18px;
+  background:rgba(55,16,34,.55);
+  color:#ffd9e5;
+  line-height:1.65;
+}
+.upload-lock-message.show{
+  display:block;
+}
+.main-button:disabled{
+  cursor:not-allowed;
+  opacity:.48;
+  filter:saturate(.55);
+}
+
 </style>
 </head>
 
@@ -525,6 +598,46 @@ input[type="file"]{
     <section class="card">
 
       <h2>🎵 曲をアップロード</h2>
+
+      <div
+        class="upload-quota"
+        id="uploadQuota"
+      >
+        <div class="upload-quota-top">
+          <div class="upload-quota-title">
+            FREEプラン 公開枠
+          </div>
+          <div
+            class="upload-quota-count"
+            id="uploadQuotaCount"
+          >
+            0 / 3曲
+          </div>
+        </div>
+
+        <div class="upload-quota-bar">
+          <div
+            class="upload-quota-fill"
+            id="uploadQuotaFill"
+          ></div>
+        </div>
+
+        <div
+          class="upload-quota-help"
+          id="uploadQuotaHelp"
+        >
+          無料プランでは3曲まで公開できます。
+        </div>
+      </div>
+
+      <div
+        class="upload-lock-message"
+        id="uploadLockMessage"
+      >
+        🔒 <strong>無料プランのアップロード上限に達しました。</strong><br>
+        現在3曲以上を公開中です。新しい曲を追加するには、
+        既存の曲を削除して公開曲数を2曲以下にしてください。
+      </div>
 
       <div class="field">
         <label>曲名 *</label>
@@ -1076,6 +1189,9 @@ let currentSession = null;
 const selectedGenres = [];
 const selectedMoods = [];
 
+const FREE_TRACK_LIMIT = 3;
+let currentTrackCount = 0;
+
 /*
   編集モーダル専用。
   アップロード画面側の選択状態とは分けて管理する。
@@ -1100,6 +1216,21 @@ const uploadButton =
 
 const progress =
   document.getElementById("progress");
+
+const uploadQuota =
+  document.getElementById("uploadQuota");
+
+const uploadQuotaCount =
+  document.getElementById("uploadQuotaCount");
+
+const uploadQuotaFill =
+  document.getElementById("uploadQuotaFill");
+
+const uploadQuotaHelp =
+  document.getElementById("uploadQuotaHelp");
+
+const uploadLockMessage =
+  document.getElementById("uploadLockMessage");
 
 const songList =
   document.getElementById("songList");
@@ -2321,6 +2452,74 @@ function formatFileSizeMB(
 }
 
 
+
+function updateUploadQuotaUI(){
+
+  const ratio =
+    Math.min(
+      1,
+      currentTrackCount /
+      FREE_TRACK_LIMIT
+    );
+
+  uploadQuotaCount.textContent =
+    `${currentTrackCount} / ${FREE_TRACK_LIMIT}曲`;
+
+  uploadQuotaFill.style.width =
+    `${Math.round(ratio * 100)}%`;
+
+  const isLocked =
+    currentTrackCount >=
+    FREE_TRACK_LIMIT;
+
+  uploadQuota.classList.toggle(
+    "locked",
+    isLocked
+  );
+
+  uploadLockMessage.classList.toggle(
+    "show",
+    isLocked
+  );
+
+  if(isLocked){
+
+    uploadQuotaHelp.textContent =
+      currentTrackCount >
+      FREE_TRACK_LIMIT
+        ? `現在${currentTrackCount}曲を公開中です。上限は${FREE_TRACK_LIMIT}曲です。`
+        : "無料プランの公開枠をすべて使用しています。";
+
+    uploadButton.disabled =
+      true;
+
+    uploadButton.textContent =
+      "🔒 FREEプラン上限（3曲）";
+
+  }
+  else{
+
+    uploadQuotaHelp.textContent =
+      `あと${FREE_TRACK_LIMIT - currentTrackCount}曲アップロードできます。`;
+
+    if(
+      progress.style.display !==
+      "block"
+    ){
+
+      uploadButton.disabled =
+        false;
+
+      uploadButton.textContent =
+        "🚀 NovaRadioにアップロード";
+
+    }
+
+  }
+
+}
+
+
 uploadButton.addEventListener(
   "click",
   async ()=>{
@@ -2406,6 +2605,24 @@ uploadButton.addEventListener(
 
     }
 
+    /*
+      まず画面側で止める。
+      最終的な強制はSupabase側のトリガーでも行う。
+    */
+    if(
+      currentTrackCount >=
+      FREE_TRACK_LIMIT
+    ){
+
+      updateUploadQuotaUI();
+
+      return showStatus(
+        "FREEプランでは3曲まで公開できます。既存曲を削除してからアップロードしてください。",
+        true
+      );
+
+    }
+
     if(cover){
 
       const allowedCoverTypes = [
@@ -2441,6 +2658,12 @@ uploadButton.addEventListener(
       "block";
 
     hideStatus();
+
+    let uploadedSongPath =
+      null;
+
+    let uploadedCoverPath =
+      null;
 
     try{
 
@@ -2535,6 +2758,9 @@ uploadButton.addEventListener(
 
       }
 
+      uploadedSongPath =
+        uploadData.path;
+
       const {
         data:publicUrlData
       } =
@@ -2586,6 +2812,9 @@ uploadButton.addEventListener(
           );
 
         }
+
+        uploadedCoverPath =
+          coverUploadData.path;
 
         const {
           data:coverPublicUrlData
@@ -2647,12 +2876,37 @@ uploadButton.addEventListener(
 
       if(databaseError){
 
+        if(
+          String(
+            databaseError.message ||
+            ""
+          ).includes(
+            "FREE_PLAN_SONG_LIMIT_REACHED"
+          )
+        ){
+
+          throw new Error(
+            "FREEプランでは3曲まで公開できます。既存曲を削除してからアップロードしてください。"
+          );
+
+        }
+
         throw new Error(
           "曲情報の登録失敗：" +
           databaseError.message
         );
 
       }
+
+      /*
+        DB登録まで成功したので、
+        catchでStorageを消さないようフラグを解除。
+      */
+      uploadedSongPath =
+        null;
+
+      uploadedCoverPath =
+        null;
 
       showStatus(
         "アップロード完了！🔥 再生用の軽量音源でNovaRadioに登録されました。",
@@ -2668,6 +2922,48 @@ uploadButton.addEventListener(
 
       console.error(error);
 
+      /*
+        DB側の上限チェックなどで登録に失敗した場合、
+        先にStorageへ上げたファイルを残さない。
+      */
+      try{
+
+        if(uploadedSongPath){
+
+          await sb
+          .storage
+          .from("songs")
+          .remove(
+            [
+              uploadedSongPath
+            ]
+          );
+
+        }
+
+        if(uploadedCoverPath){
+
+          await sb
+          .storage
+          .from("covers")
+          .remove(
+            [
+              uploadedCoverPath
+            ]
+          );
+
+        }
+
+      }
+      catch(cleanupError){
+
+        console.warn(
+          "Upload cleanup error:",
+          cleanupError
+        );
+
+      }
+
       showStatus(
         error.message ||
         "アップロード中にエラーが発生しました。",
@@ -2677,14 +2973,13 @@ uploadButton.addEventListener(
     }
     finally{
 
-      uploadButton.disabled =
-        false;
-
       progress.style.display =
         "none";
 
       progress.textContent =
         "アップロードしています… 🎧";
+
+      updateUploadQuotaUI();
 
     }
 
@@ -2729,6 +3024,13 @@ async function loadMySongs(){
     return;
 
   }
+
+  currentTrackCount =
+    Array.isArray(data)
+      ? data.length
+      : 0;
+
+  updateUploadQuotaUI();
 
   if(
     !data ||
