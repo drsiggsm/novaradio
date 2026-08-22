@@ -688,6 +688,9 @@ const navMyPage =
 const audio =
   document.getElementById("audio");
 
+const fullAudio = new Audio();
+fullAudio.preload = "auto";
+
 const playPause =
   document.getElementById("playPause");
 
@@ -1901,6 +1904,12 @@ function playNext(
     state.fullTrack &&
     !fromEnded
   ){
+    try{
+      fullAudio.pause();
+      fullAudio.removeAttribute("src");
+      fullAudio.load();
+    }catch(e){}
+
     state.fullTrack = false;
     clearHighlightSkipTimer();
     highlightStartTime = 0;
@@ -2102,35 +2111,25 @@ function playPrev(){
 ========================= */
 
 playPause.onclick =
-  async ()=>{
+  ()=>{
 
-    if(
-      !state.song
-    ){
+    if(!state.song){
       return;
     }
 
-    if(
-      audio.paused
-    ){
+    const activeAudio =
+      state.fullTrack
+        ? fullAudio
+        : audio;
 
-      const requestId =
-        ++playRequestId;
-
-      await startPlayback(
-        requestId
-      );
-
+    if(activeAudio.paused){
+      activeAudio.play().catch(()=>{});
     }
-
     else{
-
-      audio.pause();
-
+      activeAudio.pause();
     }
 
   };
-
 
 prev.onclick =
   playPrev;
@@ -2350,6 +2349,12 @@ function returnToHighlightAfterFullTrack(){
     先にfullTrackを解除してから次曲を再生する。
     これで次のplaySongは必ずhighlight_startから始まる。
   */
+  try{
+    fullAudio.pause();
+    fullAudio.removeAttribute("src");
+    fullAudio.load();
+  }catch(e){}
+
   state.fullTrack =
     false;
 
@@ -2385,6 +2390,33 @@ function returnToHighlightAfterFullTrack(){
 
 
 /* =========================
+   フル専用Audioイベント
+========================= */
+
+fullAudio.addEventListener("play",()=>{
+  playPause.textContent="⏸";
+});
+
+fullAudio.addEventListener("pause",()=>{
+  if(state.fullTrack){
+    playPause.textContent="▶";
+  }
+});
+
+fullAudio.addEventListener("loadedmetadata",updateProgressUI);
+fullAudio.addEventListener("durationchange",updateProgressUI);
+fullAudio.addEventListener("timeupdate",updateProgressUI);
+
+fullAudio.addEventListener("ended",()=>{
+  returnToHighlightAfterFullTrack();
+});
+
+fullAudio.addEventListener("error",()=>{
+  console.warn("Full audio error:",fullAudio.error);
+});
+
+
+/* =========================
    Audioイベント
 ========================= */
 
@@ -2396,18 +2428,23 @@ function updateProgressUI(){
     return;
   }
 
+  const activeAudio =
+    state.fullTrack
+      ? fullAudio
+      : audio;
+
   const duration =
     Number.isFinite(
-      audio.duration
+      activeAudio.duration
     )
-      ? audio.duration
+      ? activeAudio.duration
       : 0;
 
   const current =
     Number.isFinite(
-      audio.currentTime
+      activeAudio.currentTime
     )
-      ? audio.currentTime
+      ? activeAudio.currentTime
       : 0;
 
   if(
@@ -2506,6 +2543,7 @@ audio.addEventListener(
     */
     if(
       state.highlight &&
+      false &&
       state.fullTrack &&
       !isReturningFromFullTrack &&
       Number.isFinite(
@@ -2539,13 +2577,7 @@ audio.addEventListener(
   "ended",
   ()=>{
 
-    /*
-      「この曲だけフル」だった場合は、
-      ハイライトモードを維持したまま次曲へ。
-    */
-    if(
-      returnToHighlightAfterFullTrack()
-    ){
+    if(state.fullTrack){
       return;
     }
 
@@ -3451,203 +3483,43 @@ window.addEventListener(
 
       if(
         !state.song ||
-        !audio.getAttribute("src")
+        !state.song.audio_url
       ){
         return;
       }
 
-      const currentUrl =
-        String(
-          state.song.audio_url ||
-          ""
-        );
-
       /*
-        ハイライトモードは維持し、
-        現在曲だけフル再生へ。
+        ハイライト用audioは巻き戻さない。
+        フル専用audioを0:00から通常ロードして再生する。
       */
-      state.highlight =
-        true;
-
-      state.fullTrack =
-        true;
+      state.highlight = true;
+      state.fullTrack = true;
 
       clearHighlightSkipTimer();
+      isReturningFromFullTrack = false;
+      highlightStartTime = 0;
 
-      isReturningFromFullTrack =
-        false;
-
-      highlightStartTime =
-        0;
-
-      /*
-        同じ曲の冒頭はfullStartPreloaderで先に取得済み。
-        メインaudioはsrc/loadを触らず、0秒へ安全にseekする。
-      */
       try{
         audio.pause();
-      }
-      catch(e){}
 
-      let finished =
-        false;
+        fullAudio.pause();
+        fullAudio.src = state.song.audio_url;
+        fullAudio.load();
 
-      const resume =
-        async ()=>{
-
-          if(
-            finished ||
-            !state.highlight ||
-            !state.fullTrack ||
-            String(state.song?.audio_url || "") !== currentUrl
-          ){
-            return;
-          }
-
-          finished =
-            true;
-
-          clearTimeout(
-            fallbackTimer
-          );
-
-          audio.removeEventListener(
-            "seeked",
-            resume
-          );
-
-          audio.removeEventListener(
-            "canplay",
-            resume
-          );
-
-          try{
-
-            /*
-              seek完了後、デコーダが再生可能になるまで
-              最低限だけ待つ。
-            */
-            if(
-              audio.readyState < 2
-            ){
-
-              await new Promise(
-                resolve=>{
-
-                  let readyDone =
-                    false;
-
-                  const ready =
-                    ()=>{
-
-                      if(readyDone){
-                        return;
-                      }
-
-                      readyDone =
-                        true;
-
-                      clearTimeout(
-                        readyTimer
-                      );
-
-                      audio.removeEventListener(
-                        "canplay",
-                        ready
-                      );
-
-                      audio.removeEventListener(
-                        "loadeddata",
-                        ready
-                      );
-
-                      resolve();
-
-                    };
-
-                  const readyTimer =
-                    setTimeout(
-                      ready,
-                      900
-                    );
-
-                  audio.addEventListener(
-                    "canplay",
-                    ready,
-                    {once:true}
-                  );
-
-                  audio.addEventListener(
-                    "loadeddata",
-                    ready,
-                    {once:true}
-                  );
-
-                }
-              );
-
-            }
-
-            if(
-              state.highlight &&
-              state.fullTrack &&
-              String(state.song?.audio_url || "") === currentUrl
-            ){
-              await audio.play();
-            }
-
-          }
-          catch(error){
-
-            console.warn(
-              "Full track resume error:",
-              error
-            );
-
+        fullAudio.play().catch(
+          error=>{
+            console.warn("Full audio play error:",error);
             showPlayerStatus(
               "フル再生を準備しています。▶で再開できます。"
             );
-
           }
-
-          notifyFrameState();
-
-        };
-
-      const fallbackTimer =
-        setTimeout(
-          resume,
-          1200
         );
-
-      audio.addEventListener(
-        "seeked",
-        resume,
-        {once:true}
-      );
-
-      audio.addEventListener(
-        "canplay",
-        resume,
-        {once:true}
-      );
-
-      try{
-
-        audio.currentTime =
-          0;
-
       }
       catch(error){
-
-        console.warn(
-          "Full track seek error:",
-          error
-        );
-
-        resume();
-
+        console.warn("Full player error:",error);
       }
+
+      notifyFrameState();
 
     }
 
