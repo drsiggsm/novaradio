@@ -544,6 +544,27 @@ input[type="file"]{
   filter:saturate(.55);
 }
 
+
+/* ===== PRO ANALYTICS ===== */
+.analytics-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.plan-badge{padding:7px 11px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid #454b78;background:#171a31;color:#c8cbe0}
+.plan-badge.pro{border-color:#9a4dff;background:linear-gradient(90deg,#5520a8,#167bc1);color:#fff}
+.analytics-wrap{position:relative}
+.analytics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.analytics-stat{padding:18px;border:1px solid #30355e;border-radius:18px;background:#080b1d}
+.analytics-label{color:#9da2c0;font-size:12px;font-weight:800;line-height:1.4}
+.analytics-value{margin-top:7px;font-size:29px;font-weight:900}
+.analytics-note{margin-top:7px;color:#7f86a7;font-size:11px;line-height:1.45}
+.analytics-locked .analytics-grid{filter:blur(7px);user-select:none;pointer-events:none;opacity:.55}
+.analytics-lock{display:none;position:absolute;inset:0;align-items:center;justify-content:center;text-align:center;padding:25px;z-index:2}
+.analytics-locked .analytics-lock{display:flex}
+.analytics-lock-box{max-width:430px;padding:22px 24px;border:1px solid #623b91;border-radius:20px;background:#0c0e20eF;box-shadow:0 15px 50px #0008}
+.analytics-lock-title{font-size:20px;font-weight:900;margin-bottom:8px}
+.analytics-lock-text{color:#b8bbd2;font-size:13px;line-height:1.65}
+.analytics-error{margin-top:14px;color:#ffb9c7;font-size:13px;line-height:1.6}
+@media(max-width:760px){.analytics-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:430px){.analytics-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 
@@ -593,6 +614,49 @@ input[type="file"]{
         ログアウト
       </button>
 
+    </section>
+
+    <section class="card" id="analyticsCard">
+      <div class="analytics-head">
+        <h2 style="margin:0">📊 Artist Analytics</h2>
+        <div class="plan-badge" id="analyticsPlanBadge">PLAN</div>
+      </div>
+
+      <div class="analytics-wrap" id="analyticsWrap">
+        <div class="analytics-grid">
+          <div class="analytics-stat">
+            <div class="analytics-label">▶️ 総再生</div>
+            <div class="analytics-value" id="analyticsPlays">—</div>
+            <div class="analytics-note">10秒以上再生された回数</div>
+          </div>
+          <div class="analytics-stat">
+            <div class="analytics-label">👥 リスナー到達</div>
+            <div class="analytics-value" id="analyticsListeners">—</div>
+            <div class="analytics-note">識別できたユニークリスナー</div>
+          </div>
+          <div class="analytics-stat">
+            <div class="analytics-label">⚡ 30秒完走</div>
+            <div class="analytics-value" id="analyticsHighlights">—</div>
+            <div class="analytics-note">ハイライトを30秒聴いた回数</div>
+          </div>
+          <div class="analytics-stat">
+            <div class="analytics-label">❤️ いいね</div>
+            <div class="analytics-value" id="analyticsLikes">—</div>
+            <div class="analytics-note">あなたの曲への現在のいいね数</div>
+          </div>
+        </div>
+
+        <div class="analytics-lock">
+          <div class="analytics-lock-box">
+            <div class="analytics-lock-title">🔒 PRO限定アナリティクス</div>
+            <div class="analytics-lock-text">
+              再生数・リスナー到達・30秒完走・いいねを確認できます。<br>
+              FREEプランでは数値は非公開です。
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="analytics-error" id="analyticsError"></div>
     </section>
 
     <section class="card">
@@ -1191,6 +1255,8 @@ const selectedMoods = [];
 
 const FREE_TRACK_LIMIT = 3;
 let currentTrackCount = 0;
+let currentPlan = "free";
+let currentProUntil = null;
 
 /*
   編集モーダル専用。
@@ -1348,12 +1414,129 @@ async function init(){
   dashboard.style.display =
     "block";
 
+  await loadCurrentPlan();
   await loadMySongs();
+  await loadArtistAnalytics();
 
 }
 
 init();
 
+
+
+function isProActive(){
+  if(currentPlan !== "pro") return false;
+  if(!currentProUntil) return true;
+  const until = new Date(currentProUntil);
+  return Number.isFinite(until.getTime()) && until.getTime() > Date.now();
+}
+
+async function loadCurrentPlan(){
+  if(!currentSession) return;
+
+  const {data,error} = await sb
+    .from("profiles")
+    .select("plan,pro_until")
+    .eq("id",currentSession.user.id)
+    .maybeSingle();
+
+  if(error){
+    console.error("Plan load error:",error);
+    currentPlan = "free";
+    currentProUntil = null;
+    return;
+  }
+
+  currentPlan = String(data?.plan || "free").toLowerCase();
+  currentProUntil = data?.pro_until || null;
+}
+
+function renderAnalyticsAccess(){
+  const pro = isProActive();
+  const wrap = document.getElementById("analyticsWrap");
+  const badge = document.getElementById("analyticsPlanBadge");
+
+  wrap.classList.toggle("analytics-locked",!pro);
+  badge.textContent = pro ? "PRO" : "FREE";
+  badge.classList.toggle("pro",pro);
+
+  if(!pro){
+    document.getElementById("analyticsPlays").textContent = "—";
+    document.getElementById("analyticsListeners").textContent = "—";
+    document.getElementById("analyticsHighlights").textContent = "—";
+    document.getElementById("analyticsLikes").textContent = "—";
+  }
+}
+
+async function loadArtistAnalytics(){
+  renderAnalyticsAccess();
+
+  const errorBox = document.getElementById("analyticsError");
+  errorBox.textContent = "";
+
+  if(!currentSession || !isProActive()) return;
+
+  const artistUserId = currentSession.user.id;
+
+  const [playResult, likeResult] = await Promise.all([
+    sb
+      .from("play_events")
+      .select("event_type,listener_user_id,anonymous_listener_id")
+      .eq("artist_user_id",artistUserId),
+
+    sb
+      .from("likes")
+      .select("song_id,songs!inner(user_id)")
+      .eq("songs.user_id",artistUserId)
+  ]);
+
+  if(playResult.error){
+    console.error("Analytics play_events error:",playResult.error);
+    errorBox.textContent =
+      "再生データを取得できませんでした：" + playResult.error.message;
+    return;
+  }
+
+  if(likeResult.error){
+    console.error("Analytics likes error:",likeResult.error);
+    errorBox.textContent =
+      "いいねデータを取得できませんでした：" + likeResult.error.message;
+    return;
+  }
+
+  const events = Array.isArray(playResult.data) ? playResult.data : [];
+  const likes = Array.isArray(likeResult.data) ? likeResult.data : [];
+
+  const qualified = events.filter(
+    event => event.event_type === "play_qualified"
+  );
+
+  const highlights = events.filter(
+    event => event.event_type === "highlight_complete"
+  );
+
+  const listenerKeys = new Set();
+
+  qualified.forEach(event=>{
+    if(event.listener_user_id){
+      listenerKeys.add("user:" + event.listener_user_id);
+    }else if(event.anonymous_listener_id){
+      listenerKeys.add("anon:" + event.anonymous_listener_id);
+    }
+  });
+
+  document.getElementById("analyticsPlays").textContent =
+    qualified.length.toLocaleString("ja-JP");
+
+  document.getElementById("analyticsListeners").textContent =
+    listenerKeys.size.toLocaleString("ja-JP");
+
+  document.getElementById("analyticsHighlights").textContent =
+    highlights.length.toLocaleString("ja-JP");
+
+  document.getElementById("analyticsLikes").textContent =
+    likes.length.toLocaleString("ja-JP");
+}
 
 function setupGenreCategoryToggles(rootSelector){
   document.querySelectorAll(`${rootSelector} .genre-category-toggle`).forEach(button=>{
@@ -2916,6 +3099,7 @@ uploadButton.addEventListener(
       resetUploadForm();
 
       await loadMySongs();
+      await loadArtistAnalytics();
 
     }
     catch(error){
@@ -3651,6 +3835,7 @@ async function deleteSong(
   }
 
   await loadMySongs();
+  await loadArtistAnalytics();
 
 }
 
