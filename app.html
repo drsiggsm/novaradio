@@ -805,6 +805,110 @@ let preloadedAudioUrl =
 
 
 /*
+  ハイライト中の「この曲をフルで聴く」専用プリローダー。
+  現在曲の冒頭データを別audioで先にキャッシュへ入れておく。
+*/
+const fullStartPreloader =
+  new Audio();
+
+fullStartPreloader.preload =
+  "auto";
+
+let fullStartPreloadedUrl =
+  "";
+
+function preloadCurrentTrackStart(){
+
+  if(
+    !state.highlight ||
+    state.fullTrack ||
+    !state.song?.audio_url
+  ){
+    return;
+  }
+
+  const url =
+    String(
+      state.song.audio_url
+    );
+
+  if(
+    !url ||
+    url === fullStartPreloadedUrl
+  ){
+    return;
+  }
+
+  fullStartPreloadedUrl =
+    url;
+
+  /*
+    現在のハイライト再生を最優先。
+    少し待ってから同じ曲の冒頭側を裏で準備する。
+  */
+  setTimeout(
+    ()=>{
+
+      if(
+        !state.highlight ||
+        state.fullTrack ||
+        String(state.song?.audio_url || "") !== url
+      ){
+        return;
+      }
+
+      try{
+
+        fullStartPreloader.src =
+          url;
+
+        fullStartPreloader.load();
+
+        /*
+          metadata/data取得後に0秒を明示。
+          再生はしないので音は出ない。
+        */
+        const prepareStart =
+          ()=>{
+
+            try{
+              fullStartPreloader.currentTime = 0;
+            }
+            catch(e){}
+
+          };
+
+        if(
+          fullStartPreloader.readyState >= 1
+        ){
+          prepareStart();
+        }
+        else{
+          fullStartPreloader.addEventListener(
+            "loadedmetadata",
+            prepareStart,
+            {once:true}
+          );
+        }
+
+      }
+      catch(error){
+
+        console.warn(
+          "Full start preload failed:",
+          error
+        );
+
+      }
+
+    },
+    350
+  );
+
+}
+
+
+/*
   Safariなどで ended が遅れたり取りこぼされた時にも
   「この曲だけフル」から確実にハイライトへ戻すためのガード。
 */
@@ -1550,6 +1654,12 @@ async function playSong(
   notifyFrameState();
 
   preloadLikelyNextTrack();
+
+  /*
+    30秒ハイライト中なら、
+    「この曲をフルで聴く」用に冒頭も裏で準備。
+  */
+  preloadCurrentTrackStart();
 
 }
 
@@ -3346,14 +3456,15 @@ window.addEventListener(
         return;
       }
 
-      /*
-        安定版フル切替:
-        同じaudio / 同じsrcは維持する。
-        ただしSafariで「0秒へ飛んだ直後に無音になる」ことがあるため、
-        一度pause → 0秒へseek → seek完了/再生可能を待つ → play
-        の順にする。
+      const currentUrl =
+        String(
+          state.song.audio_url ||
+          ""
+        );
 
-        src変更 / load / playSong / renderSong は行わない。
+      /*
+        ハイライトモードは維持し、
+        現在曲だけフル再生へ。
       */
       state.highlight =
         true;
@@ -3370,32 +3481,51 @@ window.addEventListener(
         0;
 
       /*
-        いま走っている再生を一度止めて、
-        デコーダ/バッファを0秒側へ切り替えやすくする。
+        同じ曲の冒頭はfullStartPreloaderで先に取得済み。
+        メインaudioはsrc/loadを触らず、0秒へ安全にseekする。
       */
       try{
         audio.pause();
       }
       catch(e){}
 
-      const resumeFullTrack =
+      let finished =
+        false;
+
+      const resume =
         async ()=>{
 
-          /*
-            すでに別の曲へ移動していたら何もしない。
-          */
           if(
+            finished ||
+            !state.highlight ||
             !state.fullTrack ||
-            !state.highlight
+            String(state.song?.audio_url || "") !== currentUrl
           ){
             return;
           }
 
+          finished =
+            true;
+
+          clearTimeout(
+            fallbackTimer
+          );
+
+          audio.removeEventListener(
+            "seeked",
+            resume
+          );
+
+          audio.removeEventListener(
+            "canplay",
+            resume
+          );
+
           try{
 
             /*
-              0秒側が再生可能になるまで少し待つ。
-              readyState >= 2なら即再生。
+              seek完了後、デコーダが再生可能になるまで
+              最低限だけ待つ。
             */
             if(
               audio.readyState < 2
@@ -3404,55 +3534,52 @@ window.addEventListener(
               await new Promise(
                 resolve=>{
 
-                  let done =
+                  let readyDone =
                     false;
 
-                  const finish =
+                  const ready =
                     ()=>{
 
-                      if(done){
+                      if(readyDone){
                         return;
                       }
 
-                      done =
+                      readyDone =
                         true;
 
                       clearTimeout(
-                        timer
+                        readyTimer
                       );
 
                       audio.removeEventListener(
                         "canplay",
-                        onReady
+                        ready
                       );
 
                       audio.removeEventListener(
                         "loadeddata",
-                        onReady
+                        ready
                       );
 
                       resolve();
 
                     };
 
-                  const onReady =
-                    ()=>finish();
-
-                  const timer =
+                  const readyTimer =
                     setTimeout(
-                      finish,
-                      1400
+                      ready,
+                      900
                     );
 
                   audio.addEventListener(
                     "canplay",
-                    onReady,
+                    ready,
                     {once:true}
                   );
 
                   audio.addEventListener(
                     "loadeddata",
-                    onReady,
+                    ready,
                     {once:true}
                   );
 
@@ -3462,13 +3589,12 @@ window.addEventListener(
             }
 
             if(
-              !state.fullTrack ||
-              !state.highlight
+              state.highlight &&
+              state.fullTrack &&
+              String(state.song?.audio_url || "") === currentUrl
             ){
-              return;
+              await audio.play();
             }
-
-            await audio.play();
 
           }
           catch(error){
@@ -3478,11 +3604,8 @@ window.addEventListener(
               error
             );
 
-            /*
-              失敗時はユーザーに再試行可能な状態を残す。
-            */
             showPlayerStatus(
-              "フル再生の準備に少し時間がかかっています。▶を押すと再開できます。"
+              "フル再生を準備しています。▶で再開できます。"
             );
 
           }
@@ -3491,41 +3614,21 @@ window.addEventListener(
 
         };
 
-      let seekFinished =
-        false;
-
-      const afterSeek =
-        ()=>{
-
-          if(seekFinished){
-            return;
-          }
-
-          seekFinished =
-            true;
-
-          clearTimeout(
-            seekTimer
-          );
-
-          audio.removeEventListener(
-            "seeked",
-            afterSeek
-          );
-
-          resumeFullTrack();
-
-        };
-
-      const seekTimer =
+      const fallbackTimer =
         setTimeout(
-          afterSeek,
-          900
+          resume,
+          1200
         );
 
       audio.addEventListener(
         "seeked",
-        afterSeek,
+        resume,
+        {once:true}
+      );
+
+      audio.addEventListener(
+        "canplay",
+        resume,
         {once:true}
       );
 
@@ -3542,7 +3645,7 @@ window.addEventListener(
           error
         );
 
-        afterSeek();
+        resume();
 
       }
 
