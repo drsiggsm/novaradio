@@ -1227,7 +1227,7 @@ body{
       🆕 NEW DISCOVERY — 新着30秒
     </button>
     <div class="new-discovery-sub">
-      ジャンル指定なし。最近アップロードされた曲を30秒ずつ発掘。
+      Genre / Mood指定にも対応。何も選ばなければ全新着を30秒ずつ発掘。
     </div>
   </div>
 
@@ -4023,27 +4023,48 @@ const NEW_DISCOVERY_FETCH_LIMIT =
 */
 async function fetchNewDiscoveryQueue(){
 
+  /*
+    NEW DISCOVERYでも、現在Homeで選ばれている
+    Genre / Mood条件をそのまま使う。
+
+    ・何も選ばない → 全ジャンル新着
+    ・Hip Hopだけ → Hip Hop新着
+    ・Hip Hop / R&B大カテゴリー → 配下ジャンル全部
+    ・Moodも選択 → Genre AND Moodで絞り込み
+  */
+  const effectiveGenres =
+    getEffectiveSelectedGenres();
+
+  let query =
+    sb
+    .from("songs")
+    .select("*")
+    .not(
+      "audio_url",
+      "is",
+      null
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(
+      NEW_DISCOVERY_FETCH_LIMIT
+    );
+
+  /*
+    songs.genre / mood はカンマ区切り文字列なので、
+    まず新着候補を少量だけ取得してから
+    ブラウザ側で既存の songMatches と同じ考え方で絞る。
+    最大60曲だけなので全曲取得にはならない。
+  */
   const {
     data,
     error
   } =
-  await sb
-  .from("songs")
-  .select("*")
-  .not(
-    "audio_url",
-    "is",
-    null
-  )
-  .order(
-    "created_at",
-    {
-      ascending:false
-    }
-  )
-  .limit(
-    NEW_DISCOVERY_FETCH_LIMIT
-  );
+  await query;
 
   if(error){
     return {
@@ -4053,9 +4074,67 @@ async function fetchNewDiscoveryQueue(){
   }
 
 
+  const filtered =
+    (data || [])
+    .filter(
+      song=>{
+
+        const songGenres =
+          String(
+            song.genre ||
+            ""
+          )
+          .split(",")
+          .map(
+            value=>
+              value.trim()
+          )
+          .filter(Boolean);
+
+        const songMoods =
+          String(
+            song.mood ||
+            ""
+          )
+          .split(",")
+          .map(
+            value=>
+              value.trim()
+          )
+          .filter(Boolean);
+
+
+        const genreMatches =
+          !effectiveGenres.length ||
+          effectiveGenres.some(
+            genre=>
+              songGenres.includes(
+                genre
+              )
+          );
+
+
+        const moodMatches =
+          !selectedMoods.length ||
+          selectedMoods.some(
+            mood=>
+              songMoods.includes(
+                mood
+              )
+          );
+
+
+        return (
+          genreMatches &&
+          moodMatches
+        );
+
+      }
+    );
+
+
   /*
-    新着60曲の中でも、同じアーティストが大量投稿して
-    その人だけで埋まらないように、
+    同じアーティストの大量投稿で新着欄が埋まらないように、
     アーティストごとに山を分けて交互に並べる。
   */
   const artistBuckets =
@@ -4063,7 +4142,7 @@ async function fetchNewDiscoveryQueue(){
 
   for(
     const song
-    of (data || [])
+    of filtered
   ){
 
     const artistKey =
@@ -4097,9 +4176,6 @@ async function fetchNewDiscoveryQueue(){
   }
 
 
-  /*
-    各アーティスト内でも同時期の投稿順に偏らないよう軽く混ぜる。
-  */
   for(
     const bucket
     of artistBuckets.values()
@@ -4145,10 +4221,6 @@ async function fetchNewDiscoveryQueue(){
     buckets.length
   ){
 
-    /*
-      各ラウンドごとにアーティスト順をランダム化。
-      新着の中で露出機会をなるべく均等にする。
-    */
     buckets =
       buckets.sort(
         ()=>
@@ -4261,7 +4333,9 @@ document
         </div>
 
         <div class="empty">
-          まだ新着曲がありません 🎧
+          この条件に合う新着曲は
+          <br>
+          まだありません 🎧
         </div>`;
 
       return;
