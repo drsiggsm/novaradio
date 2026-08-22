@@ -1227,7 +1227,7 @@ body{
       🆕 NEW DISCOVERY — 新着30秒
     </button>
     <div class="new-discovery-sub">
-      Genre / Mood指定にも対応。何も選ばなければ全新着を30秒ずつ発掘。
+      直近7日以内の新着だけ。Genre / Mood指定にも対応。何も選ばなければ全新着を30秒ずつ発掘。
     </div>
   </div>
 
@@ -4035,6 +4035,18 @@ async function fetchNewDiscoveryQueue(){
   const effectiveGenres =
     getEffectiveSelectedGenres();
 
+  /*
+    NEW DISCOVERYは「アップロードから7日以内」の曲だけ。
+    7日を過ぎた曲は通常再生 / 通常ハイライトには残るが、
+    NEW DISCOVERYの候補からは外れる。
+  */
+  const sevenDaysAgo =
+    new Date(
+      Date.now() -
+      7 * 24 * 60 * 60 * 1000
+    )
+    .toISOString();
+
   let query =
     sb
     .from("songs")
@@ -4043,6 +4055,10 @@ async function fetchNewDiscoveryQueue(){
       "audio_url",
       "is",
       null
+    )
+    .gte(
+      "created_at",
+      sevenDaysAgo
     )
     .order(
       "created_at",
@@ -4333,9 +4349,9 @@ document
         </div>
 
         <div class="empty">
-          この条件に合う新着曲は
+          この条件に合う
           <br>
-          まだありません 🎧
+          直近7日以内の新着曲はまだありません 🎧
         </div>`;
 
       return;
