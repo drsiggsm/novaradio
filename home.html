@@ -899,6 +899,21 @@ body{
 
 }
 
+
+/* ===== Genre categories ===== */
+.genre-groups{display:grid;gap:12px}
+.genre-group{border:1px solid rgba(116,130,205,.34);border-radius:18px;background:rgba(5,8,28,.24);overflow:hidden}
+.genre-category-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px}
+.genre-category-toggle{width:100%;border:0;background:transparent;color:#f5f6ff;font:inherit;font-weight:800;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left}
+.genre-category-row .genre-category-toggle{width:48px;justify-content:center;border:1px solid rgba(116,130,205,.34);border-radius:14px;padding:0}
+.genre-category-select{width:100%;justify-content:flex-start;font-weight:850}
+.genre-children{display:none;flex-wrap:wrap;gap:10px;padding:0 14px 14px}
+.genre-children.open{display:flex}
+.genre-category-toggle[aria-expanded="true"] .genre-chevron,
+.genre-category-row .genre-category-toggle[aria-expanded="true"]{transform:rotate(180deg)}
+.genre-limit-note{margin-top:10px;color:#9ea6c7;font-size:.9rem}
+@media(min-width:760px){.genre-groups{grid-template-columns:repeat(2,minmax(0,1fr))}.genre-group:last-child:nth-child(odd){grid-column:1/-1}}
+
 </style>
 
 </head>
@@ -987,97 +1002,89 @@ body{
     </label>
 
 
-    <div
-      class="options"
-      id="genreOptions"
-    >
-
-      <button
-        type="button"
-        class="option"
-        data-value="Hip Hop"
-      >
-        Hip Hop
-      </button>
-
-
-      <button
-        type="button"
-        class="option"
-        data-value="R&B"
-      >
-        R&B
-      </button>
-
-
-      <button
-        type="button"
-        class="option"
-        data-value="Pop"
-      >
-        Pop
-      </button>
-
-
-      <button
-        type="button"
-        class="option"
-        data-value="Trap"
-      >
-        Trap
-      </button>
-
-
-      <button
-        type="button"
-        class="option"
-        data-value="Rock"
-      >
-        Rock
-      </button>
-
-
-      <button
-        type="button"
-        class="option"
-        data-value="Lo-Fi"
-      >
-        Lo-Fi
-      </button>
-
-
-      <button
-        type="button"
-        class="option"
-        data-value="Electronic"
-      >
-        Electronic
-      </button>
-
-
-      <button
-        type="button"
-        class="option"
-        data-value="Pluggnb"
-      >
-        Pluggnb
-      </button>
-
-
-      <button
-        type="button"
-        class="option"
-        data-value="Other"
-      >
-        Other
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <div class="field">
+    <div class="genre-groups" id="genreOptions">
+<div class="genre-group">
+<div class="genre-category-row">
+<button type="button" class="option genre-category-select" data-category="Hip Hop / R&B" data-values="Hip Hop|Trap|Pluggnb|Rage|Drill|Boom Bap|R&B|Soul|Neo Soul|Jersey Club">Hip Hop / R&B</button>
+<button type="button" class="genre-category-toggle" aria-label="Hip Hop / R&Bを展開" aria-expanded="true">⌄</button>
+</div>
+<div class="genre-children open">
+<button type="button" class="option genre-child" data-value="Hip Hop">Hip Hop</button>
+<button type="button" class="option genre-child" data-value="Trap">Trap</button>
+<button type="button" class="option genre-child" data-value="Pluggnb">Pluggnb</button>
+<button type="button" class="option genre-child" data-value="Rage">Rage</button>
+<button type="button" class="option genre-child" data-value="Drill">Drill</button>
+<button type="button" class="option genre-child" data-value="Boom Bap">Boom Bap</button>
+<button type="button" class="option genre-child" data-value="R&B">R&B</button>
+<button type="button" class="option genre-child" data-value="Soul">Soul</button>
+<button type="button" class="option genre-child" data-value="Neo Soul">Neo Soul</button>
+<button type="button" class="option genre-child" data-value="Jersey Club">Jersey Club</button>
+</div>
+</div>
+<div class="genre-group">
+<div class="genre-category-row">
+<button type="button" class="option genre-category-select" data-category="Electronic / Dance" data-values="House|Techno|UK Garage|Drum & Bass|Amapiano|Future Bass|Hardstyle|Ambient">Electronic / Dance</button>
+<button type="button" class="genre-category-toggle" aria-label="Electronic / Danceを展開" aria-expanded="false">⌄</button>
+</div>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="House">House</button>
+<button type="button" class="option genre-child" data-value="Techno">Techno</button>
+<button type="button" class="option genre-child" data-value="UK Garage">UK Garage</button>
+<button type="button" class="option genre-child" data-value="Drum & Bass">Drum & Bass</button>
+<button type="button" class="option genre-child" data-value="Amapiano">Amapiano</button>
+<button type="button" class="option genre-child" data-value="Future Bass">Future Bass</button>
+<button type="button" class="option genre-child" data-value="Hardstyle">Hardstyle</button>
+<button type="button" class="option genre-child" data-value="Ambient">Ambient</button>
+</div>
+</div>
+<div class="genre-group">
+<div class="genre-category-row">
+<button type="button" class="option genre-category-select" data-category="Pop" data-values="Pop|Indie Pop|Hyperpop|Synth-Pop|J-Pop|K-Pop|Afrobeats">Pop</button>
+<button type="button" class="genre-category-toggle" aria-label="Popを展開" aria-expanded="false">⌄</button>
+</div>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Pop">Pop</button>
+<button type="button" class="option genre-child" data-value="Indie Pop">Indie Pop</button>
+<button type="button" class="option genre-child" data-value="Hyperpop">Hyperpop</button>
+<button type="button" class="option genre-child" data-value="Synth-Pop">Synth-Pop</button>
+<button type="button" class="option genre-child" data-value="J-Pop">J-Pop</button>
+<button type="button" class="option genre-child" data-value="K-Pop">K-Pop</button>
+<button type="button" class="option genre-child" data-value="Afrobeats">Afrobeats</button>
+</div>
+</div>
+<div class="genre-group">
+<div class="genre-category-row">
+<button type="button" class="option genre-category-select" data-category="Rock / Alternative" data-values="Rock|Indie Rock|Alternative|Punk|Metal|Emo">Rock / Alternative</button>
+<button type="button" class="genre-category-toggle" aria-label="Rock / Alternativeを展開" aria-expanded="false">⌄</button>
+</div>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Rock">Rock</button>
+<button type="button" class="option genre-child" data-value="Indie Rock">Indie Rock</button>
+<button type="button" class="option genre-child" data-value="Alternative">Alternative</button>
+<button type="button" class="option genre-child" data-value="Punk">Punk</button>
+<button type="button" class="option genre-child" data-value="Metal">Metal</button>
+<button type="button" class="option genre-child" data-value="Emo">Emo</button>
+</div>
+</div>
+<div class="genre-group">
+<div class="genre-category-row">
+<button type="button" class="option genre-category-select" data-category="Other" data-values="Jazz|Funk|Reggae|Dancehall|Acoustic|Lo-Fi|Vocaloid|Other">Other</button>
+<button type="button" class="genre-category-toggle" aria-label="Otherを展開" aria-expanded="false">⌄</button>
+</div>
+<div class="genre-children">
+<button type="button" class="option genre-child" data-value="Jazz">Jazz</button>
+<button type="button" class="option genre-child" data-value="Funk">Funk</button>
+<button type="button" class="option genre-child" data-value="Reggae">Reggae</button>
+<button type="button" class="option genre-child" data-value="Dancehall">Dancehall</button>
+<button type="button" class="option genre-child" data-value="Acoustic">Acoustic</button>
+<button type="button" class="option genre-child" data-value="Lo-Fi">Lo-Fi</button>
+<button type="button" class="option genre-child" data-value="Vocaloid">Vocaloid</button>
+<button type="button" class="option genre-child" data-value="Other">Other</button>
+</div>
+</div>
+</div>
+</div>
+<div class="field">
 
     <label>
       🌙 Mood
@@ -1498,6 +1505,8 @@ let historyIndex =
 const selectedGenres =
   [];
 
+const selectedGenreCategories = new Map();
+
 
 const selectedMoods =
   [];
@@ -1674,7 +1683,7 @@ function updateConditions(){
 
 
   const noConditions =
-    !selectedGenres.length &&
+    !getEffectiveSelectedGenres().length &&
     !selectedMoods.length;
 
   document
@@ -1694,28 +1703,43 @@ function updateConditions(){
 }
 
 
-document
-.querySelectorAll(
-  "#genreOptions .option"
-)
-.forEach(
-  button=>{
 
-    button.addEventListener(
-      "click",
-      ()=>{
+function getEffectiveSelectedGenres(){
+  return [...new Set([
+    ...selectedGenres,
+    ...Array.from(selectedGenreCategories.values()).flat()
+  ])];
+}
 
-        toggleSelection(
-          button,
-          selectedGenres
-        );
+document.querySelectorAll("#genreOptions .genre-category-toggle").forEach(button=>{
+  button.addEventListener("click",()=>{
+    const children=button.closest(".genre-group").querySelector(".genre-children");
+    const open=!children.classList.contains("open");
+    children.classList.toggle("open",open);
+    button.setAttribute("aria-expanded",String(open));
+  });
+});
 
-      }
-    );
+document.querySelectorAll("#genreOptions .genre-category-select").forEach(button=>{
+  button.addEventListener("click",()=>{
+    const category=button.dataset.category;
+    if(selectedGenreCategories.has(category)){
+      selectedGenreCategories.delete(category);
+      button.classList.remove("selected");
+    }else{
+      selectedGenreCategories.set(category,button.dataset.values.split("|").filter(Boolean));
+      button.classList.add("selected");
+    }
+    updateSelectionText();
+  });
+});
 
-  }
-);
-
+document.querySelectorAll("#genreOptions .genre-child").forEach(button=>{
+  button.addEventListener("click",()=>{
+    toggleSelection(button,selectedGenres);
+    updateSelectionText();
+  });
+});
 
 document
 .querySelectorAll(
@@ -3873,7 +3897,7 @@ async function fetchFairRadioQueue(){
       "get_fair_radio_queue",
       {
         p_genres:
-          selectedGenres,
+          getEffectiveSelectedGenres(),
 
         p_moods:
           selectedMoods,
@@ -3905,7 +3929,7 @@ async function fetchFairRadioQueue(){
         "get_fair_radio_queue",
         {
           p_genres:
-            selectedGenres,
+          getEffectiveSelectedGenres(),
 
           p_moods:
             selectedMoods,
