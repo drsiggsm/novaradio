@@ -3347,14 +3347,12 @@ window.addEventListener(
       }
 
       /*
-        ハイライトモード自体は維持したまま、
-        「今読み込まれている同じaudio」をそのまま0:00へ戻す。
+        最軽量ルート:
+        同じaudio要素・同じsrcを維持したまま
+        モードフラグとcurrentTimeだけ変更する。
 
-        以前はここで playSong() をもう一度通していたため、
-        DOM更新・再生準備・各種同期が重なって
-        Safariでラグ/停止が起きやすかった。
-
-        今回は音源の再ロードもrenderSongも行わない。
+        src変更 / load / playSong / renderSong /
+        preloader / metadata待ち は一切行わない。
       */
       state.highlight =
         true;
@@ -3370,72 +3368,53 @@ window.addEventListener(
       highlightStartTime =
         0;
 
-      /*
-        以前の非同期再生リクエストが残っていた場合だけ無効化。
-      */
-      const requestId =
-        ++playRequestId;
-
-      const wasPaused =
+      const resumeAfterSeek =
         audio.paused;
 
-      try{
+      const seekToStart =
+        ()=>{
 
-        /*
-          同じ音源なのでsrcやload()には触らず、
-          再生位置だけ先頭へ戻す。
-        */
-        if(
-          typeof audio.fastSeek ===
-          "function"
-        ){
+          try{
+            audio.currentTime = 0;
+          }
+          catch(error){
+            console.warn(
+              "Full track seek error:",
+              error
+            );
+          }
 
-          audio.fastSeek(
-            0
-          );
+          /*
+            ハイライトが再生中ならseekだけで再生は継続する。
+            一時停止状態から押された場合だけplayする。
+          */
+          if(resumeAfterSeek){
+            audio.play().catch(()=>{});
+          }
 
-        }
-        else{
+          notifyFrameState();
 
-          audio.currentTime =
-            0;
-
-        }
-
-      }
-      catch(error){
-
-        console.warn(
-          "Full track seek error:",
-          error
-        );
-
-        try{
-          audio.currentTime = 0;
-        }
-        catch(e){}
-
-      }
+        };
 
       /*
-        すでに再生中なら、seek後もそのまま再生が続くため
-        audio.play()を重ねて呼ばない。
-        一時停止中だった時だけ再生を開始する。
+        seekableがまだ無い瞬間だけ待つ。
+        普段のハイライト再生中は即seekされる。
       */
-      if(wasPaused){
-
-        startPlayback(
-          requestId
+      if(
+        audio.seekable &&
+        audio.seekable.length > 0
+      ){
+        seekToStart();
+      }
+      else{
+        audio.addEventListener(
+          "canplay",
+          seekToStart,
+          {once:true}
         );
-
       }
 
-      updateProgressUI();
-
-      notifyFrameState();
-
     }
-
 
     if(
       data.type ===
