@@ -997,6 +997,96 @@ let highlightStartTime =
 const HIGHLIGHT_SECONDS =
   30;
 
+
+/* =========================
+   匿名リスナーID
+========================= */
+
+const ANONYMOUS_LISTENER_STORAGE_KEY =
+  "novaradio_anonymous_listener_id";
+
+function createAnonymousListenerId(){
+
+  if(
+    window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+  ){
+    return window.crypto.randomUUID();
+  }
+
+  /* randomUUID非対応ブラウザ用フォールバック */
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+  .replace(
+    /[xy]/g,
+    char=>{
+
+      const random =
+        Math.floor(
+          Math.random() * 16
+        );
+
+      const value =
+        char === "x"
+          ? random
+          : (random & 0x3) | 0x8;
+
+      return value.toString(16);
+
+    }
+  );
+
+}
+
+function getAnonymousListenerId(){
+
+  try{
+
+    let value =
+      localStorage.getItem(
+        ANONYMOUS_LISTENER_STORAGE_KEY
+      );
+
+    if(!value){
+
+      value =
+        createAnonymousListenerId();
+
+      localStorage.setItem(
+        ANONYMOUS_LISTENER_STORAGE_KEY,
+        value
+      );
+
+    }
+
+    return value;
+
+  }
+  catch(error){
+
+    console.warn(
+      "Anonymous listener ID error:",
+      error
+    );
+
+    /*
+      localStorageが使えない環境でも
+      そのページ内では匿名IDを持たせる。
+    */
+    if(!getAnonymousListenerId.fallbackId){
+      getAnonymousListenerId.fallbackId =
+        createAnonymousListenerId();
+    }
+
+    return getAnonymousListenerId.fallbackId;
+
+  }
+
+}
+
+const anonymousListenerId =
+  getAnonymousListenerId();
+
+
 /* =========================
    再生分析
 ========================= */
@@ -1114,7 +1204,6 @@ async function recordAnalyticsEvent(
 ){
 
   if(
-    !currentSession ||
     !Number.isFinite(
       Number(songId)
     )
@@ -1134,7 +1223,16 @@ async function recordAnalyticsEvent(
           Number(songId),
 
         p_event_type:
-          eventType
+          eventType,
+
+        /*
+          ログイン済みならSupabase側でauth.uid()を使用。
+          未ログインならこのブラウザの匿名UUIDを使用。
+        */
+        p_anonymous_listener_id:
+          currentSession
+            ? null
+            : anonymousListenerId
       }
     );
 
@@ -1527,9 +1625,30 @@ navHome.onclick =
 
 
 navMyPage.onclick =
-  ()=>setView(
-    "mypage.html"
-  );
+  ()=>{
+
+    if(!currentSession){
+
+      showPlayerStatus(
+        "いいね・プレイリスト・My Pageを使うには無料登録 / ログインしてください。"
+      );
+
+      setTimeout(
+        ()=>{
+          location.href =
+            "index.html?mode=login";
+        },
+        700
+      );
+
+      return;
+    }
+
+    setView(
+      "mypage.html"
+    );
+
+  };
 
 
 frame.addEventListener(
