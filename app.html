@@ -3340,14 +3340,21 @@ window.addEventListener(
     ){
 
       if(
-        !state.song
+        !state.song ||
+        !audio.getAttribute("src")
       ){
         return;
       }
 
       /*
         ハイライトモード自体は維持したまま、
-        現在曲だけ0:00から最後まで再生する。
+        「今読み込まれている同じaudio」をそのまま0:00へ戻す。
+
+        以前はここで playSong() をもう一度通していたため、
+        DOM更新・再生準備・各種同期が重なって
+        Safariでラグ/停止が起きやすかった。
+
+        今回は音源の再ロードもrenderSongも行わない。
       */
       state.highlight =
         true;
@@ -3363,12 +3370,67 @@ window.addEventListener(
       highlightStartTime =
         0;
 
-      playSong(
-        state.song,
-        state.queue,
-        state.index,
-        true
-      );
+      /*
+        以前の非同期再生リクエストが残っていた場合だけ無効化。
+      */
+      const requestId =
+        ++playRequestId;
+
+      const wasPaused =
+        audio.paused;
+
+      try{
+
+        /*
+          同じ音源なのでsrcやload()には触らず、
+          再生位置だけ先頭へ戻す。
+        */
+        if(
+          typeof audio.fastSeek ===
+          "function"
+        ){
+
+          audio.fastSeek(
+            0
+          );
+
+        }
+        else{
+
+          audio.currentTime =
+            0;
+
+        }
+
+      }
+      catch(error){
+
+        console.warn(
+          "Full track seek error:",
+          error
+        );
+
+        try{
+          audio.currentTime = 0;
+        }
+        catch(e){}
+
+      }
+
+      /*
+        すでに再生中なら、seek後もそのまま再生が続くため
+        audio.play()を重ねて呼ばない。
+        一時停止中だった時だけ再生を開始する。
+      */
+      if(wasPaused){
+
+        startPlayback(
+          requestId
+        );
+
+      }
+
+      updateProgressUI();
 
       notifyFrameState();
 
