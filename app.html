@@ -1336,9 +1336,13 @@ function maybeSendAnalyticsEvents(){
 
 function analyticsTick(){
 
+  /*
+    再生分析はゲストも対象。
+    ログイン有無に関係なく、曲が再生中なら計測する。
+    未ログイン時は record_play_event() に匿名UUIDを渡す。
+  */
   if(
-    !state.song ||
-    !currentSession
+    !state.song
   ){
     return;
   }
