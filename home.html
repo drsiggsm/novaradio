@@ -2403,6 +2403,51 @@ async function playSong(
   );
 
 
+  /*
+    フル視聴ボタン削除時に一緒に消えてしまっていた
+    戻る / スキップ / アーティスト遷移のイベントを復元。
+  */
+  document
+  .getElementById(
+    "previousButton"
+  )
+  .addEventListener(
+    "click",
+    playPreviousSong
+  );
+
+
+  document
+  .getElementById(
+    "nextButton"
+  )
+  .addEventListener(
+    "click",
+    playNextSong
+  );
+
+
+  if(
+    song.user_id
+  ){
+
+    document
+    .getElementById(
+      "nowArtist"
+    )
+    .addEventListener(
+      "click",
+      ()=>{
+
+        location.href =
+          `artist.html?id=${encodeURIComponent(
+            song.user_id
+          )}`;
+
+      }
+    );
+
+  }
 
 
   updateNavigationButtons();
