@@ -550,7 +550,7 @@ input[type="file"]{
 .plan-badge{padding:7px 11px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid #454b78;background:#171a31;color:#c8cbe0}
 .plan-badge.pro{border-color:#9a4dff;background:linear-gradient(90deg,#5520a8,#167bc1);color:#fff}
 .analytics-wrap{position:relative}
-.analytics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.analytics-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
 .analytics-stat{padding:18px;border:1px solid #30355e;border-radius:18px;background:#080b1d}
 .analytics-label{color:#9da2c0;font-size:12px;font-weight:800;line-height:1.4}
 .analytics-value{margin-top:7px;font-size:29px;font-weight:900}
@@ -640,6 +640,12 @@ input[type="file"]{
             <div class="analytics-note">ハイライトを30秒聴いた回数</div>
           </div>
           <div class="analytics-stat">
+            <div class="analytics-label">🎵 フル再生</div>
+            <div class="analytics-value" id="analyticsFullPlays">—</div>
+            <div class="analytics-note">フル再生を30秒以上聴いた回数</div>
+          </div>
+
+          <div class="analytics-stat">
             <div class="analytics-label">❤️ いいね</div>
             <div class="analytics-value" id="analyticsLikes">—</div>
             <div class="analytics-note">あなたの曲への現在のいいね数</div>
@@ -650,7 +656,7 @@ input[type="file"]{
           <div class="analytics-lock-box">
             <div class="analytics-lock-title">🔒 PRO限定アナリティクス</div>
             <div class="analytics-lock-text">
-              再生数・リスナー到達・30秒完走・いいねを確認できます。<br>
+              再生数・リスナー到達・30秒完走・フル再生・いいねを確認できます。<br>
               FREEプランでは数値は非公開です。
             </div>
           </div>
@@ -1254,6 +1260,7 @@ const selectedGenres = [];
 const selectedMoods = [];
 
 const FREE_TRACK_LIMIT = 3;
+const PRO_TRACK_LIMIT = 30;
 let currentTrackCount = 0;
 let currentPlan = "free";
 let currentProUntil = null;
@@ -1449,6 +1456,8 @@ async function loadCurrentPlan(){
 
   currentPlan = String(data?.plan || "free").toLowerCase();
   currentProUntil = data?.pro_until || null;
+
+  updateUploadQuotaUI();
 }
 
 function renderAnalyticsAccess(){
@@ -1464,6 +1473,7 @@ function renderAnalyticsAccess(){
     document.getElementById("analyticsPlays").textContent = "—";
     document.getElementById("analyticsListeners").textContent = "—";
     document.getElementById("analyticsHighlights").textContent = "—";
+    document.getElementById("analyticsFullPlays").textContent = "—";
     document.getElementById("analyticsLikes").textContent = "—";
   }
 }
@@ -1541,6 +1551,18 @@ async function loadArtistAnalytics(){
     .textContent =
       Number(
         row?.highlight_completes || 0
+      )
+      .toLocaleString(
+        "ja-JP"
+      );
+
+    document
+    .getElementById(
+      "analyticsFullPlays"
+    )
+    .textContent =
+      Number(
+        row?.full_plays || 0
       )
       .toLocaleString(
         "ja-JP"
@@ -2695,24 +2717,39 @@ function formatFileSizeMB(
 
 
 
+function getCurrentTrackLimit(){
+
+  return isProActive()
+    ? PRO_TRACK_LIMIT
+    : FREE_TRACK_LIMIT;
+
+}
+
+
 function updateUploadQuotaUI(){
+
+  const trackLimit =
+    getCurrentTrackLimit();
+
+  const pro =
+    isProActive();
 
   const ratio =
     Math.min(
       1,
       currentTrackCount /
-      FREE_TRACK_LIMIT
+      trackLimit
     );
 
   uploadQuotaCount.textContent =
-    `${currentTrackCount} / ${FREE_TRACK_LIMIT}曲`;
+    `${currentTrackCount} / ${trackLimit}曲`;
 
   uploadQuotaFill.style.width =
     `${Math.round(ratio * 100)}%`;
 
   const isLocked =
     currentTrackCount >=
-    FREE_TRACK_LIMIT;
+    trackLimit;
 
   uploadQuota.classList.toggle(
     "locked",
@@ -2724,25 +2761,46 @@ function updateUploadQuotaUI(){
     isLocked
   );
 
+  /*
+    見出しもプランに合わせて変更
+  */
+  const titleElement =
+    uploadQuota.querySelector(
+      ".upload-quota-title"
+    );
+
+  if(titleElement){
+
+    titleElement.textContent =
+      pro
+        ? "PROプラン 公開枠"
+        : "FREEプラン 公開枠";
+
+  }
+
   if(isLocked){
 
     uploadQuotaHelp.textContent =
       currentTrackCount >
-      FREE_TRACK_LIMIT
-        ? `現在${currentTrackCount}曲を公開中です。上限は${FREE_TRACK_LIMIT}曲です。`
-        : "無料プランの公開枠をすべて使用しています。";
+      trackLimit
+        ? `現在${currentTrackCount}曲を公開中です。上限は${trackLimit}曲です。`
+        : `${pro ? "PRO" : "FREE"}プランの公開枠をすべて使用しています。`;
 
     uploadButton.disabled =
       true;
 
     uploadButton.textContent =
-      "🔒 FREEプラン上限（3曲）";
+      `🔒 ${pro ? "PRO" : "FREE"}プラン上限（${trackLimit}曲）`;
+
+    uploadLockMessage.innerHTML =
+      `🔒 <strong>${pro ? "PRO" : "FREE"}プランのアップロード上限に達しました。</strong><br>` +
+      `新しい曲を追加するには、既存の曲を削除して公開曲数を${trackLimit - 1}曲以下にしてください。`;
 
   }
   else{
 
     uploadQuotaHelp.textContent =
-      `あと${FREE_TRACK_LIMIT - currentTrackCount}曲アップロードできます。`;
+      `あと${trackLimit - currentTrackCount}曲アップロードできます。`;
 
     if(
       progress.style.display !==
@@ -2851,15 +2909,18 @@ uploadButton.addEventListener(
       まず画面側で止める。
       最終的な強制はSupabase側のトリガーでも行う。
     */
+    const currentTrackLimit =
+      getCurrentTrackLimit();
+
     if(
       currentTrackCount >=
-      FREE_TRACK_LIMIT
+      currentTrackLimit
     ){
 
       updateUploadQuotaUI();
 
       return showStatus(
-        "FREEプランでは3曲まで公開できます。既存曲を削除してからアップロードしてください。",
+        `${isProActive() ? "PRO" : "FREE"}プランでは${currentTrackLimit}曲まで公開できます。既存曲を削除してからアップロードしてください。`,
         true
       );
 
