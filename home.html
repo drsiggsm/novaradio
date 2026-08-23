@@ -4072,6 +4072,10 @@ async function fetchNewDiscoveryQueue(){
     sb
     .from("songs")
     .select("*")
+    .eq(
+      "is_public",
+      true
+    )
     .not(
       "audio_url",
       "is",
