@@ -684,6 +684,23 @@ input[type="file"]{
             >
               PROにアップグレード（月額550円）
             </button>
+
+            <div
+              id="checkoutDebug"
+              style="
+                display:none;
+                margin-top:14px;
+                padding:14px;
+                border:1px solid #3d4b7b;
+                border-radius:14px;
+                background:#080b1d;
+                color:#d9dcf4;
+                font-size:13px;
+                line-height:1.6;
+                text-align:left;
+                word-break:break-all;
+              "
+            ></div>
           </div>
         </div>
       </div>
@@ -1344,6 +1361,9 @@ const editModal =
 
 const upgradeProButton =
   document.getElementById("upgradePro");
+
+const checkoutDebug =
+  document.getElementById("checkoutDebug");
 
 
 const audioFile =
@@ -4152,6 +4172,7 @@ function escapeHtml(
 
 /* =========================
    STRIPE PRO CHECKOUT
+   一時デバッグ版
 ========================= */
 
 if(upgradeProButton){
@@ -4174,12 +4195,19 @@ if(upgradeProButton){
         true;
 
       upgradeProButton.textContent =
-        "Stripe決済ページを準備中…";
+        "Stripe決済URLを確認中…";
 
       document
       .getElementById("analyticsError")
       .textContent =
         "";
+
+      if(checkoutDebug){
+        checkoutDebug.style.display =
+          "none";
+        checkoutDebug.textContent =
+          "";
+      }
 
       try{
 
@@ -4205,8 +4233,127 @@ if(upgradeProButton){
           );
         }
 
-        location.href =
-          data.url;
+        const checkoutUrl =
+          new URL(
+            String(data.url)
+          );
+
+        const stripeHost =
+          checkoutUrl.hostname ===
+            "checkout.stripe.com" ||
+          checkoutUrl.hostname.endsWith(
+            ".stripe.com"
+          );
+
+        if(
+          checkoutUrl.protocol !==
+            "https:" ||
+          !stripeHost
+        ){
+          throw new Error(
+            "Stripe以外の決済URLが返されました。"
+          );
+        }
+
+        /*
+          一時デバッグ：
+          自動遷移せず、取得した本物のURLを
+          画面にリンクとして表示する。
+          これでブラウザ側まで完全なURLが届いているか確認できる。
+        */
+
+        if(checkoutDebug){
+
+          const message =
+            document.createElement(
+              "div"
+            );
+
+          message.textContent =
+            "✅ StripeのCheckout URLを取得できました。下のボタンから直接開いてください。";
+
+          const link =
+            document.createElement(
+              "a"
+            );
+
+          link.href =
+            checkoutUrl.toString();
+
+          link.target =
+            "_blank";
+
+          link.rel =
+            "noopener noreferrer";
+
+          link.textContent =
+            "💳 Stripe決済ページを開く";
+
+          link.style.display =
+            "block";
+
+          link.style.marginTop =
+            "10px";
+
+          link.style.padding =
+            "12px 14px";
+
+          link.style.borderRadius =
+            "12px";
+
+          link.style.background =
+            "linear-gradient(90deg,#7b25ff,#159df5)";
+
+          link.style.color =
+            "#fff";
+
+          link.style.fontWeight =
+            "900";
+
+          link.style.textAlign =
+            "center";
+
+          link.style.textDecoration =
+            "none";
+
+          const urlText =
+            document.createElement(
+              "div"
+            );
+
+          urlText.textContent =
+            checkoutUrl.toString();
+
+          urlText.style.marginTop =
+            "10px";
+
+          urlText.style.color =
+            "#8f95b5";
+
+          urlText.style.fontSize =
+            "11px";
+
+          checkoutDebug.appendChild(
+            message
+          );
+
+          checkoutDebug.appendChild(
+            link
+          );
+
+          checkoutDebug.appendChild(
+            urlText
+          );
+
+          checkoutDebug.style.display =
+            "block";
+        }
+
+        upgradeProButton.disabled =
+          false;
+
+        upgradeProButton.textContent =
+          "PROにアップグレード（月額550円）";
 
       }
       catch(error){
@@ -4237,6 +4384,7 @@ if(upgradeProButton){
   );
 
 }
+
 
 
 document
