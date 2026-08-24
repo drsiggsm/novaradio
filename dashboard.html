@@ -561,6 +561,23 @@ input[type="file"]{
 .analytics-lock-box{max-width:430px;padding:22px 24px;border:1px solid #623b91;border-radius:20px;background:#0c0e20eF;box-shadow:0 15px 50px #0008}
 .analytics-lock-title{font-size:20px;font-weight:900;margin-bottom:8px}
 .analytics-lock-text{color:#b8bbd2;font-size:13px;line-height:1.65}
+.pro-upgrade-button{
+  width:100%;
+  margin-top:16px;
+  padding:14px 16px;
+  border:0;
+  border-radius:14px;
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  box-shadow:0 8px 28px #6425ff44;
+}
+.pro-upgrade-button:disabled{
+  opacity:.55;
+  cursor:wait;
+}
 .analytics-error{margin-top:14px;color:#ffb9c7;font-size:13px;line-height:1.6}
 @media(max-width:760px){.analytics-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.analytics-grid{grid-template-columns:1fr}}
@@ -659,6 +676,14 @@ input[type="file"]{
               再生数・リスナー到達・30秒完走・フル再生・いいねを確認できます。<br>
               FREEプランでは数値は非公開です。
             </div>
+
+            <button
+              class="pro-upgrade-button"
+              id="upgradePro"
+              type="button"
+            >
+              PROにアップグレード（月額550円）
+            </button>
           </div>
         </div>
       </div>
@@ -1316,6 +1341,9 @@ const coverPreview =
 
 const editModal =
   document.getElementById("editModal");
+
+const upgradeProButton =
+  document.getElementById("upgradePro");
 
 
 const audioFile =
@@ -4120,6 +4148,96 @@ function escapeHtml(
     .replaceAll("'","&#039;");
 
 }
+
+
+/* =========================
+   STRIPE PRO CHECKOUT
+========================= */
+
+if(upgradeProButton){
+
+  upgradeProButton.addEventListener(
+    "click",
+    async ()=>{
+
+      if(!currentSession){
+
+        document
+        .getElementById("analyticsError")
+        .textContent =
+          "ログイン情報を確認できません。ページを再読み込みしてください。";
+
+        return;
+      }
+
+      upgradeProButton.disabled =
+        true;
+
+      upgradeProButton.textContent =
+        "Stripe決済ページを準備中…";
+
+      document
+      .getElementById("analyticsError")
+      .textContent =
+        "";
+
+      try{
+
+        const {
+          data,
+          error
+        } =
+        await sb.functions.invoke(
+          "create-checkout",
+          {
+            body:{}
+          }
+        );
+
+        if(error){
+          throw error;
+        }
+
+        if(!data?.url){
+          throw new Error(
+            data?.error ||
+            "Stripe CheckoutのURLを取得できませんでした。"
+          );
+        }
+
+        location.href =
+          data.url;
+
+      }
+      catch(error){
+
+        console.error(
+          "PRO checkout error:",
+          error
+        );
+
+        document
+        .getElementById("analyticsError")
+        .textContent =
+          "PRO決済ページを開けませんでした：" +
+          (
+            error?.message ||
+            error
+          );
+
+        upgradeProButton.disabled =
+          false;
+
+        upgradeProButton.textContent =
+          "PROにアップグレード（月額550円）";
+
+      }
+
+    }
+  );
+
+}
+
 
 document
 .getElementById("backHome")
