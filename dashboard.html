@@ -4387,12 +4387,16 @@ if(manageProButton){
 
 
         /*
-          同じタブでStripeを開く。
-          _blankにするとSafariのポップアップ制御の影響を受ける場合がある。
+          SafariではStripe Customer Portalを
+          同じタブで開くとNovaRadioへ戻ってしまうケースがあったため、
+          ユーザーが直接クリックしたリンクとして新しいタブで開く。
+
+          <a target="_blank"> をユーザー自身がクリックする方式なので、
+          非同期の window.open() よりポップアップブロックの影響を受けにくい。
         */
 
         directLink.target =
-          "_self";
+          "_blank";
 
 
         directLink.rel =
