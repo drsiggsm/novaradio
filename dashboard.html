@@ -4240,6 +4240,7 @@ function escapeHtml(
 
 /* =========================
    STRIPE CUSTOMER PORTAL
+   直接リンク確認版
 ========================= */
 
 if(manageProButton){
@@ -4249,78 +4250,271 @@ if(manageProButton){
     async ()=>{
 
       if(!currentSession){
+
         if(proManageError){
+
           proManageError.textContent =
             "ログイン情報を確認できません。ページを再読み込みしてください。";
-          proManageError.classList.add("show");
-        }
-        return;
-      }
 
-      manageProButton.disabled = true;
-      manageProButton.textContent =
-        "Stripe管理画面を開いています…";
-
-      if(proManageError){
-        proManageError.textContent = "";
-        proManageError.classList.remove("show");
-      }
-
-      try{
-        const { data, error } =
-          await sb.functions.invoke(
-            "create-customer-portal",
-            { body:{} }
+          proManageError.classList.add(
+            "show"
           );
 
-        if(error) throw error;
+        }
+
+        return;
+
+      }
+
+
+      manageProButton.disabled =
+        true;
+
+      manageProButton.textContent =
+        "Stripe管理画面URLを取得しています…";
+
+
+      /*
+        前回作った直接リンクがあれば消す
+      */
+
+      const oldDirectLink =
+        document.getElementById(
+          "stripePortalDirectLink"
+        );
+
+      if(oldDirectLink){
+        oldDirectLink.remove();
+      }
+
+
+      if(proManageError){
+
+        proManageError.textContent =
+          "";
+
+        proManageError.classList.remove(
+          "show"
+        );
+
+      }
+
+
+      try{
+
+        const {
+          data,
+          error
+        } =
+        await sb.functions.invoke(
+          "create-customer-portal",
+          {
+            body:{}
+          }
+        );
+
+
+        if(error){
+          throw error;
+        }
+
 
         if(!data?.url){
+
           throw new Error(
             data?.error ||
             "Stripe Customer PortalのURLを取得できませんでした。"
           );
+
         }
 
+
         const portalUrl =
-          new URL(String(data.url));
+          new URL(
+            String(
+              data.url
+            )
+          );
+
 
         const stripeHost =
-          portalUrl.hostname === "billing.stripe.com" ||
-          portalUrl.hostname.endsWith(".stripe.com");
+          portalUrl.hostname ===
+            "billing.stripe.com" ||
+          portalUrl.hostname.endsWith(
+            ".stripe.com"
+          );
+
 
         if(
-          portalUrl.protocol !== "https:" ||
+          portalUrl.protocol !==
+            "https:" ||
           !stripeHost
         ){
+
           throw new Error(
             "Stripe以外の管理URLが返されました。"
           );
+
         }
 
-        window.location.href =
+
+        console.log(
+          "Stripe Customer Portal URL:",
+          portalUrl.toString()
+        );
+
+
+        /*
+          Safariの自動遷移を切り分けるため、
+          今回は自動で移動しない。
+
+          Stripeから返ってきた本物のURLを
+          ユーザーが直接クリックできるリンクとして表示する。
+        */
+
+        const directLink =
+          document.createElement(
+            "a"
+          );
+
+
+        directLink.id =
+          "stripePortalDirectLink";
+
+
+        directLink.href =
           portalUrl.toString();
+
+
+        /*
+          同じタブでStripeを開く。
+          _blankにするとSafariのポップアップ制御の影響を受ける場合がある。
+        */
+
+        directLink.target =
+          "_self";
+
+
+        directLink.rel =
+          "noopener noreferrer";
+
+
+        directLink.textContent =
+          "💳 StripeのPROプラン管理画面を開く";
+
+
+        directLink.style.display =
+          "block";
+
+
+        directLink.style.marginTop =
+          "12px";
+
+
+        directLink.style.padding =
+          "14px 16px";
+
+
+        directLink.style.borderRadius =
+          "14px";
+
+
+        directLink.style.background =
+          "linear-gradient(90deg,#7b25ff,#159df5)";
+
+
+        directLink.style.color =
+          "#fff";
+
+
+        directLink.style.fontSize =
+          "15px";
+
+
+        directLink.style.fontWeight =
+          "900";
+
+
+        directLink.style.textAlign =
+          "center";
+
+
+        directLink.style.textDecoration =
+          "none";
+
+
+        directLink.style.cursor =
+          "pointer";
+
+
+        proManageArea.appendChild(
+          directLink
+        );
+
+
+        if(proManageError){
+
+          proManageError.textContent =
+            "✅ Stripeの管理URLを取得できました。下の青いボタンを押してください。";
+
+          proManageError.style.color =
+            "#bfffe8";
+
+          proManageError.classList.add(
+            "show"
+          );
+
+        }
+
+
+        manageProButton.disabled =
+          false;
+
+
+        manageProButton.textContent =
+          "管理URLを作り直す";
+
 
       }
       catch(error){
+
         console.error(
           "Customer Portal error:",
           error
         );
 
+
         if(proManageError){
+
+          proManageError.style.color =
+            "#ffb9c7";
+
           proManageError.textContent =
             "PROプラン管理画面を開けませんでした：" +
-            (error?.message || error);
-          proManageError.classList.add("show");
+            (
+              error?.message ||
+              error
+            );
+
+          proManageError.classList.add(
+            "show"
+          );
+
         }
 
-        manageProButton.disabled = false;
+
+        manageProButton.disabled =
+          false;
+
+
         manageProButton.textContent =
           "PROプランを管理する";
+
       }
+
     }
   );
+
 }
 
 
