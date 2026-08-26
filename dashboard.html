@@ -579,6 +579,25 @@ input[type="file"]{
   cursor:wait;
 }
 .analytics-error{margin-top:14px;color:#ffb9c7;font-size:13px;line-height:1.6}
+
+/* ===== PRO PLAN MANAGEMENT ===== */
+.pro-manage-area{
+  display:none;
+  margin-top:15px;
+  padding:16px;
+  border:1px solid #3b4270;
+  border-radius:18px;
+  background:#0b0e22;
+}
+.pro-manage-area.show{display:block}
+.pro-manage-title{font-weight:900;margin-bottom:6px}
+.pro-manage-help{color:#aeb0c8;font-size:13px;line-height:1.6;margin-bottom:12px}
+.pro-manage-button{width:100%;padding:14px 16px;border:1px solid #4a548b;border-radius:14px;background:#171a31;color:#fff;font-size:15px;font-weight:900;cursor:pointer}
+.pro-manage-button:hover{border-color:#8b5cff}
+.pro-manage-button:disabled{opacity:.55;cursor:wait}
+.pro-manage-error{display:none;margin-top:11px;color:#ffb9c7;font-size:13px;line-height:1.6}
+.pro-manage-error.show{display:block}
+
 @media(max-width:760px){.analytics-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.analytics-grid{grid-template-columns:1fr}}
 
@@ -622,6 +641,29 @@ input[type="file"]{
       >
         ← NovaRadioに戻る
       </button>
+
+      <div
+        class="pro-manage-area"
+        id="proManageArea"
+      >
+        <div class="pro-manage-title">
+          💳 PROプラン
+        </div>
+        <div class="pro-manage-help">
+          Stripeの安全な管理画面から、解約・支払い方法の変更・請求情報の確認ができます。
+        </div>
+        <button
+          class="pro-manage-button"
+          id="managePro"
+          type="button"
+        >
+          PROプランを管理する
+        </button>
+        <div
+          class="pro-manage-error"
+          id="proManageError"
+        ></div>
+      </div>
 
       <button
         class="main-button logout"
@@ -1365,6 +1407,15 @@ const upgradeProButton =
 const checkoutDebug =
   document.getElementById("checkoutDebug");
 
+const proManageArea =
+  document.getElementById("proManageArea");
+
+const manageProButton =
+  document.getElementById("managePro");
+
+const proManageError =
+  document.getElementById("proManageError");
+
 
 const audioFile =
   document.getElementById("audioFile");
@@ -1506,6 +1557,23 @@ async function loadCurrentPlan(){
   currentProUntil = data?.pro_until || null;
 
   updateUploadQuotaUI();
+  updateProManagementUI();
+}
+
+function updateProManagementUI(){
+  if(!proManageArea) return;
+
+  const pro = isProActive();
+
+  proManageArea.classList.toggle(
+    "show",
+    pro
+  );
+
+  if(!pro && proManageError){
+    proManageError.textContent = "";
+    proManageError.classList.remove("show");
+  }
 }
 
 function renderAnalyticsAccess(){
@@ -4167,6 +4235,92 @@ function escapeHtml(
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 
+}
+
+
+/* =========================
+   STRIPE CUSTOMER PORTAL
+========================= */
+
+if(manageProButton){
+
+  manageProButton.addEventListener(
+    "click",
+    async ()=>{
+
+      if(!currentSession){
+        if(proManageError){
+          proManageError.textContent =
+            "ログイン情報を確認できません。ページを再読み込みしてください。";
+          proManageError.classList.add("show");
+        }
+        return;
+      }
+
+      manageProButton.disabled = true;
+      manageProButton.textContent =
+        "Stripe管理画面を開いています…";
+
+      if(proManageError){
+        proManageError.textContent = "";
+        proManageError.classList.remove("show");
+      }
+
+      try{
+        const { data, error } =
+          await sb.functions.invoke(
+            "create-customer-portal",
+            { body:{} }
+          );
+
+        if(error) throw error;
+
+        if(!data?.url){
+          throw new Error(
+            data?.error ||
+            "Stripe Customer PortalのURLを取得できませんでした。"
+          );
+        }
+
+        const portalUrl =
+          new URL(String(data.url));
+
+        const stripeHost =
+          portalUrl.hostname === "billing.stripe.com" ||
+          portalUrl.hostname.endsWith(".stripe.com");
+
+        if(
+          portalUrl.protocol !== "https:" ||
+          !stripeHost
+        ){
+          throw new Error(
+            "Stripe以外の管理URLが返されました。"
+          );
+        }
+
+        window.location.href =
+          portalUrl.toString();
+
+      }
+      catch(error){
+        console.error(
+          "Customer Portal error:",
+          error
+        );
+
+        if(proManageError){
+          proManageError.textContent =
+            "PROプラン管理画面を開けませんでした：" +
+            (error?.message || error);
+          proManageError.classList.add("show");
+        }
+
+        manageProButton.disabled = false;
+        manageProButton.textContent =
+          "PROプランを管理する";
+      }
+    }
+  );
 }
 
 
