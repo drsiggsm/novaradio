@@ -592,6 +592,27 @@ input[type="file"]{
 .pro-manage-area.show{display:block}
 .pro-manage-title{font-weight:900;margin-bottom:6px}
 .pro-manage-help{color:#aeb0c8;font-size:13px;line-height:1.6;margin-bottom:12px}
+
+.pro-cancel-notice{
+  display:none;
+  margin:0 0 12px;
+  padding:14px 15px;
+  border:1px solid rgba(255,190,74,.55);
+  border-radius:14px;
+  background:rgba(73,47,8,.38);
+}
+.pro-cancel-notice.show{display:block}
+.pro-cancel-notice-title{
+  color:#ffd37a;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.pro-cancel-notice-text{
+  color:#f2dfba;
+  font-size:13px;
+  line-height:1.65;
+}
+
 .pro-manage-button{width:100%;padding:14px 16px;border:1px solid #4a548b;border-radius:14px;background:#171a31;color:#fff;font-size:15px;font-weight:900;cursor:pointer}
 .pro-manage-button:hover{border-color:#8b5cff}
 .pro-manage-button:disabled{opacity:.55;cursor:wait}
@@ -652,6 +673,20 @@ input[type="file"]{
         <div class="pro-manage-help">
           Stripeの安全な管理画面から、解約・支払い方法の変更・請求情報の確認ができます。
         </div>
+
+        <div
+          class="pro-cancel-notice"
+          id="proCancelNotice"
+        >
+          <div class="pro-cancel-notice-title">
+            ⚠️ 解約予約済み
+          </div>
+          <div
+            class="pro-cancel-notice-text"
+            id="proCancelNoticeText"
+          ></div>
+        </div>
+
         <button
           class="pro-manage-button"
           id="managePro"
@@ -1348,6 +1383,7 @@ const PRO_TRACK_LIMIT = 30;
 let currentTrackCount = 0;
 let currentPlan = "free";
 let currentProUntil = null;
+let currentCancelAtPeriodEnd = false;
 
 /*
   編集モーダル専用。
@@ -1415,6 +1451,12 @@ const manageProButton =
 
 const proManageError =
   document.getElementById("proManageError");
+
+const proCancelNotice =
+  document.getElementById("proCancelNotice");
+
+const proCancelNoticeText =
+  document.getElementById("proCancelNoticeText");
 
 
 const audioFile =
@@ -1542,7 +1584,7 @@ async function loadCurrentPlan(){
 
   const {data,error} = await sb
     .from("profiles")
-    .select("plan,pro_until")
+    .select("plan,pro_until,cancel_at_period_end")
     .eq("user_id",currentSession.user.id)
     .maybeSingle();
 
@@ -1550,14 +1592,42 @@ async function loadCurrentPlan(){
     console.error("Plan load error:",error);
     currentPlan = "free";
     currentProUntil = null;
+    currentCancelAtPeriodEnd = false;
     return;
   }
 
   currentPlan = String(data?.plan || "free").toLowerCase();
   currentProUntil = data?.pro_until || null;
+  currentCancelAtPeriodEnd =
+    data?.cancel_at_period_end === true;
 
   updateUploadQuotaUI();
   updateProManagementUI();
+}
+
+function formatProEndDate(value){
+  if(!value) return "";
+
+  const date =
+    new Date(value);
+
+  if(
+    !Number.isFinite(
+      date.getTime()
+    )
+  ){
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(
+    "ja-JP",
+    {
+      timeZone:"Asia/Tokyo",
+      year:"numeric",
+      month:"long",
+      day:"numeric"
+    }
+  ).format(date);
 }
 
 function updateProManagementUI(){
@@ -1569,6 +1639,44 @@ function updateProManagementUI(){
     "show",
     pro
   );
+
+  if(
+    proCancelNotice &&
+    proCancelNoticeText
+  ){
+
+    if(
+      pro &&
+      currentCancelAtPeriodEnd
+    ){
+
+      const endDate =
+        formatProEndDate(
+          currentProUntil
+        );
+
+      proCancelNoticeText.textContent =
+        endDate
+          ? `${endDate}までPROをご利用いただけます。それ以降はFREEプランへ切り替わります。`
+          : "現在の契約期間が終了するとFREEプランへ切り替わります。";
+
+      proCancelNotice.classList.add(
+        "show"
+      );
+
+    }
+    else{
+
+      proCancelNoticeText.textContent =
+        "";
+
+      proCancelNotice.classList.remove(
+        "show"
+      );
+
+    }
+
+  }
 
   if(!pro && proManageError){
     proManageError.textContent = "";
