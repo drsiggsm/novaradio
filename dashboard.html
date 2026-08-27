@@ -763,6 +763,23 @@ input[type="file"]{
 }
 
 
+/* ===== SONG PERFORMANCE ===== */
+.song-performance-panel{width:100%;margin-top:22px;padding:22px 24px 18px;border:1px solid #30355e;border-radius:20px;background:#080b1d;overflow:hidden}
+.song-performance-title{font-size:16px;font-weight:900}
+.song-performance-sub{margin-top:4px;color:#858cae;font-size:12px;line-height:1.5}
+.song-performance-scroll{margin-top:16px;overflow-x:auto}
+.song-performance-table{width:100%;min-width:820px;border-collapse:collapse}
+.song-performance-table th,.song-performance-table td{padding:13px 12px;border-bottom:1px solid rgba(255,255,255,.07);text-align:right;font-size:12px;white-space:nowrap}
+.song-performance-table th{color:#858cae;font-weight:900;background:#0d1024}
+.song-performance-table th:first-child,.song-performance-table td:first-child{text-align:left}
+.song-performance-table tbody tr:last-child td{border-bottom:0}
+.song-performance-song{font-weight:900;color:#fff;max-width:280px;overflow:hidden;text-overflow:ellipsis}
+.song-performance-rate{font-weight:900;color:#6cc7ff}
+.song-performance-status{min-height:18px;margin-top:10px;color:#858cae;font-size:12px;line-height:1.5}
+.song-performance-status.error{color:#ffb9c7}
+.analytics-locked .song-performance-panel{filter:blur(7px);user-select:none;pointer-events:none;opacity:.55}
+@media(max-width:600px){.song-performance-panel{padding:16px}}
+
 /* ===== PRO PLAN MANAGEMENT ===== */
 .pro-manage-area{
   display:none;
@@ -967,6 +984,18 @@ input[type="file"]{
             <canvas id="analyticsTrendChart"></canvas>
           </div>
           <div class="analytics-chart-status" id="analyticsChartStatus"></div>
+        </div>
+
+        <div class="song-performance-panel" id="songPerformancePanel">
+          <div class="song-performance-title">🎧 曲別パフォーマンス</div>
+          <div class="song-performance-sub">選択中の期間で、曲ごとの反応を比較できます。</div>
+          <div class="song-performance-scroll">
+            <table class="song-performance-table">
+              <thead><tr><th>曲名</th><th>総再生</th><th>リスナー</th><th>30秒完走</th><th>フル再生</th><th>❤️</th><th>完走率</th></tr></thead>
+              <tbody id="songPerformanceBody"><tr><td colspan="7">読み込んでいます…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="song-performance-status" id="songPerformanceStatus"></div>
         </div>
 
         <div class="analytics-lock">
@@ -1672,6 +1701,7 @@ let analyticsChart = null;
 let analyticsSeriesRows = [];
 let analyticsPeriodDays = 7;
 let analyticsMetric = "plays";
+let songPerformanceRows = [];
 const ANALYTICS_METRICS = {
   plays:{label:"総再生"},
   listeners:{label:"リスナー到達"},
@@ -2274,6 +2304,82 @@ async function loadArtistAnalyticsSeries(){
   }
 }
 
+function escapeAnalyticsHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function renderSongPerformance(){
+  const body = document.getElementById("songPerformanceBody");
+  const status = document.getElementById("songPerformanceStatus");
+  if(!body) return;
+
+  if(!songPerformanceRows.length){
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#858cae;padding:22px">この期間のデータはまだありません。</td></tr>';
+    if(status) status.textContent = "";
+    return;
+  }
+
+  body.innerHTML = songPerformanceRows.map(row=>{
+    const title = row.title ?? row.song_title ?? "曲名未設定";
+    const plays = Number(row.plays ?? row.total_plays ?? 0);
+    const listeners = Number(row.listeners ?? row.listener_reach ?? row.new_listener_reach ?? 0);
+    const highlights = Number(row.highlight_complete ?? row.highlight_completes ?? 0);
+    const full = Number(row.full_qualified ?? row.full_plays ?? 0);
+    const likes = Number(row.likes ?? row.like_count ?? 0);
+    const rateRaw = Number(row.completion_rate ?? 0);
+    const rate = Number.isFinite(rateRaw) ? rateRaw : 0;
+    return `<tr>
+      <td class="song-performance-song" title="${escapeAnalyticsHtml(title)}">${escapeAnalyticsHtml(title)}</td>
+      <td>${plays.toLocaleString("ja-JP")}</td>
+      <td>${listeners.toLocaleString("ja-JP")}</td>
+      <td>${highlights.toLocaleString("ja-JP")}</td>
+      <td>${full.toLocaleString("ja-JP")}</td>
+      <td>${likes.toLocaleString("ja-JP")}</td>
+      <td class="song-performance-rate">${rate.toLocaleString("ja-JP",{maximumFractionDigits:1})}%</td>
+    </tr>`;
+  }).join("");
+
+  if(status){
+    status.classList.remove("error");
+    status.textContent = `${analyticsPeriodDays === 90 ? "過去3ヶ月" : analyticsPeriodDays === 365 ? "過去1年" : `過去${analyticsPeriodDays}日`}・${songPerformanceRows.length}曲`;
+  }
+}
+
+async function loadArtistSongPerformance(){
+  const body = document.getElementById("songPerformanceBody");
+  const status = document.getElementById("songPerformanceStatus");
+
+  if(!currentSession || !isProActive()){
+    songPerformanceRows = [];
+    if(body) body.innerHTML = '<tr><td colspan="7">—</td></tr>';
+    if(status) status.textContent = "";
+    return;
+  }
+
+  if(body) body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#858cae;padding:22px">読み込んでいます…</td></tr>';
+  if(status){ status.classList.remove("error"); status.textContent = ""; }
+
+  try{
+    const {data,error} = await sb.rpc("get_artist_song_performance",{p_days:analyticsPeriodDays});
+    if(error) throw error;
+    songPerformanceRows = Array.isArray(data) ? data : [];
+    renderSongPerformance();
+  }catch(error){
+    console.error("Song performance RPC error:",error);
+    songPerformanceRows = [];
+    if(body) body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#858cae;padding:22px">データを表示できませんでした。</td></tr>';
+    if(status){
+      status.classList.add("error");
+      status.textContent = "曲別パフォーマンスを取得できませんでした：" + (error?.message || error);
+    }
+  }
+}
+
 function setupAnalyticsChartControls(){
   document.querySelectorAll(".analytics-period-button").forEach(button=>{
     button.addEventListener("click",async()=>{
@@ -2285,7 +2391,10 @@ function setupAnalyticsChartControls(){
         item.classList.toggle("active",item === button);
       });
 
-      await loadArtistAnalyticsSeries();
+      await Promise.all([
+        loadArtistAnalyticsSeries(),
+        loadArtistSongPerformance()
+      ]);
     });
   });
 
@@ -2404,7 +2513,10 @@ async function loadArtistAnalytics(){
         "ja-JP"
       );
 
-    await loadArtistAnalyticsSeries();
+    await Promise.all([
+      loadArtistAnalyticsSeries(),
+      loadArtistSongPerformance()
+    ]);
 
   }
   catch(error){
