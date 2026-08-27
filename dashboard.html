@@ -558,9 +558,58 @@ input[type="file"]{
 .analytics-locked .analytics-grid{filter:blur(7px);user-select:none;pointer-events:none;opacity:.55}
 .analytics-lock{display:none;position:absolute;inset:0;align-items:center;justify-content:center;text-align:center;padding:25px;z-index:2}
 .analytics-locked .analytics-lock{display:flex}
-.analytics-lock-box{max-width:430px;padding:22px 24px;border:1px solid #623b91;border-radius:20px;background:#0c0e20eF;box-shadow:0 15px 50px #0008}
+.analytics-lock-box{
+  width:min(680px,94vw);
+  max-width:680px;
+  padding:22px 24px;
+  border:1px solid #623b91;
+  border-radius:20px;
+  background:#0c0e20f2;
+  box-shadow:0 15px 50px #0008;
+}
 .analytics-lock-title{font-size:20px;font-weight:900;margin-bottom:8px}
 .analytics-lock-text{color:#b8bbd2;font-size:13px;line-height:1.65}
+
+.plan-compare{
+  margin-top:16px;
+  border:1px solid #343b69;
+  border-radius:16px;
+  overflow:hidden;
+  background:#090c1d;
+  text-align:left;
+}
+.plan-compare-row{
+  display:grid;
+  grid-template-columns:minmax(155px,1.6fr) minmax(95px,.8fr) minmax(120px,.9fr);
+  align-items:center;
+  border-top:1px solid #252b4d;
+}
+.plan-compare-row:first-child{border-top:none}
+.plan-compare-row > div{
+  padding:10px 12px;
+  font-size:12px;
+  line-height:1.4;
+}
+.plan-compare-head{
+  background:#11162e;
+  font-weight:900;
+  color:#fff;
+}
+.plan-compare-head > div:nth-child(2){color:#adb3d3}
+.plan-compare-head > div:nth-child(3){color:#6cc7ff}
+.plan-compare-label{color:#d7daf0;font-weight:800}
+.plan-compare-free{color:#9ca2bf;text-align:center}
+.plan-compare-pro{color:#fff;text-align:center;font-weight:900}
+.plan-compare-check{color:#79e6ad;font-weight:900}
+
+.pro-price-note{
+  margin-top:12px;
+  color:#aeb3cf;
+  font-size:11px;
+  line-height:1.6;
+  text-align:center;
+}
+
 .pro-upgrade-button{
   width:100%;
   margin-top:16px;
@@ -621,6 +670,19 @@ input[type="file"]{
 
 @media(max-width:760px){.analytics-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.analytics-grid{grid-template-columns:1fr}}
+
+
+@media(max-width:640px){
+  .analytics-lock{padding:12px}
+  .analytics-lock-box{padding:18px 14px}
+  .plan-compare-row{
+    grid-template-columns:minmax(120px,1.35fr) minmax(72px,.7fr) minmax(86px,.8fr);
+  }
+  .plan-compare-row > div{
+    padding:9px 7px;
+    font-size:10px;
+  }
+}
 
 </style>
 </head>
@@ -750,8 +812,56 @@ input[type="file"]{
           <div class="analytics-lock-box">
             <div class="analytics-lock-title">🔒 PRO限定アナリティクス</div>
             <div class="analytics-lock-text">
-              再生数・リスナー到達・30秒完走・フル再生・いいねを確認できます。<br>
-              FREEプランでは数値は非公開です。
+              FREEとPROの違いを確認してからアップグレードできます。
+            </div>
+
+            <div class="plan-compare" aria-label="FREEとPROのプラン比較">
+              <div class="plan-compare-row plan-compare-head">
+                <div>機能</div>
+                <div>FREE</div>
+                <div>PRO</div>
+              </div>
+
+              <div class="plan-compare-row">
+                <div class="plan-compare-label">公開できる曲</div>
+                <div class="plan-compare-free">3曲まで</div>
+                <div class="plan-compare-pro">30曲まで</div>
+              </div>
+
+              <div class="plan-compare-row">
+                <div class="plan-compare-label">Artist Analytics</div>
+                <div class="plan-compare-free">🔒 非公開</div>
+                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span> 全データ</div>
+              </div>
+
+              <div class="plan-compare-row">
+                <div class="plan-compare-label">総再生数</div>
+                <div class="plan-compare-free">—</div>
+                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
+              </div>
+
+              <div class="plan-compare-row">
+                <div class="plan-compare-label">リスナー到達</div>
+                <div class="plan-compare-free">—</div>
+                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
+              </div>
+
+              <div class="plan-compare-row">
+                <div class="plan-compare-label">30秒完走 / フル再生</div>
+                <div class="plan-compare-free">—</div>
+                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
+              </div>
+
+              <div class="plan-compare-row">
+                <div class="plan-compare-label">いいね数</div>
+                <div class="plan-compare-free">—</div>
+                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
+              </div>
+            </div>
+
+            <div class="pro-price-note">
+              月額550円・いつでも解約可能。解約後も契約期間終了まではPROをご利用いただけます。<br>
+              決済はStripeの安全な決済画面で行います。
             </div>
 
             <button
@@ -764,19 +874,7 @@ input[type="file"]{
 
             <div
               id="checkoutDebug"
-              style="
-                display:none;
-                margin-top:14px;
-                padding:14px;
-                border:1px solid #3d4b7b;
-                border-radius:14px;
-                background:#080b1d;
-                color:#d9dcf4;
-                font-size:13px;
-                line-height:1.6;
-                text-align:left;
-                word-break:break-all;
-              "
+              style="display:none"
             ></div>
           </div>
         </div>
@@ -4632,7 +4730,7 @@ if(manageProButton){
 
 /* =========================
    STRIPE PRO CHECKOUT
-   一時デバッグ版
+   本番UI：検証後Stripeへ直接遷移
 ========================= */
 
 if(upgradeProButton){
@@ -4655,7 +4753,7 @@ if(upgradeProButton){
         true;
 
       upgradeProButton.textContent =
-        "Stripe決済URLを確認中…";
+        "Stripe決済画面を準備中…";
 
       document
       .getElementById("analyticsError")
@@ -4716,104 +4814,12 @@ if(upgradeProButton){
         }
 
         /*
-          一時デバッグ：
-          自動遷移せず、取得した本物のURLを
-          画面にリンクとして表示する。
-          これでブラウザ側まで完全なURLが届いているか確認できる。
+          URL検証に成功したらStripe Checkoutへ直接移動。
+          長いCheckout URLはユーザー画面には表示しない。
         */
 
-        if(checkoutDebug){
-
-          const message =
-            document.createElement(
-              "div"
-            );
-
-          message.textContent =
-            "✅ StripeのCheckout URLを取得できました。下のボタンから直接開いてください。";
-
-          const link =
-            document.createElement(
-              "a"
-            );
-
-          link.href =
-            checkoutUrl.toString();
-
-          link.target =
-            "_blank";
-
-          link.rel =
-            "noopener noreferrer";
-
-          link.textContent =
-            "💳 Stripe決済ページを開く";
-
-          link.style.display =
-            "block";
-
-          link.style.marginTop =
-            "10px";
-
-          link.style.padding =
-            "12px 14px";
-
-          link.style.borderRadius =
-            "12px";
-
-          link.style.background =
-            "linear-gradient(90deg,#7b25ff,#159df5)";
-
-          link.style.color =
-            "#fff";
-
-          link.style.fontWeight =
-            "900";
-
-          link.style.textAlign =
-            "center";
-
-          link.style.textDecoration =
-            "none";
-
-          const urlText =
-            document.createElement(
-              "div"
-            );
-
-          urlText.textContent =
-            checkoutUrl.toString();
-
-          urlText.style.marginTop =
-            "10px";
-
-          urlText.style.color =
-            "#8f95b5";
-
-          urlText.style.fontSize =
-            "11px";
-
-          checkoutDebug.appendChild(
-            message
-          );
-
-          checkoutDebug.appendChild(
-            link
-          );
-
-          checkoutDebug.appendChild(
-            urlText
-          );
-
-          checkoutDebug.style.display =
-            "block";
-        }
-
-        upgradeProButton.disabled =
-          false;
-
-        upgradeProButton.textContent =
-          "PROにアップグレード（月額550円）";
+        window.location.href =
+          checkoutUrl.toString();
 
       }
       catch(error){
