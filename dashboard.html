@@ -4874,6 +4874,18 @@ if(upgradeProButton){
         return;
       }
 
+      /*
+        Safari対策：
+        非同期処理のあとに新しいタブを開こうとすると
+        ブロックされることがあるため、
+        ボタンを押した瞬間に空タブを先に開く。
+      */
+      const checkoutWindow =
+        window.open(
+          "about:blank",
+          "_blank"
+        );
+
       upgradeProButton.disabled =
         true;
 
@@ -4946,11 +4958,6 @@ if(upgradeProButton){
           );
         }
 
-        /*
-          URL検証に成功したらStripe Checkoutへ直接移動。
-          長いCheckout URLはユーザー画面には表示しない。
-        */
-
         const finalCheckoutUrl =
           checkoutUrl.toString();
 
@@ -4962,18 +4969,29 @@ if(upgradeProButton){
             "block";
         }
 
-        /*
-          同じタブでStripeへ移動。
-          万一ブラウザ側で自動遷移しなかった場合でも、
-          直下に表示される「Stripe決済画面へ進む」リンクから
-          確実に開ける。
-        */
-        window.location.assign(
-          finalCheckoutUrl
-        );
+        if(checkoutWindow){
+
+          checkoutWindow.location.replace(
+            finalCheckoutUrl
+          );
+
+        }
+        else{
+
+          window.location.href =
+            finalCheckoutUrl;
+
+        }
 
       }
       catch(error){
+
+        if(
+          checkoutWindow &&
+          !checkoutWindow.closed
+        ){
+          checkoutWindow.close();
+        }
 
         console.error(
           "PRO checkout error:",
@@ -5010,12 +5028,9 @@ if(upgradeProButton){
 
         upgradeProButton.textContent =
           "PROにアップグレード（月額550円）";
-
       }
-
     }
   );
-
 }
 
 
