@@ -1257,7 +1257,37 @@ input[type="file"]{
       PROにアップグレード（月額550円）
     </button>
 
-    <div id="checkoutDebug" style="display:none"></div>
+    <a
+      id="stripeCheckoutLink"
+      href="#"
+      style="
+        display:none;
+        width:100%;
+        margin-top:12px;
+        padding:14px 16px;
+        border-radius:14px;
+        text-align:center;
+        text-decoration:none;
+        color:#fff;
+        font-size:15px;
+        font-weight:900;
+        background:linear-gradient(90deg,#7b25ff,#159df5);
+        box-shadow:0 8px 28px #6425ff44;
+      "
+    >
+      💳 Stripe決済画面へ進む
+    </a>
+
+    <div
+      id="checkoutDebug"
+      style="
+        display:none;
+        margin-top:10px;
+        color:#ffb9c7;
+        font-size:13px;
+        line-height:1.6;
+      "
+    ></div>
   </div>
 </div>
 
@@ -1594,6 +1624,9 @@ const closePlanCompareButton =
 
 const checkoutDebug =
   document.getElementById("checkoutDebug");
+
+const stripeCheckoutLink =
+  document.getElementById("stripeCheckoutLink");
 
 const proManageArea =
   document.getElementById("proManageArea");
@@ -4859,6 +4892,14 @@ if(upgradeProButton){
           "";
       }
 
+      if(stripeCheckoutLink){
+        stripeCheckoutLink.style.display =
+          "none";
+        stripeCheckoutLink.removeAttribute(
+          "href"
+        );
+      }
+
       try{
 
         const {
@@ -4910,8 +4951,26 @@ if(upgradeProButton){
           長いCheckout URLはユーザー画面には表示しない。
         */
 
-        window.location.href =
+        const finalCheckoutUrl =
           checkoutUrl.toString();
+
+        if(stripeCheckoutLink){
+          stripeCheckoutLink.href =
+            finalCheckoutUrl;
+
+          stripeCheckoutLink.style.display =
+            "block";
+        }
+
+        /*
+          同じタブでStripeへ移動。
+          万一ブラウザ側で自動遷移しなかった場合でも、
+          直下に表示される「Stripe決済画面へ進む」リンクから
+          確実に開ける。
+        */
+        window.location.assign(
+          finalCheckoutUrl
+        );
 
       }
       catch(error){
@@ -4921,14 +4980,30 @@ if(upgradeProButton){
           error
         );
 
-        document
-        .getElementById("analyticsError")
-        .textContent =
+        const checkoutErrorMessage =
           "PRO決済ページを開けませんでした：" +
           (
             error?.message ||
             error
           );
+
+        document
+        .getElementById("analyticsError")
+        .textContent =
+          checkoutErrorMessage;
+
+        if(checkoutDebug){
+          checkoutDebug.textContent =
+            checkoutErrorMessage;
+
+          checkoutDebug.style.display =
+            "block";
+        }
+
+        if(stripeCheckoutLink){
+          stripeCheckoutLink.style.display =
+            "none";
+        }
 
         upgradeProButton.disabled =
           false;
