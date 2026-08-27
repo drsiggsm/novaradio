@@ -6,6 +6,7 @@
 <title>NovaRadio - Artist Studio</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -680,6 +681,79 @@ input[type="file"]{
 }
 .analytics-error{margin-top:14px;color:#ffb9c7;font-size:13px;line-height:1.6}
 
+/* ===== ANALYTICS TREND CHART ===== */
+.analytics-chart-panel{
+  margin-top:18px;
+  padding:18px;
+  border:1px solid #30355e;
+  border-radius:20px;
+  background:#080b1d;
+}
+.analytics-chart-toolbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.analytics-chart-title{
+  font-size:16px;
+  font-weight:900;
+}
+.analytics-chart-sub{
+  margin-top:4px;
+  color:#858cae;
+  font-size:12px;
+  line-height:1.5;
+}
+.analytics-periods,.analytics-metrics{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.analytics-period-button,.analytics-metric-button{
+  width:auto;
+  border:1px solid #353b67;
+  border-radius:999px;
+  background:#11152c;
+  color:#aeb4d0;
+  padding:9px 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.analytics-period-button.active,.analytics-metric-button.active{
+  border-color:transparent;
+  color:#fff;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+}
+.analytics-chart-metric-row{
+  margin-bottom:14px;
+}
+.analytics-chart-canvas-wrap{
+  position:relative;
+  height:290px;
+}
+.analytics-chart-status{
+  min-height:18px;
+  margin-top:10px;
+  color:#858cae;
+  font-size:12px;
+  line-height:1.5;
+}
+.analytics-chart-status.error{color:#ffb9c7}
+.analytics-locked .analytics-chart-panel{
+  filter:blur(7px);
+  user-select:none;
+  pointer-events:none;
+  opacity:.55;
+}
+@media(max-width:600px){
+  .analytics-chart-canvas-wrap{height:240px}
+}
+
+
 /* ===== PRO PLAN MANAGEMENT ===== */
 .pro-manage-area{
   display:none;
@@ -857,6 +931,34 @@ input[type="file"]{
             <div class="analytics-value" id="analyticsLikes">—</div>
             <div class="analytics-note">あなたの曲への現在のいいね数</div>
           </div>
+
+        <div class="analytics-chart-panel" id="analyticsChartPanel">
+          <div class="analytics-chart-toolbar">
+            <div>
+              <div class="analytics-chart-title">📈 推移</div>
+              <div class="analytics-chart-sub">期間と指標を切り替えて、日ごとの動きを確認できます。</div>
+            </div>
+            <div class="analytics-periods" id="analyticsPeriods">
+              <button type="button" class="analytics-period-button active" data-days="7">7日</button>
+              <button type="button" class="analytics-period-button" data-days="30">30日</button>
+              <button type="button" class="analytics-period-button" data-days="90">3ヶ月</button>
+              <button type="button" class="analytics-period-button" data-days="365">1年</button>
+            </div>
+          </div>
+
+          <div class="analytics-metrics analytics-chart-metric-row" id="analyticsMetrics">
+            <button type="button" class="analytics-metric-button active" data-metric="plays">総再生</button>
+            <button type="button" class="analytics-metric-button" data-metric="listeners">リスナー到達</button>
+            <button type="button" class="analytics-metric-button" data-metric="highlight_complete">30秒完走</button>
+            <button type="button" class="analytics-metric-button" data-metric="full_qualified">フル再生</button>
+          </div>
+
+          <div class="analytics-chart-canvas-wrap">
+            <canvas id="analyticsTrendChart"></canvas>
+          </div>
+          <div class="analytics-chart-status" id="analyticsChartStatus"></div>
+        </div>
+
         </div>
 
         <div class="analytics-lock">
@@ -1558,6 +1660,18 @@ let currentPlan = "free";
 let currentProUntil = null;
 let currentCancelAtPeriodEnd = false;
 
+let analyticsChart = null;
+let analyticsSeriesRows = [];
+let analyticsPeriodDays = 7;
+let analyticsMetric = "plays";
+const ANALYTICS_METRICS = {
+  plays:{label:"総再生"},
+  listeners:{label:"リスナー到達"},
+  highlight_complete:{label:"30秒完走"},
+  full_qualified:{label:"フル再生"}
+};
+
+
 /*
   編集モーダル専用。
   アップロード画面側の選択状態とは分けて管理する。
@@ -2018,6 +2132,159 @@ function renderAnalyticsAccess(){
   }
 }
 
+
+function formatAnalyticsDay(value,days){
+  const d = new Date(`${value}T00:00:00`);
+  if(!Number.isFinite(d.getTime())) return String(value || "");
+
+  if(days >= 365){
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  }
+
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function renderAnalyticsTrendChart(){
+  const canvas = document.getElementById("analyticsTrendChart");
+  const status = document.getElementById("analyticsChartStatus");
+  if(!canvas || typeof Chart === "undefined") return;
+
+  const metric = ANALYTICS_METRICS[analyticsMetric] || ANALYTICS_METRICS.plays;
+  const labels = analyticsSeriesRows.map(row=>formatAnalyticsDay(row.day,analyticsPeriodDays));
+  const values = analyticsSeriesRows.map(row=>Number(row?.[analyticsMetric] || 0));
+
+  if(analyticsChart){
+    analyticsChart.destroy();
+    analyticsChart = null;
+  }
+
+  analyticsChart = new Chart(canvas,{
+    type:"line",
+    data:{
+      labels,
+      datasets:[{
+        label:metric.label,
+        data:values,
+        borderColor:"#5bbcff",
+        backgroundColor:"rgba(91,188,255,.12)",
+        pointBackgroundColor:"#8b5cff",
+        pointBorderColor:"#ffffff",
+        pointRadius:analyticsPeriodDays <= 30 ? 3 : 0,
+        pointHoverRadius:5,
+        borderWidth:3,
+        tension:.32,
+        fill:true
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label(context){
+              return `${metric.label}: ${Number(context.parsed.y || 0).toLocaleString("ja-JP")}`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          grid:{display:false},
+          ticks:{
+            color:"#858cae",
+            maxTicksLimit:analyticsPeriodDays >= 365 ? 12 : analyticsPeriodDays >= 90 ? 10 : 8
+          }
+        },
+        y:{
+          beginAtZero:true,
+          ticks:{color:"#858cae",precision:0},
+          grid:{color:"rgba(255,255,255,.07)"}
+        }
+      }
+    }
+  });
+
+  if(status){
+    const total = values.reduce((sum,value)=>sum+value,0);
+    status.classList.remove("error");
+    status.textContent = `${metric.label}・過去${analyticsPeriodDays === 90 ? "3ヶ月" : analyticsPeriodDays === 365 ? "1年" : analyticsPeriodDays + "日"}：${total.toLocaleString("ja-JP")}`;
+  }
+}
+
+async function loadArtistAnalyticsSeries(){
+  const status = document.getElementById("analyticsChartStatus");
+
+  if(!currentSession || !isProActive()){
+    analyticsSeriesRows = [];
+    if(analyticsChart){
+      analyticsChart.destroy();
+      analyticsChart = null;
+    }
+    if(status) status.textContent = "";
+    return;
+  }
+
+  if(status){
+    status.classList.remove("error");
+    status.textContent = "グラフを読み込んでいます…";
+  }
+
+  try{
+    const {data,error} = await sb.rpc(
+      "get_artist_analytics_series",
+      {p_days:analyticsPeriodDays}
+    );
+
+    if(error) throw error;
+
+    analyticsSeriesRows = Array.isArray(data) ? data : [];
+    renderAnalyticsTrendChart();
+  }
+  catch(error){
+    console.error("Analytics series RPC error:",error);
+    analyticsSeriesRows = [];
+    if(analyticsChart){
+      analyticsChart.destroy();
+      analyticsChart = null;
+    }
+    if(status){
+      status.classList.add("error");
+      status.textContent = "推移グラフを取得できませんでした：" + (error?.message || error);
+    }
+  }
+}
+
+function setupAnalyticsChartControls(){
+  document.querySelectorAll(".analytics-period-button").forEach(button=>{
+    button.addEventListener("click",async()=>{
+      const days = Number(button.dataset.days || 7);
+      if(days === analyticsPeriodDays) return;
+
+      analyticsPeriodDays = days;
+      document.querySelectorAll(".analytics-period-button").forEach(item=>{
+        item.classList.toggle("active",item === button);
+      });
+
+      await loadArtistAnalyticsSeries();
+    });
+  });
+
+  document.querySelectorAll(".analytics-metric-button").forEach(button=>{
+    button.addEventListener("click",()=>{
+      analyticsMetric = button.dataset.metric || "plays";
+      document.querySelectorAll(".analytics-metric-button").forEach(item=>{
+        item.classList.toggle("active",item === button);
+      });
+      renderAnalyticsTrendChart();
+    });
+  });
+}
+
+setupAnalyticsChartControls();
+
 async function loadArtistAnalytics(){
   renderAnalyticsAccess();
 
@@ -2119,6 +2386,8 @@ async function loadArtistAnalytics(){
       .toLocaleString(
         "ja-JP"
       );
+
+    await loadArtistAnalyticsSeries();
 
   }
   catch(error){
