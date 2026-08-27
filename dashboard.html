@@ -683,17 +683,19 @@ input[type="file"]{
 
 /* ===== ANALYTICS TREND CHART ===== */
 .analytics-chart-panel{
-  margin-top:18px;
-  padding:18px;
+  width:100%;
+  min-width:0;
+  margin-top:22px;
+  padding:22px 24px 18px;
   border:1px solid #30355e;
   border-radius:20px;
   background:#080b1d;
 }
 .analytics-chart-toolbar{
   display:flex;
-  align-items:flex-start;
+  align-items:center;
   justify-content:space-between;
-  gap:14px;
+  gap:18px;
   flex-wrap:wrap;
   margin-bottom:16px;
 }
@@ -729,11 +731,17 @@ input[type="file"]{
   background:linear-gradient(90deg,#7b25ff,#159df5);
 }
 .analytics-chart-metric-row{
-  margin-bottom:14px;
+  margin-bottom:16px;
 }
 .analytics-chart-canvas-wrap{
   position:relative;
-  height:290px;
+  width:100%;
+  min-width:0;
+  height:340px;
+}
+#analyticsTrendChart{
+  width:100% !important;
+  height:100% !important;
 }
 .analytics-chart-status{
   min-height:18px;
@@ -750,7 +758,8 @@ input[type="file"]{
   opacity:.55;
 }
 @media(max-width:600px){
-  .analytics-chart-canvas-wrap{height:240px}
+  .analytics-chart-panel{padding:16px}
+  .analytics-chart-canvas-wrap{height:260px}
 }
 
 
@@ -931,6 +940,7 @@ input[type="file"]{
             <div class="analytics-value" id="analyticsLikes">—</div>
             <div class="analytics-note">あなたの曲への現在のいいね数</div>
           </div>
+        </div>
 
         <div class="analytics-chart-panel" id="analyticsChartPanel">
           <div class="analytics-chart-toolbar">
@@ -957,8 +967,6 @@ input[type="file"]{
             <canvas id="analyticsTrendChart"></canvas>
           </div>
           <div class="analytics-chart-status" id="analyticsChartStatus"></div>
-        </div>
-
         </div>
 
         <div class="analytics-lock">
@@ -2169,7 +2177,7 @@ function renderAnalyticsTrendChart(){
         backgroundColor:"rgba(91,188,255,.12)",
         pointBackgroundColor:"#8b5cff",
         pointBorderColor:"#ffffff",
-        pointRadius:analyticsPeriodDays <= 30 ? 3 : 0,
+        pointRadius:analyticsPeriodDays <= 7 ? 3 : analyticsPeriodDays <= 30 ? 2 : 0,
         pointHoverRadius:5,
         borderWidth:3,
         tension:.32,
@@ -2195,13 +2203,22 @@ function renderAnalyticsTrendChart(){
           grid:{display:false},
           ticks:{
             color:"#858cae",
-            maxTicksLimit:analyticsPeriodDays >= 365 ? 12 : analyticsPeriodDays >= 90 ? 10 : 8
+            autoSkip:analyticsPeriodDays > 7,
+            maxTicksLimit:analyticsPeriodDays >= 365 ? 12 : analyticsPeriodDays >= 90 ? 10 : analyticsPeriodDays >= 30 ? 10 : 7,
+            maxRotation:0,
+            minRotation:0
           }
         },
         y:{
           beginAtZero:true,
+          suggestedMin:0,
           ticks:{color:"#858cae",precision:0},
-          grid:{color:"rgba(255,255,255,.07)"}
+          grid:{
+            color:(context)=> context.tick.value === 0
+              ? "rgba(255,255,255,.18)"
+              : "rgba(255,255,255,.07)",
+            lineWidth:(context)=> context.tick.value === 0 ? 1.5 : 1
+          }
         }
       }
     }
