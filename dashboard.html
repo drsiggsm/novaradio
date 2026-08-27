@@ -1696,6 +1696,7 @@ let currentTrackCount = 0;
 let currentPlan = "free";
 let currentProUntil = null;
 let currentCancelAtPeriodEnd = false;
+let currentIsLifetimePro = false;
 
 let analyticsChart = null;
 let analyticsSeriesRows = [];
@@ -1920,6 +1921,7 @@ init();
 
 
 function isProActive(){
+  if(currentIsLifetimePro) return true;
   if(currentPlan !== "pro") return false;
   if(!currentProUntil) return true;
   const until = new Date(currentProUntil);
@@ -2052,7 +2054,7 @@ async function loadCurrentPlan(){
 
   const {data,error} = await sb
     .from("profiles")
-    .select("plan,pro_until,cancel_at_period_end")
+    .select("plan,pro_until,cancel_at_period_end,is_lifetime_pro")
     .eq("user_id",currentSession.user.id)
     .maybeSingle();
 
@@ -2061,6 +2063,7 @@ async function loadCurrentPlan(){
     currentPlan = "free";
     currentProUntil = null;
     currentCancelAtPeriodEnd = false;
+    currentIsLifetimePro = false;
     return;
   }
 
@@ -2068,6 +2071,8 @@ async function loadCurrentPlan(){
   currentProUntil = data?.pro_until || null;
   currentCancelAtPeriodEnd =
     data?.cancel_at_period_end === true;
+  currentIsLifetimePro =
+    data?.is_lifetime_pro === true;
 
   updateUploadQuotaUI();
   updateProManagementUI();
@@ -2105,7 +2110,7 @@ function updateProManagementUI(){
 
   proManageArea.classList.toggle(
     "show",
-    pro
+    pro && !currentIsLifetimePro
   );
 
   if(
