@@ -570,6 +570,57 @@ input[type="file"]{
 .analytics-lock-title{font-size:20px;font-weight:900;margin-bottom:8px}
 .analytics-lock-text{color:#b8bbd2;font-size:13px;line-height:1.65}
 
+
+.plan-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,.78);
+  backdrop-filter:blur(8px);
+  padding:24px;
+  overflow:auto;
+}
+.plan-modal.show{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.plan-modal-box{
+  position:relative;
+  width:min(760px,96vw);
+  max-height:92vh;
+  overflow:auto;
+  padding:28px;
+  border:1px solid #623b91;
+  border-radius:24px;
+  background:#0c0e20;
+  box-shadow:0 25px 80px #000b;
+}
+.plan-modal-close{
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:42px;
+  height:42px;
+  border:1px solid #3b416e;
+  border-radius:50%;
+  background:#171a31;
+  color:#fff;
+  font-size:22px;
+  cursor:pointer;
+}
+.plan-modal-title{
+  margin:4px 46px 6px 0;
+  font-size:26px;
+  font-weight:900;
+}
+.plan-modal-sub{
+  color:#b8bbd2;
+  font-size:13px;
+  line-height:1.6;
+}
+
 .plan-compare{
   margin-top:16px;
   border:1px solid #343b69;
@@ -812,70 +863,17 @@ input[type="file"]{
           <div class="analytics-lock-box">
             <div class="analytics-lock-title">🔒 PRO限定アナリティクス</div>
             <div class="analytics-lock-text">
-              FREEとPROの違いを確認してからアップグレードできます。
-            </div>
-
-            <div class="plan-compare" aria-label="FREEとPROのプラン比較">
-              <div class="plan-compare-row plan-compare-head">
-                <div>機能</div>
-                <div>FREE</div>
-                <div>PRO</div>
-              </div>
-
-              <div class="plan-compare-row">
-                <div class="plan-compare-label">公開できる曲</div>
-                <div class="plan-compare-free">3曲まで</div>
-                <div class="plan-compare-pro">30曲まで</div>
-              </div>
-
-              <div class="plan-compare-row">
-                <div class="plan-compare-label">Artist Analytics</div>
-                <div class="plan-compare-free">🔒 非公開</div>
-                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span> 全データ</div>
-              </div>
-
-              <div class="plan-compare-row">
-                <div class="plan-compare-label">総再生数</div>
-                <div class="plan-compare-free">—</div>
-                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
-              </div>
-
-              <div class="plan-compare-row">
-                <div class="plan-compare-label">リスナー到達</div>
-                <div class="plan-compare-free">—</div>
-                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
-              </div>
-
-              <div class="plan-compare-row">
-                <div class="plan-compare-label">30秒完走 / フル再生</div>
-                <div class="plan-compare-free">—</div>
-                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
-              </div>
-
-              <div class="plan-compare-row">
-                <div class="plan-compare-label">いいね数</div>
-                <div class="plan-compare-free">—</div>
-                <div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
-              </div>
-            </div>
-
-            <div class="pro-price-note">
-              月額550円・いつでも解約可能。解約後も契約期間終了まではPROをご利用いただけます。<br>
-              決済はStripeの安全な決済画面で行います。
+              再生数・リスナー到達・30秒完走・フル再生・いいねを確認できます。<br>
+              FREEプランでは数値は非公開です。
             </div>
 
             <button
               class="pro-upgrade-button"
-              id="upgradePro"
+              id="openPlanCompare"
               type="button"
             >
-              PROにアップグレード（月額550円）
+              FREEとPROの違いを見る
             </button>
-
-            <div
-              id="checkoutDebug"
-              style="display:none"
-            ></div>
           </div>
         </div>
       </div>
@@ -1216,6 +1214,53 @@ input[type="file"]{
 
 </div>
 
+
+<div class="plan-modal" id="planCompareModal" aria-hidden="true">
+  <div class="plan-modal-box">
+    <button class="plan-modal-close" id="closePlanCompare" type="button" aria-label="閉じる">×</button>
+
+    <div class="plan-modal-title">FREEとPROの違い</div>
+    <div class="plan-modal-sub">
+      PROでは公開枠とArtist Analyticsが拡張されます。
+    </div>
+
+    <div class="plan-compare" aria-label="FREEとPROのプラン比較">
+      <div class="plan-compare-row plan-compare-head">
+        <div>機能</div><div>FREE</div><div>PRO</div>
+      </div>
+      <div class="plan-compare-row">
+        <div class="plan-compare-label">公開できる曲</div><div class="plan-compare-free">3曲まで</div><div class="plan-compare-pro">30曲まで</div>
+      </div>
+      <div class="plan-compare-row">
+        <div class="plan-compare-label">Artist Analytics</div><div class="plan-compare-free">🔒 非公開</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span> 全データ</div>
+      </div>
+      <div class="plan-compare-row">
+        <div class="plan-compare-label">総再生数</div><div class="plan-compare-free">—</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
+      </div>
+      <div class="plan-compare-row">
+        <div class="plan-compare-label">リスナー到達</div><div class="plan-compare-free">—</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
+      </div>
+      <div class="plan-compare-row">
+        <div class="plan-compare-label">30秒完走 / フル再生</div><div class="plan-compare-free">—</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
+      </div>
+      <div class="plan-compare-row">
+        <div class="plan-compare-label">いいね数</div><div class="plan-compare-free">—</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
+      </div>
+    </div>
+
+    <div class="pro-price-note">
+      月額550円・いつでも解約可能。解約後も契約期間終了まではPROをご利用いただけます。<br>
+      決済はStripeの安全な決済画面で行います。
+    </div>
+
+    <button class="pro-upgrade-button" id="upgradePro" type="button">
+      PROにアップグレード（月額550円）
+    </button>
+
+    <div id="checkoutDebug" style="display:none"></div>
+  </div>
+</div>
+
 <div
   class="modal"
   id="editModal"
@@ -1537,6 +1582,15 @@ const editModal =
 
 const upgradeProButton =
   document.getElementById("upgradePro");
+
+const openPlanCompareButton =
+  document.getElementById("openPlanCompare");
+
+const planCompareModal =
+  document.getElementById("planCompareModal");
+
+const closePlanCompareButton =
+  document.getElementById("closePlanCompare");
 
 const checkoutDebug =
   document.getElementById("checkoutDebug");
@@ -4726,6 +4780,44 @@ if(manageProButton){
   );
 
 }
+
+
+
+function openPlanCompare(){
+  if(!planCompareModal) return;
+  planCompareModal.classList.add("show");
+  planCompareModal.setAttribute("aria-hidden","false");
+  document.body.style.overflow = "hidden";
+}
+
+function closePlanCompare(){
+  if(!planCompareModal) return;
+  planCompareModal.classList.remove("show");
+  planCompareModal.setAttribute("aria-hidden","true");
+  document.body.style.overflow = "";
+}
+
+if(openPlanCompareButton){
+  openPlanCompareButton.addEventListener("click",openPlanCompare);
+}
+
+if(closePlanCompareButton){
+  closePlanCompareButton.addEventListener("click",closePlanCompare);
+}
+
+if(planCompareModal){
+  planCompareModal.addEventListener("click",(event)=>{
+    if(event.target === planCompareModal){
+      closePlanCompare();
+    }
+  });
+}
+
+document.addEventListener("keydown",(event)=>{
+  if(event.key === "Escape"){
+    closePlanCompare();
+  }
+});
 
 
 /* =========================
