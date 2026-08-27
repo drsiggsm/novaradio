@@ -3202,8 +3202,8 @@ function updateUploadQuotaUI(){
       `🔒 ${pro ? "PRO" : "FREE"}プラン上限（${trackLimit}曲）`;
 
     uploadLockMessage.innerHTML =
-      `🔒 <strong>${pro ? "PRO" : "FREE"}プランのアップロード上限に達しました。</strong><br>` +
-      `新しい曲を追加するには、既存の曲を削除して公開曲数を${trackLimit - 1}曲以下にしてください。`;
+      `🔒 <strong>${pro ? "PRO" : "FREE"}プランの公開上限（${trackLimit}曲）に達しています。</strong><br>` +
+      `新しい曲を公開するには、既存の曲を非公開または削除${pro ? "してください。" : "するか、PROにアップグレードしてください。"}`;
 
   }
   else{
@@ -3740,7 +3740,10 @@ async function loadMySongs(){
 
   currentTrackCount =
     Array.isArray(data)
-      ? data.length
+      ? data.filter(
+          (song) =>
+            song?.is_public === true
+        ).length
       : 0;
 
   updateUploadQuotaUI();
