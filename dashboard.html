@@ -1751,6 +1751,16 @@ async function init(){
   await loadMySongs();
   await loadArtistAnalytics();
 
+  /*
+    Stripe決済直後は、Stripe Webhook → Supabase の反映まで
+    数秒かかることがある。
+    FREEの状態でダッシュボードへ戻ってきた場合だけ、
+    短時間PRO状態を自動再確認する。
+  */
+  if(!isProActive()){
+    startProActivationWatcher();
+  }
+
 }
 
 init();
@@ -1763,6 +1773,127 @@ function isProActive(){
   const until = new Date(currentProUntil);
   return Number.isFinite(until.getTime()) && until.getTime() > Date.now();
 }
+
+
+let proActivationWatchRunning = false;
+
+function sleep(ms){
+  return new Promise(
+    (resolve) => setTimeout(resolve, ms)
+  );
+}
+
+async function startProActivationWatcher(){
+
+  if(
+    proActivationWatchRunning ||
+    !currentSession ||
+    isProActive()
+  ){
+    return;
+  }
+
+  proActivationWatchRunning = true;
+
+  /*
+    最大約20秒だけ確認。
+    常時ポーリングではなく、FREEでページを開いた直後だけ。
+  */
+  const maxAttempts = 10;
+  const intervalMs = 2000;
+
+  for(
+    let attempt = 0;
+    attempt < maxAttempts;
+    attempt++
+  ){
+
+    if(attempt > 0){
+      await sleep(intervalMs);
+    }
+
+    const wasPro =
+      isProActive();
+
+    await loadCurrentPlan();
+
+    const becamePro =
+      !wasPro &&
+      isProActive();
+
+    if(becamePro){
+
+      /*
+        PROへ切り替わった瞬間に、
+        公開枠・曲一覧・Analyticsもその場で更新。
+        手動リロード不要。
+      */
+      await loadMySongs();
+      await loadArtistAnalytics();
+
+      proActivationWatchRunning = false;
+
+      console.log(
+        "PRO plan activated automatically."
+      );
+
+      return;
+    }
+
+    if(isProActive()){
+
+      proActivationWatchRunning = false;
+      return;
+
+    }
+
+  }
+
+  proActivationWatchRunning = false;
+}
+
+
+/*
+  Stripeタブからこの画面へ戻ってきた場合にも再確認。
+  ブラウザの戻る/タブ切替の両方をカバーする。
+*/
+window.addEventListener(
+  "focus",
+  ()=>{
+    if(
+      currentSession &&
+      !isProActive()
+    ){
+      startProActivationWatcher();
+    }
+  }
+);
+
+document.addEventListener(
+  "visibilitychange",
+  ()=>{
+    if(
+      document.visibilityState === "visible" &&
+      currentSession &&
+      !isProActive()
+    ){
+      startProActivationWatcher();
+    }
+  }
+);
+
+window.addEventListener(
+  "pageshow",
+  ()=>{
+    if(
+      currentSession &&
+      !isProActive()
+    ){
+      startProActivationWatcher();
+    }
+  }
+);
+
 
 async function loadCurrentPlan(){
   if(!currentSession) return;
