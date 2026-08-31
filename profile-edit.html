@@ -646,8 +646,14 @@ select{
     </select>
 
     <div class="field-help">
-      アーティストの活動拠点となる国・地域を選択してください。
+      アーティストの活動拠点となる国・地域を選択してください。未設定でもプロフィール保存はできますが、曲を公開するには設定が必要です。
     </div>
+
+    <div
+      id="countryNotice"
+      class="status"
+      style="margin-top:10px"
+    ></div>
 
   </div>
 
@@ -833,6 +839,11 @@ const country =
     "country"
   );
 
+const countryNotice =
+  document.getElementById(
+    "countryNotice"
+  );
+
 const bio =
   document.getElementById(
     "bio"
@@ -872,6 +883,35 @@ const statusBox =
   document.getElementById(
     "status"
   );
+
+
+/* =========================
+   Country / Region
+========================= */
+
+function updateCountryNotice(){
+
+  const value =
+    String(country.value || "").trim();
+
+  if(value){
+    countryNotice.textContent =
+      "✅ このアーティストの公開曲は、この国・地域の曲として扱われます。";
+    countryNotice.className =
+      "status show success";
+  }
+  else{
+    countryNotice.textContent =
+      "ℹ️ 国・地域は未設定です。プロフィール保存はできますが、曲を公開するにはCountry / Regionの設定が必要です。";
+    countryNotice.className =
+      "status show error";
+  }
+}
+
+country.addEventListener(
+  "change",
+  updateCountryNotice
+);
 
 
 /* =========================
@@ -984,6 +1024,8 @@ async function loadProfile(){
   country.value =
     currentProfile?.country ||
     "";
+
+  updateCountryNotice();
 
   bio.value =
     currentProfile?.bio ||
