@@ -5241,15 +5241,12 @@ document
 
 
     /*
-      通常Radioの開始モードは、この直後のNOVARADIO_PLAYに
-      highlight:falseとして含めて送る。
-
-      ここで先にNOVARADIO_SET_HIGHLIGHTを送ると、親app.htmlが
-      まだ保持している「前の曲」をPLAYER_STATEとして返すため、
-      2回目以降の条件変更時に古い曲の状態が割り込む競合が起きる。
-      そのため事前のSET_HIGHLIGHT送信は行わない。
+      通常Radioの開始モードは NOVARADIO_PLAY の highlight:false で
+      app.html へ一度だけ伝える。
+      ここで別の NOVARADIO_SET_HIGHLIGHT を先に送ると、
+      app.html が前の曲の状態をHomeへ返してしまい、
+      国/Genre/Moodを変えた2回目の再生と競合するため送らない。
     */
-
     await playSong(
       randomSong,
       true,
