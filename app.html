@@ -2225,7 +2225,7 @@ function notifyFrameState(){
           state.index
 
       },
-      "*"
+      window.location.origin
     );
 
   }
@@ -3829,6 +3829,18 @@ playlistModal.addEventListener(
 window.addEventListener(
   "message",
   event=>{
+
+    /*
+      セキュリティ:
+      NovaRadio自身の同一オリジンiframeから届いたメッセージだけ受け付ける。
+      外部サイトや別ウィンドウからNOVARADIO_*命令を送り込まれるのを防ぐ。
+    */
+    if(
+      event.origin !== window.location.origin ||
+      event.source !== frame.contentWindow
+    ){
+      return;
+    }
 
     const data =
       event.data ||
