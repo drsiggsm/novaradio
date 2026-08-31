@@ -4263,9 +4263,6 @@ playlistModal.addEventListener(
    COUNTRY FILTER HELPERS
 ========================= */
 
-const COUNTRY_PROFILE_CACHE =
-  new Map();
-
 async function getCountryArtistIds(){
 
   if(!selectedCountry){
@@ -4275,41 +4272,17 @@ async function getCountryArtistIds(){
     };
   }
 
-  if(
-    COUNTRY_PROFILE_CACHE.has(
-      selectedCountry
-    )
-  ){
-    return {
-      data:
-        COUNTRY_PROFILE_CACHE.get(
-          selectedCountry
-        ),
-      error:null
-    };
-  }
-
   /*
-    Homeの国セレクトは value が "JP" / "US" の国コード、
-    profiles.country は "Japan" / "United States" の国名で保存している。
-    DB検索時だけ、現在選択中optionの表示名に変換して照合する。
+    Country / Region は profile-edit.html と同じ
+    ISO 2文字コード（JP / US / KR ...）で統一する。
+
+    曲自体にcountryは保存せず、
+    profiles.country → profiles.user_id → songs.user_id
+    の順で、その国に所属する公開曲を取得する。
+
+    開発中にプロフィールの国を変更してもすぐ反映されるよう、
+    国別アーティストIDはキャッシュしない。
   */
-  const selectedCountryOption =
-    countryFilter.options[
-      countryFilter.selectedIndex
-    ];
-
-  const countryName =
-    (
-      selectedCountryOption?.textContent ||
-      selectedCountry
-    )
-    .trim()
-    .split(/\s+/)
-    .slice(1)
-    .join(" ") ||
-    selectedCountry;
-
   const {
     data,
     error
@@ -4319,7 +4292,7 @@ async function getCountryArtistIds(){
   .select("user_id")
   .eq(
     "country",
-    countryName
+    selectedCountry
   );
 
   if(error){
@@ -4336,11 +4309,6 @@ async function getCountryArtistIds(){
         row.user_id
     )
     .filter(Boolean);
-
-  COUNTRY_PROFILE_CACHE.set(
-    selectedCountry,
-    ids
-  );
 
   return {
     data:ids,
@@ -4724,7 +4692,8 @@ async function fetchFairRadioQueue(){
     getRecentRadioSongIds();
 
   /*
-    国指定がある場合は profiles.country から対象アーティストを絞り、
+    国指定がある場合は selectedCountry（JP / US / KR ...）を
+    profiles.country と直接照合して対象アーティストを絞り、
     そのアーティストの公開曲だけで公平キューを作る。
     国指定なしなら従来のSupabase RPCをそのまま使用。
   */
@@ -5501,6 +5470,10 @@ async function searchArtist(){
       `%${query}%`
     );
 
+  /*
+    アーティスト検索もRadioと同じ国コードで統一。
+    profile-edit.html の profiles.country と直接一致させる。
+  */
   if(selectedCountry){
     artistQuery =
       artistQuery.eq(
