@@ -1885,6 +1885,14 @@ let selectedCountry =
 let radioStartRequestId =
   0;
 
+/*
+  app.htmlとの再生同期用セッション番号。
+  国/Genre/Moodを変えて再生し直すたびに更新し、
+  前の検索から遅れて届いたPLAYER_STATEを無視する。
+*/
+let activeRadioSessionId =
+  0;
+
 
 /* =========================
    DOM
@@ -3118,7 +3126,9 @@ function sendPlayToNovaApp(
           Number(song.id)
       ),
       highlight:
-        !!highlight
+        !!highlight,
+      radioSessionId:
+        activeRadioSessionId
     },
     window.location.origin
   );
@@ -3688,6 +3698,21 @@ window.addEventListener(
     if(
       !data.song ||
       !data.song.id
+    ){
+      return;
+    }
+
+    /*
+      新しい検索を開始した後は、その検索セッションと一致する
+      app.htmlからの状態だけを採用する。
+      これで前の国の曲が遅れて返ってきてもHomeを上書きしない。
+    */
+    const incomingRadioSessionId =
+      Number(data.radioSessionId || 0);
+
+    if(
+      activeRadioSessionId > 0 &&
+      incomingRadioSessionId !== activeRadioSessionId
     ){
       return;
     }
@@ -5131,6 +5156,9 @@ function beginFreshRadioSearch(){
 
   historyIndex =
     -1;
+
+  activeRadioSessionId =
+    radioStartRequestId;
 
   return radioStartRequestId;
 
