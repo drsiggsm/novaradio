@@ -1687,6 +1687,46 @@ const sb =
 
 let currentSession = null;
 
+/*
+  Country / Region:
+  公開曲は曲ごとではなく、投稿者の profiles.country に所属する。
+  未設定の場合はNovaRadioへの公開アップロードを止める。
+*/
+let currentArtistCountry = null;
+
+async function loadCurrentArtistCountry(){
+
+  if(!currentSession){
+    currentArtistCountry = null;
+    return null;
+  }
+
+  const {data,error} =
+    await sb
+    .from("profiles")
+    .select("country")
+    .eq("user_id",currentSession.user.id)
+    .limit(1);
+
+  if(error){
+    console.error("Country load error:",error);
+    currentArtistCountry = null;
+    return null;
+  }
+
+  const value =
+    data && data.length
+      ? String(data[0]?.country || "").trim()
+      : "";
+
+  currentArtistCountry =
+    value || null;
+
+  return currentArtistCountry;
+}
+
+
+
 const selectedGenres = [];
 const selectedMoods = [];
 
@@ -1900,6 +1940,7 @@ async function init(){
   dashboard.style.display =
     "block";
 
+  await loadCurrentArtistCountry();
   await loadCurrentPlan();
   await loadMySongs();
   await loadArtistAnalytics();
@@ -3767,6 +3808,19 @@ uploadButton.addEventListener(
   "click",
   async ()=>{
 
+    /*
+      公開前に必ず最新のプロフィール国を確認。
+      国未設定のアーティストの曲がRadioへ混ざるのを防ぐ。
+    */
+    await loadCurrentArtistCountry();
+
+    if(!currentArtistCountry){
+      return showStatus(
+        "🌍 曲をNovaRadioで公開するには、先にプロフィール編集で Country / Region を設定してください。",
+        true
+      );
+    }
+
     const title =
       document
       .getElementById("songTitle")
@@ -4108,6 +4162,11 @@ uploadButton.addEventListener(
         cover_url:
           coverUrl,
 
+        /*
+          国は songs にコピーしない。
+          この user_id → profiles.user_id → profiles.country
+          でアーティストの所属国を判定する。
+        */
         user_id:
           currentSession.user.id
 
