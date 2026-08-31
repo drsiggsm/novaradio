@@ -5240,15 +5240,15 @@ document
       currentQueue[0];
 
 
-    if(isInsideNovaApp()){
-      window.parent.postMessage(
-        {
-          type:"NOVARADIO_SET_HIGHLIGHT",
-          value:false
-        },
-        window.location.origin
-      );
-    }
+    /*
+      通常Radioの開始モードは、この直後のNOVARADIO_PLAYに
+      highlight:falseとして含めて送る。
+
+      ここで先にNOVARADIO_SET_HIGHLIGHTを送ると、親app.htmlが
+      まだ保持している「前の曲」をPLAYER_STATEとして返すため、
+      2回目以降の条件変更時に古い曲の状態が割り込む競合が起きる。
+      そのため事前のSET_HIGHLIGHT送信は行わない。
+    */
 
     await playSong(
       randomSong,
