@@ -1878,6 +1878,14 @@ let selectedCountry =
   "";
 
 
+/*
+  条件を変えて再生し直した時、
+  古い検索結果が新しい再生を上書きしないための番号。
+*/
+let radioStartRequestId =
+  0;
+
+
 /* =========================
    DOM
 ========================= */
@@ -3112,7 +3120,7 @@ function sendPlayToNovaApp(
       highlight:
         !!highlight
     },
-    "*"
+    window.location.origin
   );
 
   return true;
@@ -5104,6 +5112,32 @@ document
 
 
 /* =========================
+   RESTART RADIO SESSION
+========================= */
+
+function beginFreshRadioSearch(){
+
+  radioStartRequestId +=
+    1;
+
+  /*
+    前の検索条件で作ったキューと履歴を完全に破棄する。
+  */
+  currentQueue =
+    [];
+
+  historySongs =
+    [];
+
+  historyIndex =
+    -1;
+
+  return radioStartRequestId;
+
+}
+
+
+/* =========================
    START RADIO
 ========================= */
 
@@ -5114,6 +5148,9 @@ document
 .addEventListener(
   "click",
   async ()=>{
+
+    const requestId =
+      beginFreshRadioSearch();
 
     const now =
       document.getElementById(
@@ -5136,6 +5173,14 @@ document
       error
     } =
     await fetchFairRadioQueue();
+
+
+    if(
+      requestId !==
+      radioStartRequestId
+    ){
+      return;
+    }
 
 
     if(error){
@@ -5187,14 +5232,6 @@ document
     }
 
 
-    historySongs =
-      [];
-
-
-    historyIndex =
-      -1;
-
-
     /*
       RPC側ですでに公平にランダム順になっているので
       先頭をそのままスタート曲にする。
@@ -5209,12 +5246,16 @@ document
           type:"NOVARADIO_SET_HIGHLIGHT",
           value:false
         },
-        "*"
+        window.location.origin
       );
     }
 
     await playSong(
-      randomSong
+      randomSong,
+      true,
+      {
+        highlight:false
+      }
     );
 
   }
@@ -5232,6 +5273,9 @@ document
 .addEventListener(
   "click",
   async ()=>{
+
+    const requestId =
+      beginFreshRadioSearch();
 
     const now =
       document.getElementById(
@@ -5252,6 +5296,13 @@ document
       error
     } =
     await fetchFairRadioQueue();
+
+    if(
+      requestId !==
+      radioStartRequestId
+    ){
+      return;
+    }
 
     if(error){
 
@@ -5295,12 +5346,6 @@ document
 
       return;
     }
-
-    historySongs =
-      [];
-
-    historyIndex =
-      -1;
 
     /*
       RPC側ですでに公平にランダム順になっているので
