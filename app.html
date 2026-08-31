@@ -783,6 +783,13 @@ let state = {
 let playRequestId =
   0;
 
+/*
+  Homeから届いた最新のRadio検索セッション番号。
+  PLAYER_STATEにもそのまま返し、古い検索状態の逆流を防ぐ。
+*/
+let activeRadioSessionId =
+  0;
+
 
 /*
   下プレイヤーのいいね状態キャッシュ。
@@ -2230,7 +2237,10 @@ function notifyFrameState(){
           state.song,
 
         index:
-          state.index
+          state.index,
+
+        radioSessionId:
+          activeRadioSessionId
 
       },
       window.location.origin
@@ -3916,6 +3926,21 @@ window.addEventListener(
       data.type ===
       "NOVARADIO_PLAY"
     ){
+
+      /*
+        Homeが発行した最新の検索セッション番号を先に確定。
+        以後のPLAYER_STATEはこの番号を付けてHomeへ返す。
+      */
+      const incomingRadioSessionId =
+        Number(data.radioSessionId || 0);
+
+      if(
+        Number.isFinite(incomingRadioSessionId) &&
+        incomingRadioSessionId > 0
+      ){
+        activeRadioSessionId =
+          incomingRadioSessionId;
+      }
 
       /*
         Homeで条件を変えて再検索した場合も、
