@@ -2246,7 +2246,9 @@ function notifyFrameState(){
    シャッフル / リピート
 ========================= */
 
-function updateModeButtons(){
+function updateModeButtons(
+  shouldNotify=true
+){
 
   shuffle.classList.toggle(
     "active",
@@ -2275,7 +2277,9 @@ function updateModeButtons(){
       ? "1曲リピート"
       : "リピート OFF";
 
-  notifyFrameState();
+  if(shouldNotify){
+    notifyFrameState();
+  }
 
 }
 
@@ -3983,7 +3987,16 @@ window.addEventListener(
 
       }
 
-      updateModeButtons();
+      /*
+        重要:
+        この時点では state.song がまだ「前の検索の曲」のまま。
+        updateModeButtons() が notifyFrameState() まで行うと、
+        前の国の曲がHomeへ逆流して新しい検索結果と競合する。
+        UIだけ更新し、新曲の状態通知は playSong() 完了後に一度だけ行う。
+      */
+      updateModeButtons(
+        false
+      );
 
       playSong(
         data.song,
