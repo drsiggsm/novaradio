@@ -1978,14 +1978,21 @@ async function playSong(
     previousSrc !==
     String(song.audio_url);
 
-  if(sourceChanged){
+  if(
+    sourceChanged ||
+    restart
+  ){
 
+    /*
+      新しい検索からのrestartでは同じ曲が選ばれた場合でも
+      srcを再セットして0秒/ハイライト開始位置から確実に再生する。
+    */
     audio.src =
       song.audio_url;
 
     /*
       ここは軽量化より正確さを優先。
-      新しいsrcに切り替えたら必ずloadして、
+      新しいsrc、または明示restartなら必ずloadして、
       この曲自身のmetadataを確実に読み込む。
       先読み済みならブラウザキャッシュが効くので
       ネットワーク負荷は抑えられる。
@@ -2033,6 +2040,7 @@ async function playSong(
 
       if(
         sourceChanged ||
+        restart ||
         audio.readyState < 1
       ){
 
@@ -3823,6 +3831,60 @@ playlistModal.addEventListener(
 
 
 /* =========================
+   新しい検索からの再生を強制開始
+========================= */
+
+function resetForFreshPlayCommand(){
+
+  /*
+    以前の検索・ハイライト・「この曲だけフル」の再生状態を
+    新しいNOVARADIO_PLAYへ持ち越さない。
+  */
+  clearHighlightSkipTimer();
+
+  isReturningFromFullTrack =
+    false;
+
+  highlightStartTime =
+    0;
+
+  /*
+    進行中の古いplaySong/startPlaybackを無効化。
+  */
+  playRequestId +=
+    1;
+
+  try{
+    fullAudio.pause();
+    fullAudio.removeAttribute(
+      "src"
+    );
+    fullAudio.load();
+  }
+  catch(e){}
+
+  try{
+    audio.pause();
+  }
+  catch(e){}
+
+  state.fullTrack =
+    false;
+
+  /*
+    前の検索キューを先に捨てる。
+    この直後に受け取った新しいqueue/indexで上書きされる。
+  */
+  state.queue =
+    [];
+
+  state.index =
+    -1;
+
+}
+
+
+/* =========================
    Home / My Pageからの命令
 ========================= */
 
@@ -3850,6 +3912,12 @@ window.addEventListener(
       data.type ===
       "NOVARADIO_PLAY"
     ){
+
+      /*
+        Homeで条件を変えて再検索した場合も、
+        現在再生中かどうかに関係なく新しい曲へ切り替える。
+      */
+      resetForFreshPlayCommand();
 
       const queue =
         Array.isArray(
@@ -3922,6 +3990,20 @@ window.addEventListener(
         queue,
         index,
         true
+      )
+      .catch(
+        error=>{
+
+          console.error(
+            "Fresh play command failed:",
+            error
+          );
+
+          showPlayerStatus(
+            "新しい条件への切り替えに失敗しました。もう一度再生してください。"
+          );
+
+        }
       );
 
     }
