@@ -1066,10 +1066,7 @@ async function saveProfile(){
     }
 
 
-    const payload = {
-
-      user_id:
-        currentSession.user.id,
+    const profilePayload = {
 
       artist_name:
         name,
@@ -1114,7 +1111,7 @@ async function saveProfile(){
       await sb
       .from("profiles")
       .update(
-        payload
+        profilePayload
       )
       .eq(
         "id",
@@ -1137,9 +1134,11 @@ async function saveProfile(){
       } =
       await sb
       .from("profiles")
-      .insert(
-        payload
-      );
+      .insert({
+        user_id:
+          currentSession.user.id,
+        ...profilePayload
+      });
 
 
       profileError =
