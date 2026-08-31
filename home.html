@@ -4289,6 +4289,27 @@ async function getCountryArtistIds(){
     };
   }
 
+  /*
+    Homeの国セレクトは value が "JP" / "US" の国コード、
+    profiles.country は "Japan" / "United States" の国名で保存している。
+    DB検索時だけ、現在選択中optionの表示名に変換して照合する。
+  */
+  const selectedCountryOption =
+    countryFilter.options[
+      countryFilter.selectedIndex
+    ];
+
+  const countryName =
+    (
+      selectedCountryOption?.textContent ||
+      selectedCountry
+    )
+    .trim()
+    .split(/\s+/)
+    .slice(1)
+    .join(" ") ||
+    selectedCountry;
+
   const {
     data,
     error
@@ -4298,7 +4319,7 @@ async function getCountryArtistIds(){
   .select("user_id")
   .eq(
     "country",
-    selectedCountry
+    countryName
   );
 
   if(error){
