@@ -156,9 +156,66 @@ header{
 
 .liked-list,
 .playlist-list,
-.playlist-song-list{
+.playlist-song-list,
+.following-list{
   display:grid;
   gap:12px;
+}
+
+.following-item{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  padding:16px;
+  border-radius:18px;
+  background:#080b1d;
+  border:1px solid #30355e;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.following-item:hover{
+  border-color:#7b25ff;
+  transform:translateY(-1px);
+}
+
+.following-avatar{
+  width:58px;
+  height:58px;
+  flex:0 0 58px;
+  border-radius:50%;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#7b25ff,#159df5);
+  font-size:24px;
+}
+
+.following-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.following-info{
+  min-width:0;
+  flex:1;
+}
+
+.following-name{
+  font-size:17px;
+  font-weight:900;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.following-open{
+  color:#8f93ad;
+  font-size:13px;
+  margin-top:5px;
 }
 
 .liked-song,
@@ -830,6 +887,26 @@ if(window.parent && window.parent !== window){
   </section>
 
 
+  <!-- フォロー中 -->
+
+  <section class="card">
+
+    <h2>
+      👤 フォロー中
+    </h2>
+
+    <div
+      id="followingArtists"
+      class="following-list"
+    >
+      <div class="empty">
+        フォロー中のアーティストを読み込んでいます…
+      </div>
+    </div>
+
+  </section>
+
+
   <!-- プレイリスト -->
 
   <section
@@ -1179,6 +1256,11 @@ const likedSongs =
     "likedSongs"
   );
 
+const followingArtists =
+  document.getElementById(
+    "followingArtists"
+  );
+
 const playlistList =
   document.getElementById(
     "playlistList"
@@ -1363,6 +1445,7 @@ async function init(){
   await Promise.all([
     loadProfile(),
     loadLikedSongs(),
+    loadFollowingArtists(),
     loadPlaylists()
   ]);
 
@@ -1894,6 +1977,213 @@ async function loadLikedSongs(){
     likedSongs.innerHTML =
       `<div class="empty">
         まだいいねした曲はありません。
+      </div>`;
+
+  }
+
+}
+
+
+/* =========================
+   フォロー中アーティスト
+========================= */
+
+async function loadFollowingArtists(){
+
+  followingArtists.innerHTML =
+    `<div class="empty">
+      フォロー中のアーティストを読み込んでいます…
+    </div>`;
+
+
+  const {
+    data:follows,
+    error:followsError
+  } =
+  await sb
+  .from("artist_follows")
+  .select("artist_user_id,created_at")
+  .eq(
+    "follower_user_id",
+    currentSession.user.id
+  )
+  .order(
+    "created_at",
+    {
+      ascending:false
+    }
+  );
+
+
+  if(followsError){
+
+    followingArtists.innerHTML =
+      `<div class="empty">
+        フォロー中のアーティストを取得できませんでした。<br><br>
+        ${escapeHtml(followsError.message)}
+      </div>`;
+
+    return;
+  }
+
+
+  if(
+    !follows ||
+    !follows.length
+  ){
+
+    followingArtists.innerHTML =
+      `<div class="empty">
+        まだフォロー中のアーティストはいません。
+      </div>`;
+
+    return;
+  }
+
+
+  const artistIds =
+    [
+      ...new Set(
+        follows.map(
+          row=>row.artist_user_id
+        )
+      )
+    ];
+
+
+  const {
+    data:profiles,
+    error:profilesError
+  } =
+  await sb
+  .from("profiles")
+  .select(
+    "user_id,artist_name,avatar_url,plan,pro_until,is_lifetime_pro"
+  )
+  .in(
+    "user_id",
+    artistIds
+  );
+
+
+  if(profilesError){
+
+    followingArtists.innerHTML =
+      `<div class="empty">
+        アーティスト情報を取得できませんでした。<br><br>
+        ${escapeHtml(profilesError.message)}
+      </div>`;
+
+    return;
+  }
+
+
+  const profileMap =
+    new Map(
+      (profiles || []).map(
+        profile=>[
+          String(profile.user_id),
+          profile
+        ]
+      )
+    );
+
+
+  followingArtists.innerHTML =
+    "";
+
+
+  artistIds.forEach(
+    artistId=>{
+
+      const profile =
+        profileMap.get(
+          String(artistId)
+        );
+
+
+      if(!profile){
+        return;
+      }
+
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+
+      item.className =
+        "following-item";
+
+
+      const avatarUrl =
+        safeHttpUrl(
+          profile.avatar_url
+        );
+
+
+      item.innerHTML =
+        `<div class="following-avatar">
+          ${
+            avatarUrl
+              ? `<img
+                  src="${escapeHtml(avatarUrl)}"
+                  alt="${escapeHtml(
+                    (profile.artist_name || "Artist") +
+                    " のプロフィール画像"
+                  )}"
+                >`
+              : "👤"
+          }
+        </div>
+
+        <div class="following-info">
+          <div class="following-name">
+            ${escapeHtml(
+              profile.artist_name ||
+              "Unknown Artist"
+            )}
+            ${
+              isActiveProProfile(profile)
+                ? `<span class="pro-badge">PRO</span>`
+                : ""
+            }
+          </div>
+
+          <div class="following-open">
+            アーティストページを見る →
+          </div>
+        </div>`;
+
+
+      item.addEventListener(
+        "click",
+        ()=>{
+          location.href =
+            "artist.html?id=" +
+            encodeURIComponent(
+              artistId
+            );
+        }
+      );
+
+
+      followingArtists.appendChild(
+        item
+      );
+
+    }
+  );
+
+
+  if(
+    !followingArtists.children.length
+  ){
+
+    followingArtists.innerHTML =
+      `<div class="empty">
+        まだフォロー中のアーティストはいません。
       </div>`;
 
   }
