@@ -3709,6 +3709,228 @@ function formatFileSizeMB(
 
 
 
+
+/* =========================
+   LOUDNESS NORMALIZATION
+   アップロード時に音源をブラウザ内で解析し、
+   再生時に使う補正値(dB)を songs.loudness_gain_db へ保存する。
+
+   ※ これは軽量なRMSベースの正規化。
+      無音区間をある程度除外し、極端な補正は±8dBに制限する。
+========================= */
+async function analyzeLoudnessGain(file){
+
+  const AudioContextClass =
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+  if(!AudioContextClass){
+    throw new Error(
+      "このブラウザでは音量解析を利用できません。"
+    );
+  }
+
+  const audioContext =
+    new AudioContextClass();
+
+  try{
+
+    const arrayBuffer =
+      await file.arrayBuffer();
+
+    const audioBuffer =
+      await audioContext.decodeAudioData(
+        arrayBuffer.slice(0)
+      );
+
+    const channels =
+      audioBuffer.numberOfChannels;
+
+    const sampleRate =
+      audioBuffer.sampleRate;
+
+    if(
+      !channels ||
+      !sampleRate ||
+      !audioBuffer.length
+    ){
+      throw new Error(
+        "音源を解析できませんでした。"
+      );
+    }
+
+    /*
+      約0.4秒ごとのブロックで平均音量を測る。
+      -45dBFS未満のブロックは無音・極小音として除外する。
+    */
+    const blockFrames =
+      Math.max(
+        1,
+        Math.floor(
+          sampleRate * 0.4
+        )
+      );
+
+    /*
+      長い曲でも画面が固まりにくいよう、
+      約12kHz相当までサンプルを間引いて解析する。
+    */
+    const stride =
+      Math.max(
+        1,
+        Math.floor(
+          sampleRate / 12000
+        )
+      );
+
+    const gateDb = -45;
+    let activePowerSum = 0;
+    let activeWeight = 0;
+
+    for(
+      let blockStart = 0;
+      blockStart < audioBuffer.length;
+      blockStart += blockFrames
+    ){
+
+      const blockEnd =
+        Math.min(
+          blockStart + blockFrames,
+          audioBuffer.length
+        );
+
+      let blockSquareSum = 0;
+      let blockSamples = 0;
+
+      for(
+        let channel = 0;
+        channel < channels;
+        channel++
+      ){
+
+        const data =
+          audioBuffer.getChannelData(
+            channel
+          );
+
+        for(
+          let i = blockStart;
+          i < blockEnd;
+          i += stride
+        ){
+
+          const sample = data[i];
+
+          blockSquareSum +=
+            sample * sample;
+
+          blockSamples++;
+
+        }
+
+      }
+
+      if(!blockSamples){
+        continue;
+      }
+
+      const blockMeanSquare =
+        blockSquareSum /
+        blockSamples;
+
+      const blockDb =
+        blockMeanSquare > 0
+          ? 10 * Math.log10(
+              blockMeanSquare
+            )
+          : -Infinity;
+
+      if(blockDb >= gateDb){
+
+        activePowerSum +=
+          blockMeanSquare *
+          blockSamples;
+
+        activeWeight +=
+          blockSamples;
+
+      }
+
+      if(
+        blockStart %
+        (
+          blockFrames * 25
+        ) === 0
+      ){
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              0
+            )
+        );
+      }
+
+    }
+
+    if(!activeWeight){
+      return 0;
+    }
+
+    const meanSquare =
+      activePowerSum /
+      activeWeight;
+
+    const measuredDb =
+      10 * Math.log10(
+        Math.max(
+          meanSquare,
+          1e-12
+        )
+      );
+
+    /*
+      RMSベースの実用ターゲット。
+      Webプレイヤーで曲間差を抑えることを優先する。
+    */
+    const targetDb = -16;
+
+    let gainDb =
+      targetDb -
+      measuredDb;
+
+    /*
+      極端に小さい/大きい音源でも、
+      補正しすぎないよう±8dBに制限。
+    */
+    gainDb =
+      Math.max(
+        -8,
+        Math.min(
+          8,
+          gainDb
+        )
+      );
+
+    return Math.round(
+      gainDb * 10
+    ) / 10;
+
+  }
+  finally{
+
+    try{
+      await audioContext.close();
+    }
+    catch(_error){
+      /* close失敗はアップロードを止めない */
+    }
+
+  }
+
+}
+
+
 function getCurrentTrackLimit(){
 
   return isProActive()
@@ -4004,6 +4226,42 @@ uploadButton.addEventListener(
       }
 
       /*
+        アップロード前に元音源を解析して、
+        曲ごとの再生音量補正値を作る。
+        解析に失敗しても曲のアップロード自体は継続し、
+        その場合は補正なし(0dB)として保存する。
+      */
+      progress.textContent =
+        "曲の音量バランスを自動解析しています… 🔊";
+
+      let loudnessGainDb = 0;
+
+      try{
+
+        loudnessGainDb =
+          await analyzeLoudnessGain(
+            file
+          );
+
+        progress.textContent =
+          `音量解析完了（補正 ${loudnessGainDb >= 0 ? "+" : ""}${loudnessGainDb.toFixed(1)} dB）… 🎚️`;
+
+      }
+      catch(loudnessError){
+
+        console.warn(
+          "Loudness analysis failed:",
+          loudnessError
+        );
+
+        loudnessGainDb = 0;
+
+        progress.textContent =
+          "音量解析をスキップしてアップロードを続けます…";
+
+      }
+
+      /*
         WAVはブラウザ内で256kbps MP3へ変換してから
         Supabaseへアップロードする。
         元WAVはStorageへ送らないので、
@@ -4169,6 +4427,9 @@ uploadButton.addEventListener(
 
         cover_url:
           coverUrl,
+
+        loudness_gain_db:
+          loudnessGainDb,
 
         /*
           国は songs にコピーしない。
