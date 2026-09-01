@@ -146,6 +146,41 @@ header{
   border-color:#7b25ff;
 }
 
+.follow-area{
+  display:flex;
+  justify-content:center;
+  margin-top:18px;
+}
+
+.follow-button{
+  min-width:160px;
+  padding:12px 20px;
+  border-radius:999px;
+  border:1px solid #5a61a0;
+  background:#171a31;
+  color:#fff;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.follow-button:hover{
+  border-color:#8c55ff;
+  transform:translateY(-1px);
+}
+
+.follow-button.following{
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  border-color:#8f68ff;
+}
+
+.follow-button:disabled{
+  opacity:.65;
+  cursor:default;
+  transform:none;
+}
+
 .card{
   background:#101228e8;
   border:1px solid #30355e;
@@ -486,6 +521,20 @@ header{
       style="display:none"
     ></div>
 
+    <div
+      class="follow-area"
+      id="followArea"
+      style="display:none"
+    >
+      <button
+        class="follow-button"
+        id="followButton"
+        type="button"
+      >
+        ＋ フォロー
+      </button>
+    </div>
+
   </section>
 
 
@@ -645,6 +694,16 @@ const songList =
     "songList"
   );
 
+const followArea =
+  document.getElementById(
+    "followArea"
+  );
+
+const followButton =
+  document.getElementById(
+    "followButton"
+  );
+
 const playlistModal =
   document.getElementById(
     "playlistModal"
@@ -710,6 +769,9 @@ async function init(){
   if(!success){
     return;
   }
+
+
+  await setupFollowButton();
 
 
   await loadArtistSongs();
@@ -978,6 +1040,248 @@ function renderLinks(
     artistLinks.children.length
       ? "flex"
       : "none";
+
+}
+
+
+/* =========================
+   フォロー
+========================= */
+
+async function setupFollowButton(){
+
+  if(!currentSession){
+
+    followArea.style.display =
+      "flex";
+
+    followButton.textContent =
+      "🔒 ログインでフォロー";
+
+    followButton.classList.remove(
+      "following"
+    );
+
+    followButton.onclick =
+      ()=>{
+        location.href =
+          "index.html";
+      };
+
+    return;
+  }
+
+
+  if(
+    currentSession.user.id ===
+    artistUserId
+  ){
+
+    // 自分自身のアーティストページでは
+    // フォローボタンを表示しない
+    followArea.style.display =
+      "none";
+
+    return;
+  }
+
+
+  followArea.style.display =
+    "flex";
+
+  followButton.onclick =
+    toggleArtistFollow;
+
+  await updateFollowButton();
+
+}
+
+
+async function isFollowingArtist(){
+
+  if(
+    !currentSession ||
+    !artistUserId
+  ){
+    return false;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("artist_follows")
+  .select("id")
+  .eq(
+    "follower_user_id",
+    currentSession.user.id
+  )
+  .eq(
+    "artist_user_id",
+    artistUserId
+  )
+  .limit(1);
+
+
+  if(error){
+
+    console.error(
+      "Follow check error:",
+      error
+    );
+
+    return false;
+  }
+
+
+  return !!(
+    data &&
+    data.length
+  );
+
+}
+
+
+async function updateFollowButton(){
+
+  if(
+    !currentSession ||
+    currentSession.user.id === artistUserId
+  ){
+    return;
+  }
+
+
+  const following =
+    await isFollowingArtist();
+
+
+  if(following){
+
+    followButton.textContent =
+      "✓ フォロー中";
+
+    followButton.classList.add(
+      "following"
+    );
+
+  }else{
+
+    followButton.textContent =
+      "＋ フォロー";
+
+    followButton.classList.remove(
+      "following"
+    );
+
+  }
+
+}
+
+
+async function toggleArtistFollow(){
+
+  if(!currentSession){
+
+    location.href =
+      "index.html";
+
+    return;
+  }
+
+
+  if(
+    currentSession.user.id ===
+    artistUserId
+  ){
+    return;
+  }
+
+
+  followButton.disabled =
+    true;
+
+
+  try{
+
+    const following =
+      await isFollowingArtist();
+
+
+    if(following){
+
+      const {
+        error
+      } =
+      await sb
+      .from("artist_follows")
+      .delete()
+      .eq(
+        "follower_user_id",
+        currentSession.user.id
+      )
+      .eq(
+        "artist_user_id",
+        artistUserId
+      );
+
+
+      if(error){
+        throw error;
+      }
+
+    }else{
+
+      const {
+        error
+      } =
+      await sb
+      .from("artist_follows")
+      .insert({
+
+        follower_user_id:
+          currentSession.user.id,
+
+        artist_user_id:
+          artistUserId
+
+      });
+
+
+      if(error){
+        throw error;
+      }
+
+    }
+
+
+    await updateFollowButton();
+
+  }
+  catch(error){
+
+    console.error(
+      "Follow toggle error:",
+      error
+    );
+
+    alert(
+      "フォロー操作に失敗しました：" +
+      (
+        error?.message ||
+        "Unknown error"
+      )
+    );
+
+  }
+  finally{
+
+    followButton.disabled =
+      false;
+
+  }
 
 }
 
