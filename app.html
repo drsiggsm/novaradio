@@ -1785,6 +1785,131 @@ frame.addEventListener(
 
 
 /* =========================
+   Media Session / ロック画面
+========================= */
+
+function updateMediaSessionMetadata(song){
+
+  if(
+    !("mediaSession" in navigator) ||
+    !("MediaMetadata" in window) ||
+    !song
+  ){
+    return;
+  }
+
+  try{
+
+    const artwork = [];
+
+    if(song.cover_url){
+      artwork.push({
+        src:String(song.cover_url)
+      });
+    }
+
+    navigator.mediaSession.metadata =
+      new MediaMetadata({
+        title:song.title || "Untitled",
+        artist:song.artist || "Unknown Artist",
+        album:"NovaRadio",
+        artwork
+      });
+
+  }
+  catch(error){
+    console.warn(
+      "Media Session metadata error:",
+      error
+    );
+  }
+}
+
+function setMediaSessionPlaybackState(value){
+
+  if(
+    !("mediaSession" in navigator)
+  ){
+    return;
+  }
+
+  try{
+    navigator.mediaSession.playbackState = value;
+  }
+  catch(error){
+    console.warn(
+      "Media Session playbackState error:",
+      error
+    );
+  }
+}
+
+function setupMediaSessionActions(){
+
+  if(
+    !("mediaSession" in navigator)
+  ){
+    return;
+  }
+
+  const setHandler =
+    (action,handler)=>{
+      try{
+        navigator.mediaSession.setActionHandler(
+          action,
+          handler
+        );
+      }
+      catch(error){
+        /*
+          ブラウザが未対応のactionは無視する。
+        */
+      }
+    };
+
+  setHandler(
+    "play",
+    ()=>{
+      const activeAudio =
+        state.fullTrack
+          ? fullAudio
+          : audio;
+
+      activeAudio.play().catch(()=>{});
+    }
+  );
+
+  setHandler(
+    "pause",
+    ()=>{
+      const activeAudio =
+        state.fullTrack
+          ? fullAudio
+          : audio;
+
+      activeAudio.pause();
+    }
+  );
+
+  /*
+    iPhone / Androidのロック画面やコントロールセンターに
+    前へ・次へボタンを出せるようにする。
+  */
+  setHandler(
+    "nexttrack",
+    ()=>playNext(false)
+  );
+
+  setHandler(
+    "previoustrack",
+    ()=>playPrev()
+  );
+}
+
+setupMediaSessionActions();
+
+
+/* =========================
    曲情報表示
 ========================= */
 
@@ -1801,6 +1926,14 @@ function renderSong(song){
   if(!song){
     return;
   }
+
+  /*
+    スマホのロック画面 / コントロールセンターへ
+    現在曲の曲名・アーティスト名・ジャケットを渡す。
+  */
+  updateMediaSessionMetadata(
+    song
+  );
 
   title.textContent =
     song.title ||
@@ -3066,6 +3199,7 @@ function returnToHighlightAfterFullTrack(){
 
 fullAudio.addEventListener("play",()=>{
   playPause.textContent="⏸";
+  setMediaSessionPlaybackState("playing");
   resetAnalyticsClock();
 });
 
@@ -3073,6 +3207,7 @@ fullAudio.addEventListener("pause",()=>{
   if(state.fullTrack){
     playPause.textContent="▶";
   }
+  setMediaSessionPlaybackState("paused");
   resetAnalyticsClock();
 });
 
@@ -3155,6 +3290,10 @@ audio.addEventListener(
     playPause.textContent =
       "⏸";
 
+    setMediaSessionPlaybackState(
+      "playing"
+    );
+
     resetAnalyticsClock();
 
     if(
@@ -3181,6 +3320,10 @@ audio.addEventListener(
 
     playPause.textContent =
       "▶";
+
+    setMediaSessionPlaybackState(
+      "paused"
+    );
 
     resetAnalyticsClock();
 
