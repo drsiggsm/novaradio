@@ -1892,9 +1892,24 @@ function setupMediaSessionActions(){
   );
 
   /*
-    iPhone / Androidのロック画面やコントロールセンターに
-    前へ・次へボタンを出せるようにする。
+    iPhone / Android のロック画面では、Safari が音声を
+    「10秒戻る / 10秒進む」として扱うことがある。
+    NovaRadio は曲送りを優先したいので、シーク系 action を
+    明示的に解除してから previous/next track だけ登録する。
   */
+  [
+    "seekbackward",
+    "seekforward",
+    "seekto"
+  ].forEach((action)=>{
+    try{
+      navigator.mediaSession.setActionHandler(action,null);
+    }
+    catch(error){
+      /* 未対応ブラウザでは無視 */
+    }
+  });
+
   setHandler(
     "nexttrack",
     ()=>playNext(false)
