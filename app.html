@@ -691,39 +691,26 @@ const audio =
 
 const fullAudio = new Audio();
 fullAudio.preload = "auto";
-fullAudio.crossOrigin = "anonymous";
 
 
 /* =========================
    LOUDNESS NORMALIZATION
-   songs.loudness_gain_db の補正値を
-   共通プレイヤーへ反映する。
 
-   Web Audio API の GainNode で 1.0 を超える増幅を行う。
-   今回はクリック音の原因切り分けテストとして、
-   DynamicsCompressorNode（リミッター）は完全に外す。
+   安定性優先版。
+   Web Audio API / AudioContext / MediaElementSource / GainNode は使わず、
+   HTMLMediaElement.volume だけで曲ごとの音量差をそろえる。
 
-   AudioContext がブラウザの自動再生制限などで使えない場合は、
-   従来どおり HTMLMediaElement.volume へ安全にフォールバックする。
+   loudness_gain_db がプラスの曲は 1.0 を上限にし、
+   大きい曲を下げることで相対的な音量差を小さくする。
+   これにより Web Audio 経路切替由来のクリックノイズを避ける。
 ========================= */
 const NORMALIZATION_MIN_GAIN_DB = -12;
 const NORMALIZATION_MAX_GAIN_DB = 12;
-
-/* Web Audio が使えない時だけ使う安全なフォールバック */
-const NORMALIZATION_FALLBACK_BASE_VOLUME = 0.45;
-const NORMALIZATION_FALLBACK_MIN_VOLUME = 0.08;
-const NORMALIZATION_FALLBACK_MAX_VOLUME = 1.0;
+const NORMALIZATION_BASE_VOLUME = 0.45;
+const NORMALIZATION_MIN_VOLUME = 0.08;
+const NORMALIZATION_MAX_VOLUME = 1.0;
 
 const loudnessGainCache = new Map();
-
-let loudnessAudioContext = null;
-let loudnessAudioSource = null;
-let loudnessFullAudioSource = null;
-let loudnessAudioGainNode = null;
-let loudnessFullAudioGainNode = null;
-let loudnessCurrentLinearGain = 1;
-let loudnessGraphReady = false;
-let loudnessGraphFailed = false;
 
 function clampNumber(value,min,max){
   return Math.max(min,Math.min(max,value));
@@ -737,145 +724,17 @@ function normalizeGainDb(value){
   );
 }
 
-function gainDbToLinearGain(gainDb){
-  return Math.pow(
+function gainDbToPlayerVolume(gainDb){
+  const linearGain = Math.pow(
     10,
     normalizeGainDb(gainDb) / 20
   );
-}
-
-function gainDbToFallbackVolume(gainDb){
-  const linearGain = gainDbToLinearGain(gainDb);
 
   return clampNumber(
-    NORMALIZATION_FALLBACK_BASE_VOLUME * linearGain,
-    NORMALIZATION_FALLBACK_MIN_VOLUME,
-    NORMALIZATION_FALLBACK_MAX_VOLUME
+    NORMALIZATION_BASE_VOLUME * linearGain,
+    NORMALIZATION_MIN_VOLUME,
+    NORMALIZATION_MAX_VOLUME
   );
-}
-
-async function ensureLoudnessAudioGraph(){
-  if(loudnessGraphReady){
-    if(
-      loudnessAudioContext &&
-      loudnessAudioContext.state === "suspended"
-    ){
-      try{
-        await loudnessAudioContext.resume();
-      }
-      catch(error){
-        console.warn("AudioContext resume error:",error);
-      }
-    }
-
-    return (
-      loudnessAudioContext &&
-      loudnessAudioContext.state === "running"
-    );
-  }
-
-  if(loudnessGraphFailed){
-    return false;
-  }
-
-  try{
-    const AudioContextClass =
-      window.AudioContext ||
-      window.webkitAudioContext;
-
-    if(!AudioContextClass){
-      loudnessGraphFailed = true;
-      return false;
-    }
-
-    /*
-      先にAudioContextだけ開始する。
-      ユーザー操作扱いにならずresumeできない環境では、
-      MediaElementSourceへ接続せず通常audioの音を残す。
-    */
-    if(!loudnessAudioContext){
-      loudnessAudioContext =
-        new AudioContextClass();
-    }
-
-    if(
-      loudnessAudioContext.state === "suspended"
-    ){
-      try{
-        await loudnessAudioContext.resume();
-      }
-      catch(error){
-        console.warn("AudioContext start blocked:",error);
-        return false;
-      }
-    }
-
-    if(
-      loudnessAudioContext.state !== "running"
-    ){
-      return false;
-    }
-
-    loudnessAudioGainNode =
-      loudnessAudioContext.createGain();
-
-    loudnessFullAudioGainNode =
-      loudnessAudioContext.createGain();
-
-    /*
-      重要: Web Audioグラフを接続する前に必ず無音にする。
-      GainNodeの初期値は1なので、そのまま接続するとAudioContextの
-      初回起動・経路切替の瞬間に1サンプルだけ音が通り、
-      「プツッ」と聞こえる環境がある。
-    */
-    loudnessAudioGainNode.gain.value = 0;
-    loudnessFullAudioGainNode.gain.value = 0;
-
-    loudnessAudioSource =
-      loudnessAudioContext.createMediaElementSource(
-        audio
-      );
-
-    loudnessFullAudioSource =
-      loudnessAudioContext.createMediaElementSource(
-        fullAudio
-      );
-
-    /*
-      原因切り分け用: GainNode から destination へ直接接続する。
-      Limiter / DynamicsCompressorNode は一切通さない。
-    */
-    loudnessAudioSource
-      .connect(loudnessAudioGainNode)
-      .connect(loudnessAudioContext.destination);
-
-    loudnessFullAudioSource
-      .connect(loudnessFullAudioGainNode)
-      .connect(loudnessAudioContext.destination);
-
-    /*
-      Web Audio側でゲインを管理するので、
-      element自体のvolumeは100%にする。
-    */
-    audio.volume = 1;
-    fullAudio.volume = 1;
-
-    loudnessGraphReady = true;
-    return true;
-  }
-  catch(error){
-    console.warn(
-      "Web Audio loudness setup failed; using fallback:",
-      error
-    );
-
-    /*
-      createMediaElementSource後の例外など、
-      中途半端な状態を再利用しない。
-    */
-    loudnessGraphFailed = true;
-    return false;
-  }
 }
 
 async function resolveSongLoudnessGain(song){
@@ -916,8 +775,7 @@ async function resolveSongLoudnessGain(song){
       : 0;
 
     loudnessGainCache.set(songId,gainDb);
-    song.loudness_gain_db =
-      data?.loudness_gain_db ?? null;
+    song.loudness_gain_db = data?.loudness_gain_db ?? null;
 
     return gainDb;
   }
@@ -929,73 +787,8 @@ async function resolveSongLoudnessGain(song){
 }
 
 async function applyLoudnessForSong(song){
-  const gainDb =
-    await resolveSongLoudnessGain(song);
-
-  const webAudioReady =
-    await ensureLoudnessAudioGraph();
-
-  if(
-    webAudioReady &&
-    loudnessAudioGainNode &&
-    loudnessFullAudioGainNode
-  ){
-    const linearGain =
-      gainDbToLinearGain(gainDb);
-
-    loudnessCurrentLinearGain =
-      linearGain;
-
-    const now =
-      loudnessAudioContext.currentTime;
-
-    /*
-      再生前はここで目的ゲインまで上げない。
-      目的値だけ保存し、停止中のプレイヤーは0のまま待機させる。
-      実際の立ち上げは audio.play() 後の startLoudnessFadeIn() だけで行う。
-      これでAudioContext初回起動時のクリックを避ける。
-    */
-    loudnessAudioGainNode.gain
-      .cancelScheduledValues(now);
-
-    loudnessFullAudioGainNode.gain
-      .cancelScheduledValues(now);
-
-    if(audio.paused){
-      loudnessAudioGainNode.gain
-        .setValueAtTime(0,now);
-    }
-    else{
-      loudnessAudioGainNode.gain
-        .setTargetAtTime(linearGain,now,0.015);
-    }
-
-    if(fullAudio.paused){
-      loudnessFullAudioGainNode.gain
-        .setValueAtTime(0,now);
-    }
-    else{
-      loudnessFullAudioGainNode.gain
-        .setTargetAtTime(linearGain,now,0.015);
-    }
-
-    audio.volume = 1;
-    fullAudio.volume = 1;
-
-    return {
-      gainDb,
-      linearGain,
-      mode:"webaudio"
-    };
-  }
-
-  /*
-    AudioContextが使えない環境では従来方式。
-    1.0を超えないため増幅量は限定されるが、
-    再生不能にはしない。
-  */
-  const volume =
-    gainDbToFallbackVolume(gainDb);
+  const gainDb = await resolveSongLoudnessGain(song);
+  const volume = gainDbToPlayerVolume(gainDb);
 
   audio.volume = volume;
   fullAudio.volume = volume;
@@ -1003,26 +796,9 @@ async function applyLoudnessForSong(song){
   return {
     gainDb,
     volume,
-    mode:"fallback"
+    mode:"html-media-volume"
   };
 }
-
-/*
-  親プレイヤーを直接操作した場合は、
-  Safari/iOS等のAudioContext再開チャンスとして使う。
-*/
-document.addEventListener(
-  "pointerdown",
-  ()=>{
-    if(
-      loudnessAudioContext &&
-      loudnessAudioContext.state === "suspended"
-    ){
-      loudnessAudioContext.resume().catch(()=>{});
-    }
-  },
-  {passive:true}
-);
 
 const playPause =
   document.getElementById("playPause");
@@ -2092,107 +1868,6 @@ function renderSong(song){
    再生安定化
 ========================= */
 
-/*
-  曲の頭が0以外の波形から始まる場合、
-  Web Audioの増幅後に「プツッ」と聞こえることがある。
-  再生開始直前に一度0へ落とし、約30msだけフェードインして
-  DC/波形の不連続によるクリックノイズを抑える。
-*/
-function prepareLoudnessFadeIn(){
-  if(
-    !loudnessGraphReady ||
-    !loudnessAudioContext ||
-    !loudnessAudioGainNode
-  ){
-    return;
-  }
-
-  const now =
-    loudnessAudioContext.currentTime;
-
-  loudnessAudioGainNode.gain
-    .cancelScheduledValues(now);
-
-  loudnessAudioGainNode.gain
-    .setValueAtTime(0, now);
-}
-
-function startLoudnessFadeIn(){
-  if(
-    !loudnessGraphReady ||
-    !loudnessAudioContext ||
-    !loudnessAudioGainNode
-  ){
-    return;
-  }
-
-  const now =
-    loudnessAudioContext.currentTime;
-
-  loudnessAudioGainNode.gain
-    .cancelScheduledValues(now);
-
-  loudnessAudioGainNode.gain
-    .setValueAtTime(0, now);
-
-  /*
-    初回AudioContext起動も吸収できるよう80msで立ち上げる。
-    音楽としてはごく短い長さだが、
-    0以外の波形から始まる音源のクリックを抑えやすい。
-  */
-  loudnessAudioGainNode.gain
-    .linearRampToValueAtTime(
-      Math.max(0.0001, loudnessCurrentLinearGain),
-      now + 0.08
-    );
-}
-
-/*
-  曲の「始まり」で聞こえるプツッが、実際には
-  前の曲を波形の途中で急に切った瞬間のクリックであることがある。
-  srcを差し替える前に旧曲を約40msだけ0へ落としてから切り替える。
-*/
-async function fadeOutBeforeSourceChange(){
-  if(
-    audio.paused ||
-    !loudnessGraphReady ||
-    !loudnessAudioContext ||
-    !loudnessAudioGainNode
-  ){
-    return;
-  }
-
-  const now =
-    loudnessAudioContext.currentTime;
-
-  const currentGain =
-    Math.max(
-      0.0001,
-      Number(loudnessAudioGainNode.gain.value) ||
-      loudnessCurrentLinearGain ||
-      1
-    );
-
-  loudnessAudioGainNode.gain
-    .cancelScheduledValues(now);
-
-  loudnessAudioGainNode.gain
-    .setValueAtTime(
-      currentGain,
-      now
-    );
-
-  loudnessAudioGainNode.gain
-    .linearRampToValueAtTime(
-      0,
-      now + 0.04
-    );
-
-  await new Promise(
-    resolve=>setTimeout(resolve,45)
-  );
-}
-
 function waitForPlayable(
   requestId,
   timeoutMs=3000
@@ -2293,11 +1968,7 @@ async function startPlayback(
   */
   try{
 
-    prepareLoudnessFadeIn();
-
     await audio.play();
-
-    startLoudnessFadeIn();
 
     return;
 
@@ -2335,11 +2006,7 @@ async function startPlayback(
 
   try{
 
-    prepareLoudnessFadeIn();
-
     await audio.play();
-
-    startLoudnessFadeIn();
 
   }
   catch(secondError){
@@ -2418,21 +2085,10 @@ async function playSong(
     previousSrc !==
     String(song.audio_url);
 
-  /*
-    旧曲を波形の途中で即座に切ると、次曲の頭で
-    「プツッ」と聞こえることがある。
-    新しい補正値を反映したりsrcを差し替えたりする前に、
-    旧曲だけ短くフェードアウトしてゼロまで落とす。
-  */
-  if(
-    sourceChanged ||
-    restart
-  ){
-    await fadeOutBeforeSourceChange();
-  }
 
   /*
     曲ごとの保存済み補正値を、実際に再生を始める前に反映する。
+    Web Audioは使わず、HTMLMediaElement.volumeだけを変更する。
     Home/RPC側が loudness_gain_db を返さない場合でも、
     song.id からsongsテーブルを補助取得するため既存導線を壊さない。
   */
