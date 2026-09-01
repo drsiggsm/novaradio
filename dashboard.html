@@ -871,6 +871,37 @@ input[type="file"]{
   }
 }
 
+
+/* Artist Analytics: 初期状態は折りたたみ */
+#analyticsCard.analytics-collapsed > .analytics-song-filter,
+#analyticsCard.analytics-collapsed > .analytics-wrap,
+#analyticsCard.analytics-collapsed > .analytics-error{
+  display:none;
+}
+#analyticsCard .analytics-head{
+  margin-bottom:18px;
+}
+#analyticsCard.analytics-collapsed .analytics-head{
+  margin-bottom:0;
+}
+.analytics-toggle-button{
+  margin-left:auto;
+  border:1px solid #3a4070;
+  background:#0b0e22;
+  color:#fff;
+  border-radius:999px;
+  padding:9px 14px;
+  font:inherit;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.18s ease;
+}
+.analytics-toggle-button:hover{
+  transform:translateY(-1px);
+  border-color:#6d5cff;
+}
+
 </style>
 </head>
 
@@ -967,10 +998,11 @@ input[type="file"]{
 
     </section>
 
-    <section class="card" id="analyticsCard">
+    <section class="card analytics-collapsed" id="analyticsCard">
       <div class="analytics-head">
         <h2 style="margin:0">📊 Artist Analytics</h2>
         <div class="plan-badge" id="analyticsPlanBadge">PLAN</div>
+        <button class="analytics-toggle-button" id="analyticsToggle" type="button" aria-expanded="false">▼ Analyticsを開く</button>
       </div>
 
       <div class="analytics-song-filter">
@@ -1779,6 +1811,26 @@ const sb =
   );
 
 let currentSession = null;
+
+const analyticsCardToggle = document.getElementById("analyticsCard");
+const analyticsToggle = document.getElementById("analyticsToggle");
+
+if(analyticsCardToggle && analyticsToggle){
+  analyticsToggle.addEventListener("click",()=>{
+    const willOpen = analyticsCardToggle.classList.contains("analytics-collapsed");
+    analyticsCardToggle.classList.toggle("analytics-collapsed", !willOpen);
+    analyticsToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    analyticsToggle.textContent = willOpen ? "▲ Analyticsを閉じる" : "▼ Analyticsを開く";
+
+    if(willOpen){
+      requestAnimationFrame(()=>{
+        if(analyticsChart && typeof analyticsChart.resize === "function"){
+          analyticsChart.resize();
+        }
+      });
+    }
+  });
+}
 
 /*
   Country / Region:
