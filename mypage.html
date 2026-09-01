@@ -82,6 +82,23 @@ header{
   font-weight:800;
 }
 
+.pro-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:8px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.4px;
+  vertical-align:middle;
+  box-shadow:0 4px 14px #6425ff33;
+}
+
 .profile-bio{
   max-width:620px;
   margin:12px auto 0;
@@ -1386,7 +1403,7 @@ async function loadProfile(){
   await sb
   .from("profiles")
   .select(
-    "artist_name,avatar_url,bio,instagram_url,x_url,tiktok_url,youtube_url,website_url"
+    "artist_name,avatar_url,bio,instagram_url,x_url,tiktok_url,youtube_url,website_url,plan,pro_until,is_lifetime_pro"
   )
   .eq(
     "user_id",
@@ -1418,11 +1435,37 @@ async function loadProfile(){
     data[0];
 
 
-  document
-  .getElementById("username")
-  .textContent =
+  const usernameEl =
+    document.getElementById("username");
+
+  const displayName =
     profile.artist_name ||
     fallbackName;
+
+  usernameEl.textContent =
+    displayName;
+
+  if(isActiveProProfile(profile)){
+
+    const badge =
+      document.createElement(
+        "span"
+      );
+
+    badge.className =
+      "pro-badge";
+
+    badge.textContent =
+      "PRO";
+
+    badge.title =
+      "NovaRadio PRO";
+
+    usernameEl.appendChild(
+      badge
+    );
+
+  }
 
 
   renderProfileAvatar(
@@ -1615,6 +1658,49 @@ function renderProfileLinks(
     profileLinks.children.length
       ? "flex"
       : "none";
+
+}
+
+
+function isActiveProProfile(
+  profile
+){
+
+  if(!profile){
+    return false;
+  }
+
+  if(
+    profile.is_lifetime_pro ===
+    true
+  ){
+    return true;
+  }
+
+  if(
+    String(
+      profile.plan || ""
+    )
+    .toLowerCase() !==
+    "pro"
+  ){
+    return false;
+  }
+
+  if(!profile.pro_until){
+    return false;
+  }
+
+  const until =
+    new Date(
+      profile.pro_until
+    )
+    .getTime();
+
+  return (
+    Number.isFinite(until) &&
+    until > Date.now()
+  );
 
 }
 
