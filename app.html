@@ -824,6 +824,15 @@ async function ensureLoudnessAudioGraph(){
     loudnessFullAudioGainNode =
       loudnessAudioContext.createGain();
 
+    /*
+      重要: Web Audioグラフを接続する前に必ず無音にする。
+      GainNodeの初期値は1なので、そのまま接続するとAudioContextの
+      初回起動・経路切替の瞬間に1サンプルだけ音が通り、
+      「プツッ」と聞こえる環境がある。
+    */
+    loudnessAudioGainNode.gain.value = 0;
+    loudnessFullAudioGainNode.gain.value = 0;
+
     loudnessLimiter =
       loudnessAudioContext.createDynamicsCompressor();
 
@@ -956,8 +965,10 @@ async function applyLoudnessForSong(song){
       loudnessAudioContext.currentTime;
 
     /*
-      曲切替時の急な音量変化でクリックノイズが出ないよう
-      ごく短くスムージングする。
+      再生前はここで目的ゲインまで上げない。
+      目的値だけ保存し、停止中のプレイヤーは0のまま待機させる。
+      実際の立ち上げは audio.play() 後の startLoudnessFadeIn() だけで行う。
+      これでAudioContext初回起動時のクリックを避ける。
     */
     loudnessAudioGainNode.gain
       .cancelScheduledValues(now);
@@ -965,19 +976,23 @@ async function applyLoudnessForSong(song){
     loudnessFullAudioGainNode.gain
       .cancelScheduledValues(now);
 
-    loudnessAudioGainNode.gain
-      .setTargetAtTime(
-        linearGain,
-        now,
-        0.015
-      );
+    if(audio.paused){
+      loudnessAudioGainNode.gain
+        .setValueAtTime(0,now);
+    }
+    else{
+      loudnessAudioGainNode.gain
+        .setTargetAtTime(linearGain,now,0.015);
+    }
 
-    loudnessFullAudioGainNode.gain
-      .setTargetAtTime(
-        linearGain,
-        now,
-        0.015
-      );
+    if(fullAudio.paused){
+      loudnessFullAudioGainNode.gain
+        .setValueAtTime(0,now);
+    }
+    else{
+      loudnessFullAudioGainNode.gain
+        .setTargetAtTime(linearGain,now,0.015);
+    }
 
     audio.volume = 1;
     fullAudio.volume = 1;
@@ -2135,11 +2150,62 @@ function startLoudnessFadeIn(){
   loudnessAudioGainNode.gain
     .setValueAtTime(0, now);
 
+  /*
+    初回AudioContext起動も吸収できるよう80msで立ち上げる。
+    音楽としてはごく短い長さだが、
+    0以外の波形から始まる音源のクリックを抑えやすい。
+  */
   loudnessAudioGainNode.gain
     .linearRampToValueAtTime(
       Math.max(0.0001, loudnessCurrentLinearGain),
-      now + 0.03
+      now + 0.08
     );
+}
+
+/*
+  曲の「始まり」で聞こえるプツッが、実際には
+  前の曲を波形の途中で急に切った瞬間のクリックであることがある。
+  srcを差し替える前に旧曲を約40msだけ0へ落としてから切り替える。
+*/
+async function fadeOutBeforeSourceChange(){
+  if(
+    audio.paused ||
+    !loudnessGraphReady ||
+    !loudnessAudioContext ||
+    !loudnessAudioGainNode
+  ){
+    return;
+  }
+
+  const now =
+    loudnessAudioContext.currentTime;
+
+  const currentGain =
+    Math.max(
+      0.0001,
+      Number(loudnessAudioGainNode.gain.value) ||
+      loudnessCurrentLinearGain ||
+      1
+    );
+
+  loudnessAudioGainNode.gain
+    .cancelScheduledValues(now);
+
+  loudnessAudioGainNode.gain
+    .setValueAtTime(
+      currentGain,
+      now
+    );
+
+  loudnessAudioGainNode.gain
+    .linearRampToValueAtTime(
+      0,
+      now + 0.04
+    );
+
+  await new Promise(
+    resolve=>setTimeout(resolve,45)
+  );
 }
 
 function waitForPlayable(
@@ -2363,6 +2429,23 @@ async function playSong(
     song
   );
 
+  const sourceChanged =
+    previousSrc !==
+    String(song.audio_url);
+
+  /*
+    旧曲を波形の途中で即座に切ると、次曲の頭で
+    「プツッ」と聞こえることがある。
+    新しい補正値を反映したりsrcを差し替えたりする前に、
+    旧曲だけ短くフェードアウトしてゼロまで落とす。
+  */
+  if(
+    sourceChanged ||
+    restart
+  ){
+    await fadeOutBeforeSourceChange();
+  }
+
   /*
     曲ごとの保存済み補正値を、実際に再生を始める前に反映する。
     Home/RPC側が loudness_gain_db を返さない場合でも、
@@ -2380,10 +2463,6 @@ async function playSong(
 
   const requestId =
     ++playRequestId;
-
-  const sourceChanged =
-    previousSrc !==
-    String(song.audio_url);
 
   if(
     sourceChanged ||
