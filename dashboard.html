@@ -780,6 +780,42 @@ input[type="file"]{
 .analytics-locked .song-performance-panel{filter:blur(7px);user-select:none;pointer-events:none;opacity:.55}
 @media(max-width:600px){.song-performance-panel{padding:16px}}
 
+/* ===== ANALYTICS SONG DETAIL ===== */
+.analytics-song-filter{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(220px,360px);
+  gap:14px;
+  align-items:end;
+  margin:0 0 18px;
+  padding:16px 18px;
+  border:1px solid #30355e;
+  border-radius:18px;
+  background:#080b1d;
+}
+.analytics-song-filter-title{font-weight:900;font-size:14px}
+.analytics-song-filter-help{margin-top:5px;color:#858cae;font-size:12px;line-height:1.5}
+.analytics-song-select{
+  width:100%;
+  padding:13px 14px;
+  border:1px solid #3a416d;
+  border-radius:14px;
+  background:#11152c;
+  color:#fff;
+  font-size:14px;
+  font-weight:800;
+  outline:none;
+}
+.analytics-selection-note{margin:-6px 0 14px;color:#9ca4c5;font-size:12px;line-height:1.5}
+.analytics-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.analytics-detail-stat{padding:16px 18px;border:1px solid #30355e;border-radius:18px;background:#0b0e22}
+.analytics-detail-label{color:#9da2c0;font-size:12px;font-weight:800}
+.analytics-detail-value{margin-top:7px;font-size:24px;font-weight:900;color:#fff}
+.analytics-detail-note{margin-top:5px;color:#7f86a7;font-size:11px;line-height:1.45}
+@media(max-width:700px){
+  .analytics-song-filter{grid-template-columns:1fr}
+  .analytics-detail-grid{grid-template-columns:1fr}
+}
+
 /* ===== PRO PLAN MANAGEMENT ===== */
 .pro-manage-area{
   display:none;
@@ -937,6 +973,16 @@ input[type="file"]{
         <div class="plan-badge" id="analyticsPlanBadge">PLAN</div>
       </div>
 
+      <div class="analytics-song-filter">
+        <div>
+          <div class="analytics-song-filter-title">🎵 表示する曲</div>
+          <div class="analytics-song-filter-help">全曲の概要、または1曲を選んで詳細な反応を確認できます。</div>
+        </div>
+        <select class="analytics-song-select" id="analyticsSongSelect">
+          <option value="all">全曲</option>
+        </select>
+      </div>
+
       <div class="analytics-wrap" id="analyticsWrap">
         <div class="analytics-grid">
           <div class="analytics-stat">
@@ -967,11 +1013,31 @@ input[type="file"]{
           </div>
         </div>
 
+        <div class="analytics-selection-note" id="analyticsSelectionNote">全曲・全期間の概要</div>
+
+        <div class="analytics-detail-grid" id="analyticsDetailGrid">
+          <div class="analytics-detail-stat">
+            <div class="analytics-detail-label">⚡ 30秒完走率</div>
+            <div class="analytics-detail-value" id="analyticsHighlightRate">—</div>
+            <div class="analytics-detail-note">総再生のうち30秒ハイライトを完走した割合</div>
+          </div>
+          <div class="analytics-detail-stat">
+            <div class="analytics-detail-label">🎵 フル再生率</div>
+            <div class="analytics-detail-value" id="analyticsFullRate">—</div>
+            <div class="analytics-detail-note">総再生のうちフル再生が30秒以上続いた割合</div>
+          </div>
+          <div class="analytics-detail-stat">
+            <div class="analytics-detail-label">🚀 フル移行率</div>
+            <div class="analytics-detail-value" id="analyticsFullConversionRate">—</div>
+            <div class="analytics-detail-note">30秒完走のうちフル再生へ進んだ割合</div>
+          </div>
+        </div>
+
         <div class="analytics-chart-panel" id="analyticsChartPanel">
           <div class="analytics-chart-toolbar">
             <div>
-              <div class="analytics-chart-title">📈 推移</div>
-              <div class="analytics-chart-sub">期間と指標を切り替えて、日ごとの動きを確認できます。</div>
+              <div class="analytics-chart-title" id="analyticsChartTitle">📈 推移</div>
+              <div class="analytics-chart-sub" id="analyticsChartSub">期間と指標を切り替えて、日ごとの動きを確認できます。</div>
             </div>
             <div class="analytics-periods" id="analyticsPeriods">
               <button type="button" class="analytics-period-button active" data-days="7">7日</button>
@@ -1378,7 +1444,7 @@ input[type="file"]{
 
     <div class="plan-modal-title">FREEとPROの違い</div>
     <div class="plan-modal-sub">
-      PROでは公開枠とArtist Analyticsが拡張されます。
+      PROでは公開枠に加えて、曲別の詳細Artist Analyticsを利用できます。
     </div>
 
     <div class="plan-compare" aria-label="FREEとPROのプラン比較">
@@ -1389,7 +1455,7 @@ input[type="file"]{
         <div class="plan-compare-label">公開できる曲</div><div class="plan-compare-free">3曲まで</div><div class="plan-compare-pro">30曲まで</div>
       </div>
       <div class="plan-compare-row">
-        <div class="plan-compare-label">Artist Analytics</div><div class="plan-compare-free">🔒 非公開</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span> 全データ</div>
+        <div class="plan-compare-label">Artist Analytics</div><div class="plan-compare-free">🔒 非公開</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span> 曲別詳細</div>
       </div>
       <div class="plan-compare-row">
         <div class="plan-compare-label">総再生数</div><div class="plan-compare-free">—</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span></div>
@@ -1770,6 +1836,9 @@ let analyticsSeriesRows = [];
 let analyticsPeriodDays = 7;
 let analyticsMetric = "plays";
 let songPerformanceRows = [];
+let analyticsSongSelection = "all";
+let analyticsOverallSummary = null;
+let mySongsForAnalytics = [];
 const ANALYTICS_METRICS = {
   plays:{label:"総再生"},
   listeners:{label:"リスナー到達"},
@@ -2235,15 +2304,136 @@ function renderAnalyticsAccess(){
   badge.textContent = pro ? "PRO" : "FREE";
   badge.classList.toggle("pro",pro);
 
+  const songSelect = document.getElementById("analyticsSongSelect");
+  if(songSelect) songSelect.disabled = !pro;
+
   if(!pro){
     document.getElementById("analyticsPlays").textContent = "—";
     document.getElementById("analyticsListeners").textContent = "—";
     document.getElementById("analyticsHighlights").textContent = "—";
     document.getElementById("analyticsFullPlays").textContent = "—";
     document.getElementById("analyticsLikes").textContent = "—";
+    document.getElementById("analyticsHighlightRate").textContent = "—";
+    document.getElementById("analyticsFullRate").textContent = "—";
+    document.getElementById("analyticsFullConversionRate").textContent = "—";
   }
 }
 
+
+function analyticsPeriodLabel(){
+  return analyticsPeriodDays === 90
+    ? "過去3ヶ月"
+    : analyticsPeriodDays === 365
+      ? "過去1年"
+      : `過去${analyticsPeriodDays}日`;
+}
+
+function getAnalyticsSongKey(song){
+  const id = song?.song_id ?? song?.id ?? song?.track_id;
+  if(id !== undefined && id !== null && String(id) !== ""){
+    return `id:${String(id)}`;
+  }
+  const title = String(song?.title ?? song?.song_title ?? "").trim();
+  return `title:${title}`;
+}
+
+function findSelectedSongPerformance(){
+  if(analyticsSongSelection === "all") return null;
+  return songPerformanceRows.find(row=>getAnalyticsSongKey(row) === analyticsSongSelection) || null;
+}
+
+function findSelectedSongMeta(){
+  if(analyticsSongSelection === "all") return null;
+  return mySongsForAnalytics.find(song=>getAnalyticsSongKey(song) === analyticsSongSelection) || null;
+}
+
+function safeAnalyticsRate(numerator,denominator){
+  const n = Number(numerator || 0);
+  const d = Number(denominator || 0);
+  if(!Number.isFinite(n) || !Number.isFinite(d) || d <= 0) return 0;
+  return Math.max(0,(n / d) * 100);
+}
+
+function setAnalyticsNumber(id,value){
+  const el = document.getElementById(id);
+  if(el) el.textContent = Number(value || 0).toLocaleString("ja-JP");
+}
+
+function setAnalyticsRate(id,value){
+  const el = document.getElementById(id);
+  if(el) el.textContent = `${Number(value || 0).toLocaleString("ja-JP",{maximumFractionDigits:1})}%`;
+}
+
+function updateAnalyticsSongSelect(){
+  const select = document.getElementById("analyticsSongSelect");
+  if(!select) return;
+
+  const previous = analyticsSongSelection;
+  const options = ['<option value="all">全曲</option>'];
+
+  mySongsForAnalytics.forEach(song=>{
+    const key = getAnalyticsSongKey(song);
+    const title = escapeAnalyticsHtml(song?.title || "Untitled");
+    options.push(`<option value="${escapeAnalyticsHtml(key)}">${title}</option>`);
+  });
+
+  select.innerHTML = options.join("");
+  const exists = [...select.options].some(option=>option.value === previous);
+  analyticsSongSelection = exists ? previous : "all";
+  select.value = analyticsSongSelection;
+}
+
+function renderAnalyticsSelectionSummary(){
+  const note = document.getElementById("analyticsSelectionNote");
+  const metrics = document.getElementById("analyticsMetrics");
+  const titleEl = document.getElementById("analyticsChartTitle");
+  const subEl = document.getElementById("analyticsChartSub");
+
+  if(analyticsSongSelection === "all"){
+    const row = analyticsOverallSummary || {};
+    setAnalyticsNumber("analyticsPlays",row.total_plays || 0);
+    setAnalyticsNumber("analyticsListeners",row.new_listener_reach || 0);
+    setAnalyticsNumber("analyticsHighlights",row.highlight_completes || 0);
+    setAnalyticsNumber("analyticsFullPlays",row.full_plays || 0);
+    setAnalyticsNumber("analyticsLikes",row.likes_count || 0);
+
+    const periodPlays = songPerformanceRows.reduce((sum,item)=>sum + Number(item?.plays ?? item?.total_plays ?? 0),0);
+    const periodHighlights = songPerformanceRows.reduce((sum,item)=>sum + Number(item?.highlight_complete ?? item?.highlight_completes ?? 0),0);
+    const periodFull = songPerformanceRows.reduce((sum,item)=>sum + Number(item?.full_qualified ?? item?.full_plays ?? 0),0);
+    setAnalyticsRate("analyticsHighlightRate",safeAnalyticsRate(periodHighlights,periodPlays));
+    setAnalyticsRate("analyticsFullRate",safeAnalyticsRate(periodFull,periodPlays));
+    setAnalyticsRate("analyticsFullConversionRate",safeAnalyticsRate(periodFull,periodHighlights));
+
+    if(note) note.textContent = `全曲・上の5項目は全期間 / 割合は${analyticsPeriodLabel()}`;
+    if(metrics) metrics.style.display = "flex";
+    if(titleEl) titleEl.textContent = "📈 推移";
+    if(subEl) subEl.textContent = "期間と指標を切り替えて、日ごとの動きを確認できます。";
+    return;
+  }
+
+  const row = findSelectedSongPerformance() || {};
+  const meta = findSelectedSongMeta() || row;
+  const songTitle = meta?.title ?? meta?.song_title ?? "選択中の曲";
+  const plays = Number(row?.plays ?? row?.total_plays ?? 0);
+  const listeners = Number(row?.listeners ?? row?.listener_reach ?? row?.new_listener_reach ?? 0);
+  const highlights = Number(row?.highlight_complete ?? row?.highlight_completes ?? 0);
+  const full = Number(row?.full_qualified ?? row?.full_plays ?? 0);
+  const likes = Number(row?.likes ?? row?.like_count ?? 0);
+
+  setAnalyticsNumber("analyticsPlays",plays);
+  setAnalyticsNumber("analyticsListeners",listeners);
+  setAnalyticsNumber("analyticsHighlights",highlights);
+  setAnalyticsNumber("analyticsFullPlays",full);
+  setAnalyticsNumber("analyticsLikes",likes);
+  setAnalyticsRate("analyticsHighlightRate",safeAnalyticsRate(highlights,plays));
+  setAnalyticsRate("analyticsFullRate",safeAnalyticsRate(full,plays));
+  setAnalyticsRate("analyticsFullConversionRate",safeAnalyticsRate(full,highlights));
+
+  if(note) note.textContent = `「${songTitle}」・${analyticsPeriodLabel()}の詳細`;
+  if(metrics) metrics.style.display = "none";
+  if(titleEl) titleEl.textContent = "🎯 曲別詳細";
+  if(subEl) subEl.textContent = "選択した曲の主要な反応を、現在の期間で比較できます。";
+}
 
 function formatAnalyticsDay(value,days){
   const d = new Date(`${value}T00:00:00`);
@@ -2261,14 +2451,65 @@ function renderAnalyticsTrendChart(){
   const status = document.getElementById("analyticsChartStatus");
   if(!canvas || typeof Chart === "undefined") return;
 
-  const metric = ANALYTICS_METRICS[analyticsMetric] || ANALYTICS_METRICS.plays;
-  const labels = analyticsSeriesRows.map(row=>formatAnalyticsDay(row.day,analyticsPeriodDays));
-  const values = analyticsSeriesRows.map(row=>Number(row?.[analyticsMetric] || 0));
-
   if(analyticsChart){
     analyticsChart.destroy();
     analyticsChart = null;
   }
+
+  if(analyticsSongSelection !== "all"){
+    const row = findSelectedSongPerformance() || {};
+    const meta = findSelectedSongMeta() || row;
+    const songTitle = meta?.title ?? meta?.song_title ?? "選択中の曲";
+    const plays = Number(row?.plays ?? row?.total_plays ?? 0);
+    const listeners = Number(row?.listeners ?? row?.listener_reach ?? row?.new_listener_reach ?? 0);
+    const highlights = Number(row?.highlight_complete ?? row?.highlight_completes ?? 0);
+    const full = Number(row?.full_qualified ?? row?.full_plays ?? 0);
+    const likes = Number(row?.likes ?? row?.like_count ?? 0);
+
+    analyticsChart = new Chart(canvas,{
+      type:"bar",
+      data:{
+        labels:["総再生","リスナー","30秒完走","フル再生","いいね"],
+        datasets:[{
+          label:songTitle,
+          data:[plays,listeners,highlights,full,likes],
+          backgroundColor:[
+            "rgba(91,188,255,.72)",
+            "rgba(139,92,255,.72)",
+            "rgba(255,61,154,.72)",
+            "rgba(75,214,152,.72)",
+            "rgba(255,194,92,.72)"
+          ],
+          borderWidth:0,
+          borderRadius:8
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:"#aeb4d0"}},
+          y:{
+            beginAtZero:true,
+            suggestedMin:0,
+            ticks:{color:"#858cae",precision:0},
+            grid:{color:"rgba(255,255,255,.07)"}
+          }
+        }
+      }
+    });
+
+    if(status){
+      status.classList.remove("error");
+      status.textContent = `${songTitle}・${analyticsPeriodLabel()}`;
+    }
+    return;
+  }
+
+  const metric = ANALYTICS_METRICS[analyticsMetric] || ANALYTICS_METRICS.plays;
+  const labels = analyticsSeriesRows.map(row=>formatAnalyticsDay(row.day,analyticsPeriodDays));
+  const values = analyticsSeriesRows.map(row=>Number(row?.[analyticsMetric] || 0));
 
   analyticsChart = new Chart(canvas,{
     type:"line",
@@ -2331,7 +2572,7 @@ function renderAnalyticsTrendChart(){
   if(status){
     const total = values.reduce((sum,value)=>sum+value,0);
     status.classList.remove("error");
-    status.textContent = `${metric.label}・過去${analyticsPeriodDays === 90 ? "3ヶ月" : analyticsPeriodDays === 365 ? "1年" : analyticsPeriodDays + "日"}：${total.toLocaleString("ja-JP")}`;
+    status.textContent = `${metric.label}・${analyticsPeriodLabel()}：${total.toLocaleString("ja-JP")}`;
   }
 }
 
@@ -2443,6 +2684,8 @@ async function loadArtistSongPerformance(){
     if(error) throw error;
     songPerformanceRows = Array.isArray(data) ? data : [];
     renderSongPerformance();
+    renderAnalyticsSelectionSummary();
+    renderAnalyticsTrendChart();
   }catch(error){
     console.error("Song performance RPC error:",error);
     songPerformanceRows = [];
@@ -2485,6 +2728,15 @@ function setupAnalyticsChartControls(){
 
 setupAnalyticsChartControls();
 
+const analyticsSongSelect = document.getElementById("analyticsSongSelect");
+if(analyticsSongSelect){
+  analyticsSongSelect.addEventListener("change",()=>{
+    analyticsSongSelection = analyticsSongSelect.value || "all";
+    renderAnalyticsSelectionSummary();
+    renderAnalyticsTrendChart();
+  });
+}
+
 async function loadArtistAnalytics(){
   renderAnalyticsAccess();
 
@@ -2526,6 +2778,8 @@ async function loadArtistAnalytics(){
       Array.isArray(data)
         ? data[0]
         : data;
+
+    analyticsOverallSummary = row || {};
 
     document
     .getElementById(
@@ -2591,6 +2845,9 @@ async function loadArtistAnalytics(){
       loadArtistAnalyticsSeries(),
       loadArtistSongPerformance()
     ]);
+
+    renderAnalyticsSelectionSummary();
+    renderAnalyticsTrendChart();
 
   }
   catch(error){
@@ -4620,6 +4877,9 @@ async function loadMySongs(){
     return;
 
   }
+
+  mySongsForAnalytics = Array.isArray(data) ? data : [];
+  updateAnalyticsSongSelect();
 
   currentTrackCount =
     Array.isArray(data)
