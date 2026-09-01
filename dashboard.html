@@ -1027,9 +1027,9 @@ input[type="file"]{
             <div class="analytics-detail-note">総再生のうちフル再生が30秒以上続いた割合</div>
           </div>
           <div class="analytics-detail-stat">
-            <div class="analytics-detail-label">🚀 フル移行率</div>
+            <div class="analytics-detail-label">🚀 フル / 30秒比率</div>
             <div class="analytics-detail-value" id="analyticsFullConversionRate">—</div>
-            <div class="analytics-detail-note">30秒完走のうちフル再生へ進んだ割合</div>
+            <div class="analytics-detail-note">30秒完走回数に対するフル再生回数の比率</div>
           </div>
         </div>
 
@@ -2397,14 +2397,20 @@ function renderAnalyticsSelectionSummary(){
     setAnalyticsNumber("analyticsFullPlays",row.full_plays || 0);
     setAnalyticsNumber("analyticsLikes",row.likes_count || 0);
 
-    const periodPlays = songPerformanceRows.reduce((sum,item)=>sum + Number(item?.plays ?? item?.total_plays ?? 0),0);
-    const periodHighlights = songPerformanceRows.reduce((sum,item)=>sum + Number(item?.highlight_complete ?? item?.highlight_completes ?? 0),0);
-    const periodFull = songPerformanceRows.reduce((sum,item)=>sum + Number(item?.full_qualified ?? item?.full_plays ?? 0),0);
-    setAnalyticsRate("analyticsHighlightRate",safeAnalyticsRate(periodHighlights,periodPlays));
-    setAnalyticsRate("analyticsFullRate",safeAnalyticsRate(periodFull,periodPlays));
-    setAnalyticsRate("analyticsFullConversionRate",safeAnalyticsRate(periodFull,periodHighlights));
+    /*
+      全曲表示では、上の5項目が「全期間」の数字なので、
+      割合も同じ全期間データから計算する。
+      これで 8再生 / 1完走 なら 12.5% のように、
+      画面に見えている数字同士で割合が一致する。
+    */
+    const overallPlays = Number(row.total_plays || 0);
+    const overallHighlights = Number(row.highlight_completes || 0);
+    const overallFull = Number(row.full_plays || 0);
+    setAnalyticsRate("analyticsHighlightRate",safeAnalyticsRate(overallHighlights,overallPlays));
+    setAnalyticsRate("analyticsFullRate",safeAnalyticsRate(overallFull,overallPlays));
+    setAnalyticsRate("analyticsFullConversionRate",safeAnalyticsRate(overallFull,overallHighlights));
 
-    if(note) note.textContent = `全曲・上の5項目は全期間 / 割合は${analyticsPeriodLabel()}`;
+    if(note) note.textContent = "全曲・上の5項目と割合は全期間";
     if(metrics) metrics.style.display = "flex";
     if(titleEl) titleEl.textContent = "📈 推移";
     if(subEl) subEl.textContent = "期間と指標を切り替えて、日ごとの動きを確認できます。";
