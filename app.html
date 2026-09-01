@@ -723,6 +723,7 @@ let loudnessAudioSource = null;
 let loudnessFullAudioSource = null;
 let loudnessAudioGainNode = null;
 let loudnessFullAudioGainNode = null;
+let loudnessCurrentLinearGain = 1;
 let loudnessGraphReady = false;
 let loudnessGraphFailed = false;
 
@@ -947,6 +948,9 @@ async function applyLoudnessForSong(song){
   ){
     const linearGain =
       gainDbToLinearGain(gainDb);
+
+    loudnessCurrentLinearGain =
+      linearGain;
 
     const now =
       loudnessAudioContext.currentTime;
@@ -2088,6 +2092,56 @@ function renderSong(song){
    再生安定化
 ========================= */
 
+/*
+  曲の頭が0以外の波形から始まる場合、
+  Web Audioの増幅後に「プツッ」と聞こえることがある。
+  再生開始直前に一度0へ落とし、約30msだけフェードインして
+  DC/波形の不連続によるクリックノイズを抑える。
+*/
+function prepareLoudnessFadeIn(){
+  if(
+    !loudnessGraphReady ||
+    !loudnessAudioContext ||
+    !loudnessAudioGainNode
+  ){
+    return;
+  }
+
+  const now =
+    loudnessAudioContext.currentTime;
+
+  loudnessAudioGainNode.gain
+    .cancelScheduledValues(now);
+
+  loudnessAudioGainNode.gain
+    .setValueAtTime(0, now);
+}
+
+function startLoudnessFadeIn(){
+  if(
+    !loudnessGraphReady ||
+    !loudnessAudioContext ||
+    !loudnessAudioGainNode
+  ){
+    return;
+  }
+
+  const now =
+    loudnessAudioContext.currentTime;
+
+  loudnessAudioGainNode.gain
+    .cancelScheduledValues(now);
+
+  loudnessAudioGainNode.gain
+    .setValueAtTime(0, now);
+
+  loudnessAudioGainNode.gain
+    .linearRampToValueAtTime(
+      Math.max(0.0001, loudnessCurrentLinearGain),
+      now + 0.03
+    );
+}
+
 function waitForPlayable(
   requestId,
   timeoutMs=3000
@@ -2188,7 +2242,11 @@ async function startPlayback(
   */
   try{
 
+    prepareLoudnessFadeIn();
+
     await audio.play();
+
+    startLoudnessFadeIn();
 
     return;
 
@@ -2226,7 +2284,11 @@ async function startPlayback(
 
   try{
 
+    prepareLoudnessFadeIn();
+
     await audio.play();
+
+    startLoudnessFadeIn();
 
   }
   catch(secondError){
