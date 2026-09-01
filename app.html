@@ -24,6 +24,7 @@ button,input{font:inherit}
 
 .app-shell{
   height:100vh;
+  height:100dvh;
   display:grid;
   grid-template-rows:64px 1fr 108px;
   background:radial-gradient(circle at 50% 0,#211b50,#07091a 55%,#050611);
@@ -371,7 +372,9 @@ button,input{font:inherit}
 @media(max-width:700px){
 
   .app-shell{
-    grid-template-rows:58px 1fr 126px;
+    /* iPhone Safariの下部ツールバーを除いた「見えている高さ」に合わせる */
+    height:100dvh;
+    grid-template-rows:58px minmax(0,1fr) calc(126px + env(safe-area-inset-bottom));
   }
 
   .brand{
@@ -385,7 +388,7 @@ button,input{font:inherit}
   .player{
     grid-template-columns:minmax(0,1fr);
     gap:8px;
-    padding:16px 10px 8px;
+    padding:16px 10px calc(8px + env(safe-area-inset-bottom));
   }
 
   .cover{
@@ -415,11 +418,11 @@ button,input{font:inherit}
 
   .more-menu{
     right:10px;
-    bottom:136px;
+    bottom:calc(136px + env(safe-area-inset-bottom));
   }
 
   .player-status{
-    bottom:140px;
+    bottom:calc(140px + env(safe-area-inset-bottom));
   }
 }
 </style>
