@@ -82,6 +82,36 @@ header{
   font-weight:800;
 }
 
+.artist-name-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+
+.artist-name-row .artist-name{
+  margin-top:0;
+}
+
+.pro-badge{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:5px 10px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  border:1px solid #9d67ff;
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.4px;
+  box-shadow:0 0 18px #6f38ff55;
+}
+
+.pro-badge.show{ display:inline-flex; }
+
 .bio{
   max-width:620px;
   margin:14px auto 0;
@@ -434,11 +464,14 @@ header{
       👤
     </div>
 
-    <div
-      class="artist-name"
-      id="artistName"
-    >
-      Artist
+    <div class="artist-name-row">
+      <div
+        class="artist-name"
+        id="artistName"
+      >
+        Artist
+      </div>
+      <span class="pro-badge" id="artistProBadge">PRO</span>
     </div>
 
     <div
@@ -592,6 +625,11 @@ const artistName =
     "artistName"
   );
 
+const artistProBadge =
+  document.getElementById(
+    "artistProBadge"
+  );
+
 const artistBio =
   document.getElementById(
     "artistBio"
@@ -699,7 +737,7 @@ async function loadArtistProfile(){
   await sb
   .from("profiles")
   .select(
-    "artist_name,avatar_url,bio,instagram_url,x_url,tiktok_url,youtube_url,website_url"
+    "artist_name,avatar_url,bio,instagram_url,x_url,tiktok_url,youtube_url,website_url,plan,pro_until,is_lifetime_pro"
   )
   .eq(
     "user_id",
@@ -741,6 +779,22 @@ async function loadArtistProfile(){
   artistName.textContent =
     profile.artist_name ||
     "Unknown Artist";
+
+
+  const isPro =
+    profile.is_lifetime_pro === true ||
+    (
+      String(profile.plan || "").toLowerCase() === "pro" &&
+      (
+        !profile.pro_until ||
+        new Date(profile.pro_until).getTime() > Date.now()
+      )
+    );
+
+  artistProBadge.classList.toggle(
+    "show",
+    isPro
+  );
 
 
   renderAvatar(
