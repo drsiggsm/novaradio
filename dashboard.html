@@ -1342,6 +1342,33 @@ input[type="file"]{
 
     </section>
 
+
+    <!-- TEMPORARY: 既存曲のloudness_gain_dbを埋めたら削除してOK -->
+    <section class="card" id="loudnessBackfillCard">
+
+      <h2>🎚️ 既存曲の音量解析（臨時）</h2>
+
+      <div class="user">
+        音量解析機能を追加する前にアップロードした曲だけを対象に、
+        <strong>loudness_gain_db が未設定（NULL）の曲</strong>を1曲ずつ自動解析します。<br>
+        新しくアップロードする曲はすでに自動解析されるため、このボタンは今回の作業が終わったら削除してOKです。
+      </div>
+
+      <button
+        class="main-button"
+        id="backfillLoudness"
+        type="button"
+      >
+        🎚️ 既存曲の音量を解析する
+      </button>
+
+      <div
+        id="backfillLoudnessStatus"
+        class="status"
+      ></div>
+
+    </section>
+
     <section class="card">
 
       <h2>📚 あなたの曲</h2>
@@ -1801,6 +1828,12 @@ const uploadLockMessage =
 
 const songList =
   document.getElementById("songList");
+
+const backfillLoudnessButton =
+  document.getElementById("backfillLoudness");
+
+const backfillLoudnessStatus =
+  document.getElementById("backfillLoudnessStatus");
 
 const coverFile =
   document.getElementById("coverFile");
@@ -3927,6 +3960,346 @@ async function analyzeLoudnessGain(file){
     }
 
   }
+
+}
+
+
+
+/* =========================
+   TEMPORARY LOUDNESS BACKFILL
+   既存の loudness_gain_db = NULL の自分の曲だけを解析。
+   全曲の値が埋まったら、このブロックと臨時ボタンは削除してOK。
+========================= */
+function showBackfillLoudnessStatus(
+  message,
+  isError=false
+){
+
+  if(!backfillLoudnessStatus){
+    return;
+  }
+
+  backfillLoudnessStatus.textContent =
+    message;
+
+  backfillLoudnessStatus.style.display =
+    "block";
+
+  backfillLoudnessStatus.classList.toggle(
+    "error",
+    !!isError
+  );
+
+}
+
+
+async function fileFromExistingSong(
+  song
+){
+
+  const audioUrl =
+    String(
+      song?.audio_url ||
+      ""
+    );
+
+  if(!audioUrl){
+    throw new Error(
+      "音源URLがありません。"
+    );
+  }
+
+  const response =
+    await fetch(
+      audioUrl,
+      {
+        mode:"cors",
+        cache:"force-cache"
+      }
+    );
+
+  if(!response.ok){
+    throw new Error(
+      `音源取得に失敗しました（HTTP ${response.status}）。`
+    );
+  }
+
+  const blob =
+    await response.blob();
+
+  if(!blob.size){
+    throw new Error(
+      "音源データが空でした。"
+    );
+  }
+
+  const mime =
+    blob.type ||
+    "audio/mpeg";
+
+  const extension =
+    mime.includes("wav")
+      ? "wav"
+      : "mp3";
+
+  return new File(
+    [blob],
+    `existing_${song.id}.${extension}`,
+    {
+      type:mime,
+      lastModified:Date.now()
+    }
+  );
+
+}
+
+
+async function backfillExistingLoudness(){
+
+  if(!currentSession){
+
+    showBackfillLoudnessStatus(
+      "ログイン情報を確認できません。",
+      true
+    );
+
+    return;
+  }
+
+  if(!backfillLoudnessButton){
+    return;
+  }
+
+  const confirmed =
+    confirm(
+      "loudness_gain_db が未設定（NULL）の自分の曲だけを音量解析します。実行しますか？"
+    );
+
+  if(!confirmed){
+    return;
+  }
+
+  backfillLoudnessButton.disabled =
+    true;
+
+  backfillLoudnessButton.textContent =
+    "対象曲を確認しています…";
+
+  showBackfillLoudnessStatus(
+    "既存曲を確認しています…"
+  );
+
+  try{
+
+    const {
+      data:songsToAnalyze,
+      error:loadError
+    } =
+    await sb
+    .from("songs")
+    .select(
+      "id,title,audio_url,loudness_gain_db"
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .is(
+      "loudness_gain_db",
+      null
+    )
+    .order(
+      "created_at",
+      {
+        ascending:true
+      }
+    );
+
+    if(loadError){
+      throw loadError;
+    }
+
+    if(
+      !songsToAnalyze ||
+      !songsToAnalyze.length
+    ){
+
+      showBackfillLoudnessStatus(
+        "✅ 未解析の曲はありません。すべての曲に音量補正値が入っています。"
+      );
+
+      backfillLoudnessButton.textContent =
+        "✅ 解析済み";
+
+      return;
+    }
+
+    const total =
+      songsToAnalyze.length;
+
+    let completed =
+      0;
+
+    const failures =
+      [];
+
+    for(
+      let index = 0;
+      index < songsToAnalyze.length;
+      index++
+    ){
+
+      const song =
+        songsToAnalyze[index];
+
+      const songTitle =
+        song.title ||
+        `曲ID ${song.id}`;
+
+      backfillLoudnessButton.textContent =
+        `解析中 ${index + 1} / ${total}`;
+
+      showBackfillLoudnessStatus(
+        `🎧 ${index + 1} / ${total}「${songTitle}」の音源を読み込んでいます…`
+      );
+
+      try{
+
+        const file =
+          await fileFromExistingSong(
+            song
+          );
+
+        showBackfillLoudnessStatus(
+          `🔊 ${index + 1} / ${total}「${songTitle}」の音量を解析しています…`
+        );
+
+        const gainDb =
+          await analyzeLoudnessGain(
+            file
+          );
+
+        const {
+          error:updateError
+        } =
+        await sb
+        .from("songs")
+        .update({
+          loudness_gain_db:
+            gainDb
+        })
+        .eq(
+          "id",
+          song.id
+        )
+        .eq(
+          "user_id",
+          currentSession.user.id
+        )
+        .is(
+          "loudness_gain_db",
+          null
+        );
+
+        if(updateError){
+          throw updateError;
+        }
+
+        completed++;
+
+        showBackfillLoudnessStatus(
+          `✅ ${index + 1} / ${total}「${songTitle}」→ 補正 ${gainDb >= 0 ? "+" : ""}${gainDb.toFixed(1)} dB`
+        );
+
+      }
+      catch(songError){
+
+        console.error(
+          "Existing loudness analysis failed:",
+          song.id,
+          songError
+        );
+
+        failures.push(
+          `${songTitle}: ${songError?.message || songError}`
+        );
+
+      }
+
+      /*
+        AudioContextの生成・音源decodeを連続で行うため、
+        曲ごとに少しUIへ制御を返す。
+      */
+      await new Promise(
+        resolve =>
+          setTimeout(
+            resolve,
+            120
+          )
+      );
+
+    }
+
+    await loadMySongs();
+
+    if(failures.length){
+
+      showBackfillLoudnessStatus(
+        `⚠️ ${completed} / ${total}曲の解析が完了しました。${failures.length}曲は失敗しました。\n` +
+        failures.join("\n"),
+        true
+      );
+
+      backfillLoudnessButton.disabled =
+        false;
+
+      backfillLoudnessButton.textContent =
+        "🎚️ 失敗した曲をもう一度解析する";
+
+      return;
+    }
+
+    showBackfillLoudnessStatus(
+      `✅ 完了！ ${completed}曲すべての loudness_gain_db を保存しました。SupabaseのsongsテーブルでNULLが消えたか確認してください。`
+    );
+
+    backfillLoudnessButton.textContent =
+      "✅ 既存曲の解析完了";
+
+  }
+  catch(error){
+
+    console.error(
+      "Loudness backfill error:",
+      error
+    );
+
+    showBackfillLoudnessStatus(
+      "既存曲の音量解析に失敗しました：" +
+      (
+        error?.message ||
+        error
+      ),
+      true
+    );
+
+    backfillLoudnessButton.disabled =
+      false;
+
+    backfillLoudnessButton.textContent =
+      "🎚️ 既存曲の音量を解析する";
+
+  }
+
+}
+
+
+if(backfillLoudnessButton){
+
+  backfillLoudnessButton.addEventListener(
+    "click",
+    backfillExistingLoudness
+  );
 
 }
 
