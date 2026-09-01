@@ -647,6 +647,7 @@ button,input{font:inherit}
 <audio
   id="audio"
   preload="auto"
+  crossorigin="anonymous"
 ></audio>
 
 
@@ -690,6 +691,7 @@ const audio =
 
 const fullAudio = new Audio();
 fullAudio.preload = "auto";
+fullAudio.crossOrigin = "anonymous";
 
 
 /* =========================
@@ -697,38 +699,200 @@ fullAudio.preload = "auto";
    songs.loudness_gain_db の補正値を
    共通プレイヤーへ反映する。
 
-   HTMLMediaElement.volume は 1.0 を超えられないため、
-   0dB時を 0.45 にして、+8dB までの持ち上げ余地を確保する。
-   これにより Web Audio のCORS制約を避けつつ、
-   Safariを含めて安全に曲間差を抑える。
+   Web Audio API の GainNode で 1.0 を超える増幅を行い、
+   DynamicsCompressorNode をリミッターとして後段に置く。
+   これにより、小さすぎる曲を持ち上げながら
+   出力ピークの暴れ・音割れを抑える。
+
+   AudioContext がブラウザの自動再生制限などで使えない場合は、
+   従来どおり HTMLMediaElement.volume へ安全にフォールバックする。
 ========================= */
-const NORMALIZATION_BASE_VOLUME = 0.45;
-const NORMALIZATION_MIN_VOLUME = 0.08;
-const NORMALIZATION_MAX_VOLUME = 1.0;
+const NORMALIZATION_MIN_GAIN_DB = -12;
+const NORMALIZATION_MAX_GAIN_DB = 12;
+
+/* Web Audio が使えない時だけ使う安全なフォールバック */
+const NORMALIZATION_FALLBACK_BASE_VOLUME = 0.45;
+const NORMALIZATION_FALLBACK_MIN_VOLUME = 0.08;
+const NORMALIZATION_FALLBACK_MAX_VOLUME = 1.0;
+
 const loudnessGainCache = new Map();
+
+let loudnessAudioContext = null;
+let loudnessLimiter = null;
+let loudnessAudioSource = null;
+let loudnessFullAudioSource = null;
+let loudnessAudioGainNode = null;
+let loudnessFullAudioGainNode = null;
+let loudnessGraphReady = false;
+let loudnessGraphFailed = false;
 
 function clampNumber(value,min,max){
   return Math.max(min,Math.min(max,value));
 }
 
-function gainDbToPlayerVolume(gainDb){
-  const safeGainDb = clampNumber(Number(gainDb) || 0,-8,8);
-  const linearGain = Math.pow(10,safeGainDb / 20);
+function normalizeGainDb(value){
   return clampNumber(
-    NORMALIZATION_BASE_VOLUME * linearGain,
-    NORMALIZATION_MIN_VOLUME,
-    NORMALIZATION_MAX_VOLUME
+    Number(value) || 0,
+    NORMALIZATION_MIN_GAIN_DB,
+    NORMALIZATION_MAX_GAIN_DB
   );
+}
+
+function gainDbToLinearGain(gainDb){
+  return Math.pow(
+    10,
+    normalizeGainDb(gainDb) / 20
+  );
+}
+
+function gainDbToFallbackVolume(gainDb){
+  const linearGain = gainDbToLinearGain(gainDb);
+
+  return clampNumber(
+    NORMALIZATION_FALLBACK_BASE_VOLUME * linearGain,
+    NORMALIZATION_FALLBACK_MIN_VOLUME,
+    NORMALIZATION_FALLBACK_MAX_VOLUME
+  );
+}
+
+async function ensureLoudnessAudioGraph(){
+  if(loudnessGraphReady){
+    if(
+      loudnessAudioContext &&
+      loudnessAudioContext.state === "suspended"
+    ){
+      try{
+        await loudnessAudioContext.resume();
+      }
+      catch(error){
+        console.warn("AudioContext resume error:",error);
+      }
+    }
+
+    return (
+      loudnessAudioContext &&
+      loudnessAudioContext.state === "running"
+    );
+  }
+
+  if(loudnessGraphFailed){
+    return false;
+  }
+
+  try{
+    const AudioContextClass =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+    if(!AudioContextClass){
+      loudnessGraphFailed = true;
+      return false;
+    }
+
+    /*
+      先にAudioContextだけ開始する。
+      ユーザー操作扱いにならずresumeできない環境では、
+      MediaElementSourceへ接続せず通常audioの音を残す。
+    */
+    if(!loudnessAudioContext){
+      loudnessAudioContext =
+        new AudioContextClass();
+    }
+
+    if(
+      loudnessAudioContext.state === "suspended"
+    ){
+      try{
+        await loudnessAudioContext.resume();
+      }
+      catch(error){
+        console.warn("AudioContext start blocked:",error);
+        return false;
+      }
+    }
+
+    if(
+      loudnessAudioContext.state !== "running"
+    ){
+      return false;
+    }
+
+    loudnessAudioGainNode =
+      loudnessAudioContext.createGain();
+
+    loudnessFullAudioGainNode =
+      loudnessAudioContext.createGain();
+
+    loudnessLimiter =
+      loudnessAudioContext.createDynamicsCompressor();
+
+    /*
+      ほぼリミッターとして使う設定。
+      0dBFS直前から強く圧縮し、増幅時のピークを抑える。
+    */
+    loudnessLimiter.threshold.value = -1.0;
+    loudnessLimiter.knee.value = 0;
+    loudnessLimiter.ratio.value = 20;
+    loudnessLimiter.attack.value = 0.003;
+    loudnessLimiter.release.value = 0.12;
+
+    loudnessAudioSource =
+      loudnessAudioContext.createMediaElementSource(
+        audio
+      );
+
+    loudnessFullAudioSource =
+      loudnessAudioContext.createMediaElementSource(
+        fullAudio
+      );
+
+    loudnessAudioSource
+      .connect(loudnessAudioGainNode)
+      .connect(loudnessLimiter);
+
+    loudnessFullAudioSource
+      .connect(loudnessFullAudioGainNode)
+      .connect(loudnessLimiter);
+
+    loudnessLimiter.connect(
+      loudnessAudioContext.destination
+    );
+
+    /*
+      Web Audio側でゲインを管理するので、
+      element自体のvolumeは100%にする。
+    */
+    audio.volume = 1;
+    fullAudio.volume = 1;
+
+    loudnessGraphReady = true;
+    return true;
+  }
+  catch(error){
+    console.warn(
+      "Web Audio loudness setup failed; using fallback:",
+      error
+    );
+
+    /*
+      createMediaElementSource後の例外など、
+      中途半端な状態を再利用しない。
+    */
+    loudnessGraphFailed = true;
+    return false;
+  }
 }
 
 async function resolveSongLoudnessGain(song){
   if(!song) return 0;
 
   const directValue = Number(song.loudness_gain_db);
-  if(song.loudness_gain_db !== null &&
-     song.loudness_gain_db !== undefined &&
-     Number.isFinite(directValue)){
-    return clampNumber(directValue,-8,8);
+  if(
+    song.loudness_gain_db !== null &&
+    song.loudness_gain_db !== undefined &&
+    Number.isFinite(directValue)
+  ){
+    return normalizeGainDb(directValue);
   }
 
   const songId = Number(song.id);
@@ -752,10 +916,14 @@ async function resolveSongLoudnessGain(song){
     }
 
     const value = Number(data?.loudness_gain_db);
-    const gainDb = Number.isFinite(value) ? clampNumber(value,-8,8) : 0;
+    const gainDb = Number.isFinite(value)
+      ? normalizeGainDb(value)
+      : 0;
 
     loudnessGainCache.set(songId,gainDb);
-    song.loudness_gain_db = data?.loudness_gain_db ?? null;
+    song.loudness_gain_db =
+      data?.loudness_gain_db ?? null;
+
     return gainDb;
   }
   catch(error){
@@ -766,14 +934,91 @@ async function resolveSongLoudnessGain(song){
 }
 
 async function applyLoudnessForSong(song){
-  const gainDb = await resolveSongLoudnessGain(song);
-  const volume = gainDbToPlayerVolume(gainDb);
+  const gainDb =
+    await resolveSongLoudnessGain(song);
+
+  const webAudioReady =
+    await ensureLoudnessAudioGraph();
+
+  if(
+    webAudioReady &&
+    loudnessAudioGainNode &&
+    loudnessFullAudioGainNode
+  ){
+    const linearGain =
+      gainDbToLinearGain(gainDb);
+
+    const now =
+      loudnessAudioContext.currentTime;
+
+    /*
+      曲切替時の急な音量変化でクリックノイズが出ないよう
+      ごく短くスムージングする。
+    */
+    loudnessAudioGainNode.gain
+      .cancelScheduledValues(now);
+
+    loudnessFullAudioGainNode.gain
+      .cancelScheduledValues(now);
+
+    loudnessAudioGainNode.gain
+      .setTargetAtTime(
+        linearGain,
+        now,
+        0.015
+      );
+
+    loudnessFullAudioGainNode.gain
+      .setTargetAtTime(
+        linearGain,
+        now,
+        0.015
+      );
+
+    audio.volume = 1;
+    fullAudio.volume = 1;
+
+    return {
+      gainDb,
+      linearGain,
+      mode:"webaudio"
+    };
+  }
+
+  /*
+    AudioContextが使えない環境では従来方式。
+    1.0を超えないため増幅量は限定されるが、
+    再生不能にはしない。
+  */
+  const volume =
+    gainDbToFallbackVolume(gainDb);
 
   audio.volume = volume;
   fullAudio.volume = volume;
 
-  return {gainDb,volume};
+  return {
+    gainDb,
+    volume,
+    mode:"fallback"
+  };
 }
+
+/*
+  親プレイヤーを直接操作した場合は、
+  Safari/iOS等のAudioContext再開チャンスとして使う。
+*/
+document.addEventListener(
+  "pointerdown",
+  ()=>{
+    if(
+      loudnessAudioContext &&
+      loudnessAudioContext.state === "suspended"
+    ){
+      loudnessAudioContext.resume().catch(()=>{});
+    }
+  },
+  {passive:true}
+);
 
 const playPause =
   document.getElementById("playPause");
