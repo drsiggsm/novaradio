@@ -876,6 +876,14 @@ input[type="file"]{
         ← NovaRadioに戻る
       </button>
 
+      <button
+        class="main-button back"
+        id="accountSettings"
+        type="button"
+      >
+        ⚙️ アカウント設定
+      </button>
+
       <div
         class="pro-manage-area"
         id="proManageArea"
@@ -5639,6 +5647,18 @@ document
 
     location.href =
       "home.html";
+
+  }
+);
+
+document
+.getElementById("accountSettings")
+.addEventListener(
+  "click",
+  ()=>{
+
+    location.href =
+      "mypage.html";
 
   }
 );
