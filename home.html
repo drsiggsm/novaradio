@@ -350,6 +350,29 @@ label{
   font-weight:800;
 }
 
+.pro-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:7px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.4px;
+  vertical-align:middle;
+  box-shadow:0 4px 14px #6425ff33;
+}
+
+.now-artist .pro-badge,
+.fixed-artist .pro-badge{
+  margin-left:5px;
+  transform:translateY(-1px);
+}
+
 .artist-bio-preview{
   margin-top:7px;
   color:#858baa;
@@ -2680,6 +2703,33 @@ async function playSong(
     currentSong =
       song;
 
+  /*
+    PROバッジ用。
+    Radioの曲データには課金情報を持たせず、
+    再生時にそのアーティストのprofilesだけ確認する。
+  */
+  if(
+    currentSong &&
+    currentSong.user_id
+  ){
+    const {
+      data:artistPlanProfile
+    } =
+    await sb
+    .from("profiles")
+    .select("plan,pro_until,is_lifetime_pro")
+    .eq(
+      "user_id",
+      currentSong.user_id
+    )
+    .maybeSingle();
+
+    currentSong._pro_profile =
+      artistPlanProfile || null;
+  }
+
+
+
     updateNavigationButtons();
 
     return;
@@ -2799,7 +2849,7 @@ async function playSong(
       ${escapeHtml(
         song.artist ||
         "Unknown Artist"
-      )}
+      )}${proBadgeHtml(currentSong?._pro_profile)}
     </div>
 
     <div class="artist-meta">
@@ -3227,9 +3277,9 @@ function playSongInFixedPlayer(
     "Untitled";
 
 
-  fixedArtist.textContent =
-    song.artist ||
-    "Unknown Artist";
+  fixedArtist.innerHTML =
+    escapeHtml(song.artist ||
+    "Unknown Artist") + proBadgeHtml(currentSong?._pro_profile);
 
 
   const currentSrc =
@@ -5472,7 +5522,7 @@ async function searchArtist(){
       "profiles"
     )
     .select(
-      "user_id,artist_name,avatar_url,bio,country"
+      "user_id,artist_name,avatar_url,bio,country,plan,pro_until,is_lifetime_pro"
     )
     .ilike(
       "artist_name",
@@ -5599,7 +5649,7 @@ async function searchArtist(){
               ${escapeHtml(
                 profile.artist_name ||
                 "Unknown Artist"
-              )}
+              )}${proBadgeHtml(profile)}
 
             </div>
 
@@ -5652,6 +5702,46 @@ async function searchArtist(){
 /* =========================
    HELPERS
 ========================= */
+
+function isActiveProProfile(profile){
+
+  if(!profile){
+    return false;
+  }
+
+  if(profile.is_lifetime_pro === true){
+    return true;
+  }
+
+  if(
+    String(profile.plan || "").toLowerCase() !== "pro"
+  ){
+    return false;
+  }
+
+  if(!profile.pro_until){
+    return false;
+  }
+
+  const until =
+    new Date(profile.pro_until).getTime();
+
+  return (
+    Number.isFinite(until) &&
+    until > Date.now()
+  );
+
+}
+
+
+function proBadgeHtml(profile){
+
+  return isActiveProProfile(profile)
+    ? `<span class="pro-badge" title="NovaRadio PRO">PRO</span>`
+    : "";
+
+}
+
 
 function safeHttpUrl(
   value
