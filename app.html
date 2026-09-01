@@ -81,6 +81,157 @@ button,input{font:inherit}
 }
 
 /* =========================
+   新曲通知
+========================= */
+
+.notification-wrap{
+  position:relative;
+}
+
+.notification-btn{
+  position:relative;
+  width:42px;
+  height:42px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #343b67;
+  border-radius:12px;
+  background:#11152a;
+  color:#fff;
+  font-size:19px;
+  cursor:pointer;
+}
+
+.notification-btn:hover{
+  border-color:#7b25ff;
+}
+
+.notification-badge{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  min-width:19px;
+  height:19px;
+  padding:0 5px;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:#ff3b6b;
+  color:#fff;
+  border:2px solid #090c1b;
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+}
+
+.notification-badge.show{
+  display:flex;
+}
+
+.notification-panel{
+  position:fixed;
+  top:58px;
+  right:18px;
+  width:min(430px,calc(100vw - 28px));
+  max-height:min(620px,72vh);
+  overflow:auto;
+  display:none;
+  padding:12px;
+  border:1px solid #343b67;
+  border-radius:18px;
+  background:#101328f7;
+  box-shadow:0 20px 70px #000c;
+  backdrop-filter:blur(18px);
+  z-index:1400;
+}
+
+.notification-panel.show{
+  display:block;
+}
+
+.notification-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:4px 4px 12px;
+}
+
+.notification-title{
+  font-size:17px;
+  font-weight:900;
+}
+
+.notification-close{
+  border:0;
+  background:transparent;
+  color:#a8adc8;
+  font-size:20px;
+  cursor:pointer;
+}
+
+.notification-list{
+  display:grid;
+  gap:9px;
+}
+
+.notification-item{
+  padding:13px;
+  border:1px solid #30355e;
+  border-radius:14px;
+  background:#080b1d;
+}
+
+.notification-artist{
+  color:#b8bdd8;
+  font-size:12px;
+  font-weight:800;
+}
+
+.notification-song{
+  margin-top:5px;
+  font-size:15px;
+  font-weight:900;
+  overflow-wrap:anywhere;
+}
+
+.notification-date{
+  margin-top:5px;
+  color:#777d9d;
+  font-size:11px;
+}
+
+.notification-play{
+  width:100%;
+  margin-top:10px;
+  padding:9px 12px;
+  border:1px solid #4b5e9d;
+  border-radius:10px;
+  background:#17233f;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.notification-play:hover{
+  border-color:#7b25ff;
+}
+
+.notification-empty{
+  padding:24px 14px;
+  text-align:center;
+  color:#969bb9;
+  border:1px solid #30355e;
+  border-radius:14px;
+  background:#080b1d;
+  line-height:1.7;
+}
+
+
+/* =========================
    共通プレイヤー
 ========================= */
 
@@ -385,6 +536,17 @@ button,input{font:inherit}
     padding:8px 10px;
   }
 
+  .notification-btn{
+    width:38px;
+    height:38px;
+  }
+
+  .notification-panel{
+    top:54px;
+    right:10px;
+    max-height:68vh;
+  }
+
   .player{
     grid-template-columns:minmax(0,1fr);
     gap:8px;
@@ -439,6 +601,26 @@ button,input{font:inherit}
     </div>
 
     <div class="nav-buttons">
+
+      <div
+        class="notification-wrap"
+        id="notificationWrap"
+        style="display:none"
+      >
+        <button
+          class="notification-btn"
+          id="notificationButton"
+          type="button"
+          title="新曲通知"
+          aria-label="新曲通知"
+        >
+          🔔
+          <span
+            class="notification-badge"
+            id="notificationBadge"
+          ></span>
+        </button>
+      </div>
 
       <button
         class="nav-btn active"
@@ -586,6 +768,36 @@ button,input{font:inherit}
 
 
 <div
+  class="notification-panel"
+  id="notificationPanel"
+>
+  <div class="notification-head">
+    <div class="notification-title">
+      🔔 新曲通知
+    </div>
+
+    <button
+      class="notification-close"
+      id="notificationClose"
+      type="button"
+      aria-label="通知を閉じる"
+    >
+      ×
+    </button>
+  </div>
+
+  <div
+    class="notification-list"
+    id="notificationList"
+  >
+    <div class="notification-empty">
+      通知を読み込んでいます…
+    </div>
+  </div>
+</div>
+
+
+<div
   class="more-menu"
   id="moreMenu"
 >
@@ -688,6 +900,24 @@ const navHome =
 
 const navMyPage =
   document.getElementById("navMyPage");
+
+const notificationWrap =
+  document.getElementById("notificationWrap");
+
+const notificationButton =
+  document.getElementById("notificationButton");
+
+const notificationBadge =
+  document.getElementById("notificationBadge");
+
+const notificationPanel =
+  document.getElementById("notificationPanel");
+
+const notificationClose =
+  document.getElementById("notificationClose");
+
+const notificationList =
+  document.getElementById("notificationList");
 
 const audio =
   document.getElementById("audio");
@@ -1676,6 +1906,20 @@ function escapeAttribute(value){
 }
 
 
+function escapeHtml(value){
+
+  return String(
+    value ?? ""
+  )
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+
+}
+
+
 function closeMoreMenu(){
 
   moreMenu.classList.remove(
@@ -1717,6 +1961,520 @@ async function initSession(){
   }
 
 }
+
+
+/* =========================
+   フォロー中アーティストの新曲通知
+========================= */
+
+let notificationSongs = [];
+
+function renderNotificationBadge(count){
+
+  const value =
+    Math.max(
+      0,
+      Number(count) || 0
+    );
+
+  if(value > 0){
+
+    notificationBadge.textContent =
+      value > 99
+        ? "99+"
+        : String(value);
+
+    notificationBadge.classList.add(
+      "show"
+    );
+
+  }
+  else{
+
+    notificationBadge.textContent =
+      "";
+
+    notificationBadge.classList.remove(
+      "show"
+    );
+
+  }
+
+}
+
+
+async function ensureNotificationStatus(){
+
+  if(!currentSession){
+    return null;
+  }
+
+  const userId =
+    currentSession.user.id;
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .from("notification_status")
+  .select("last_checked_at")
+  .eq("user_id",userId)
+  .maybeSingle();
+
+  if(error){
+    throw error;
+  }
+
+  if(data?.last_checked_at){
+    return data.last_checked_at;
+  }
+
+  /*
+    初めて通知機能を使う時点をスタート地点にする。
+    フォロー以前の古い曲を大量に「新着」にしない。
+  */
+  const now =
+    new Date().toISOString();
+
+  const {
+    error:insertError
+  } =
+  await sb
+  .from("notification_status")
+  .insert({
+    user_id:userId,
+    last_checked_at:now
+  });
+
+  if(insertError){
+    throw insertError;
+  }
+
+  return now;
+
+}
+
+
+async function fetchNewReleaseNotifications(){
+
+  if(!currentSession){
+    return [];
+  }
+
+  const since =
+    await ensureNotificationStatus();
+
+  if(!since){
+    return [];
+  }
+
+  const {
+    data:follows,
+    error:followsError
+  } =
+  await sb
+  .from("artist_follows")
+  .select("artist_user_id")
+  .eq(
+    "follower_user_id",
+    currentSession.user.id
+  );
+
+  if(followsError){
+    throw followsError;
+  }
+
+  const artistIds =
+    [
+      ...new Set(
+        (follows || [])
+        .map(row=>row.artist_user_id)
+        .filter(Boolean)
+      )
+    ];
+
+  if(!artistIds.length){
+    return [];
+  }
+
+  const {
+    data:songs,
+    error:songsError
+  } =
+  await sb
+  .from("songs")
+  .select(
+    "id,user_id,title,audio_url,cover_url,genre,mood,highlight_start,loudness_gain_db,created_at"
+  )
+  .in(
+    "user_id",
+    artistIds
+  )
+  .gt(
+    "created_at",
+    since
+  )
+  .order(
+    "created_at",
+    {ascending:false}
+  )
+  .limit(50);
+
+  if(songsError){
+    throw songsError;
+  }
+
+  if(!songs?.length){
+    return [];
+  }
+
+  const profileIds =
+    [
+      ...new Set(
+        songs
+        .map(song=>song.user_id)
+        .filter(Boolean)
+      )
+    ];
+
+  const {
+    data:profiles,
+    error:profilesError
+  } =
+  await sb
+  .from("profiles")
+  .select("user_id,artist_name")
+  .in(
+    "user_id",
+    profileIds
+  );
+
+  if(profilesError){
+    throw profilesError;
+  }
+
+  const artistNameMap =
+    new Map(
+      (profiles || []).map(
+        profile=>[
+          String(profile.user_id),
+          profile.artist_name || "Unknown Artist"
+        ]
+      )
+    );
+
+  return songs.map(
+    song=>({
+      ...song,
+      artist:
+        artistNameMap.get(
+          String(song.user_id)
+        ) ||
+        "Unknown Artist"
+    })
+  );
+
+}
+
+
+async function refreshNotificationBadge(){
+
+  if(!currentSession){
+
+    notificationWrap.style.display =
+      "none";
+
+    renderNotificationBadge(0);
+
+    return;
+  }
+
+  notificationWrap.style.display =
+    "block";
+
+  try{
+
+    notificationSongs =
+      await fetchNewReleaseNotifications();
+
+    renderNotificationBadge(
+      notificationSongs.length
+    );
+
+  }
+  catch(error){
+
+    console.warn(
+      "Notification badge error:",
+      error
+    );
+
+  }
+
+}
+
+
+function formatNotificationDate(value){
+
+  const date =
+    new Date(value);
+
+  if(
+    !Number.isFinite(
+      date.getTime()
+    )
+  ){
+    return "";
+  }
+
+  return date.toLocaleString(
+    "ja-JP",
+    {
+      month:"numeric",
+      day:"numeric",
+      hour:"2-digit",
+      minute:"2-digit"
+    }
+  );
+
+}
+
+
+function renderNotifications(){
+
+  if(!notificationSongs.length){
+
+    notificationList.innerHTML =
+      `<div class="notification-empty">
+        新しい通知はありません。<br>
+        フォロー中のアーティストが新曲を公開すると、ここに表示されます。
+      </div>`;
+
+    return;
+  }
+
+  notificationList.innerHTML =
+    "";
+
+  notificationSongs.forEach(
+    song=>{
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+      item.className =
+        "notification-item";
+
+      item.innerHTML =
+        `<div class="notification-artist">
+          🎵 ${escapeHtml(song.artist)} が新曲を公開しました
+        </div>
+
+        <div class="notification-song">
+          ${escapeHtml(song.title || "Untitled")}
+        </div>
+
+        <div class="notification-date">
+          ${escapeHtml(
+            formatNotificationDate(
+              song.created_at
+            )
+          )}
+        </div>
+
+        <button
+          class="notification-play"
+          type="button"
+        >
+          ▶ この曲を聴く
+        </button>`;
+
+      const playButton =
+        item.querySelector(
+          ".notification-play"
+        );
+
+      playButton.addEventListener(
+        "click",
+        async ()=>{
+
+          notificationPanel.classList.remove(
+            "show"
+          );
+
+          /*
+            通知から直接フル再生。
+            Radioの選曲条件には混ぜず、この1曲だけを再生する。
+          */
+          state.highlight =
+            false;
+
+          state.fullTrack =
+            false;
+
+          updateModeButtons(
+            false
+          );
+
+          await playSong(
+            song,
+            [song],
+            0,
+            true
+          );
+
+        }
+      );
+
+      notificationList.appendChild(
+        item
+      );
+
+    }
+  );
+
+}
+
+
+async function markNotificationsChecked(){
+
+  if(!currentSession){
+    return;
+  }
+
+  const now =
+    new Date().toISOString();
+
+  const {
+    error
+  } =
+  await sb
+  .from("notification_status")
+  .update({
+    last_checked_at:now,
+    updated_at:now
+  })
+  .eq(
+    "user_id",
+    currentSession.user.id
+  );
+
+  if(error){
+    throw error;
+  }
+
+  renderNotificationBadge(0);
+
+}
+
+
+async function openNotifications(){
+
+  if(!currentSession){
+    return;
+  }
+
+  notificationPanel.classList.add(
+    "show"
+  );
+
+  notificationList.innerHTML =
+    `<div class="notification-empty">
+      通知を読み込んでいます…
+    </div>`;
+
+  try{
+
+    notificationSongs =
+      await fetchNewReleaseNotifications();
+
+    renderNotifications();
+
+    await markNotificationsChecked();
+
+  }
+  catch(error){
+
+    console.error(
+      "Notification load error:",
+      error
+    );
+
+    notificationList.innerHTML =
+      `<div class="notification-empty">
+        通知を取得できませんでした。<br>
+        もう一度お試しください。
+      </div>`;
+
+  }
+
+}
+
+
+notificationButton.addEventListener(
+  "click",
+  event=>{
+
+    event.stopPropagation();
+
+    if(
+      notificationPanel.classList.contains(
+        "show"
+      )
+    ){
+
+      notificationPanel.classList.remove(
+        "show"
+      );
+
+      return;
+    }
+
+    openNotifications();
+
+  }
+);
+
+
+notificationClose.addEventListener(
+  "click",
+  ()=>{
+
+    notificationPanel.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+document.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      notificationPanel.classList.contains(
+        "show"
+      ) &&
+      !notificationPanel.contains(
+        event.target
+      ) &&
+      !notificationButton.contains(
+        event.target
+      )
+    ){
+
+      notificationPanel.classList.remove(
+        "show"
+      );
+
+    }
+
+  }
+);
 
 
 /* =========================
@@ -4519,6 +5277,17 @@ window.addEventListener(
   updateModeButtons();
 
   updateProgressUI();
+
+  await refreshNotificationBadge();
+
+  /*
+    NovaRadioを開いたままでも新曲に気づけるよう、
+    1分ごとに軽く新着だけ確認する。
+  */
+  setInterval(
+    refreshNotificationBadge,
+    60000
+  );
 
 })();
 </script>
