@@ -691,6 +691,90 @@ const audio =
 const fullAudio = new Audio();
 fullAudio.preload = "auto";
 
+
+/* =========================
+   LOUDNESS NORMALIZATION
+   songs.loudness_gain_db の補正値を
+   共通プレイヤーへ反映する。
+
+   HTMLMediaElement.volume は 1.0 を超えられないため、
+   0dB時を 0.45 にして、+8dB までの持ち上げ余地を確保する。
+   これにより Web Audio のCORS制約を避けつつ、
+   Safariを含めて安全に曲間差を抑える。
+========================= */
+const NORMALIZATION_BASE_VOLUME = 0.45;
+const NORMALIZATION_MIN_VOLUME = 0.08;
+const NORMALIZATION_MAX_VOLUME = 1.0;
+const loudnessGainCache = new Map();
+
+function clampNumber(value,min,max){
+  return Math.max(min,Math.min(max,value));
+}
+
+function gainDbToPlayerVolume(gainDb){
+  const safeGainDb = clampNumber(Number(gainDb) || 0,-8,8);
+  const linearGain = Math.pow(10,safeGainDb / 20);
+  return clampNumber(
+    NORMALIZATION_BASE_VOLUME * linearGain,
+    NORMALIZATION_MIN_VOLUME,
+    NORMALIZATION_MAX_VOLUME
+  );
+}
+
+async function resolveSongLoudnessGain(song){
+  if(!song) return 0;
+
+  const directValue = Number(song.loudness_gain_db);
+  if(song.loudness_gain_db !== null &&
+     song.loudness_gain_db !== undefined &&
+     Number.isFinite(directValue)){
+    return clampNumber(directValue,-8,8);
+  }
+
+  const songId = Number(song.id);
+  if(!Number.isFinite(songId)) return 0;
+
+  if(loudnessGainCache.has(songId)){
+    return loudnessGainCache.get(songId);
+  }
+
+  try{
+    const {data,error} = await sb
+      .from("songs")
+      .select("loudness_gain_db")
+      .eq("id",songId)
+      .maybeSingle();
+
+    if(error){
+      console.warn("Loudness gain load error:",error);
+      loudnessGainCache.set(songId,0);
+      return 0;
+    }
+
+    const value = Number(data?.loudness_gain_db);
+    const gainDb = Number.isFinite(value) ? clampNumber(value,-8,8) : 0;
+
+    loudnessGainCache.set(songId,gainDb);
+    song.loudness_gain_db = data?.loudness_gain_db ?? null;
+    return gainDb;
+  }
+  catch(error){
+    console.warn("Loudness gain resolve error:",error);
+    loudnessGainCache.set(songId,0);
+    return 0;
+  }
+}
+
+async function applyLoudnessForSong(song){
+  const gainDb = await resolveSongLoudnessGain(song);
+  const volume = gainDbToPlayerVolume(gainDb);
+
+  audio.volume = volume;
+  fullAudio.volume = volume;
+
+  return {gainDb,volume};
+}
+
 const playPause =
   document.getElementById("playPause");
 
@@ -1969,6 +2053,15 @@ async function playSong(
     ) || "";
 
   renderSong(
+    song
+  );
+
+  /*
+    曲ごとの保存済み補正値を、実際に再生を始める前に反映する。
+    Home/RPC側が loudness_gain_db を返さない場合でも、
+    song.id からsongsテーブルを補助取得するため既存導線を壊さない。
+  */
+  await applyLoudnessForSong(
     song
   );
 
@@ -4174,6 +4267,8 @@ window.addEventListener(
         fullAudio.pause();
         fullAudio.src = state.song.audio_url;
         fullAudio.load();
+
+        fullAudio.volume = audio.volume;
 
         fullAudio.play().catch(
           error=>{
