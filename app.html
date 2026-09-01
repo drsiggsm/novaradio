@@ -699,10 +699,9 @@ fullAudio.crossOrigin = "anonymous";
    songs.loudness_gain_db の補正値を
    共通プレイヤーへ反映する。
 
-   Web Audio API の GainNode で 1.0 を超える増幅を行い、
-   DynamicsCompressorNode をリミッターとして後段に置く。
-   これにより、小さすぎる曲を持ち上げながら
-   出力ピークの暴れ・音割れを抑える。
+   Web Audio API の GainNode で 1.0 を超える増幅を行う。
+   今回はクリック音の原因切り分けテストとして、
+   DynamicsCompressorNode（リミッター）は完全に外す。
 
    AudioContext がブラウザの自動再生制限などで使えない場合は、
    従来どおり HTMLMediaElement.volume へ安全にフォールバックする。
@@ -718,7 +717,6 @@ const NORMALIZATION_FALLBACK_MAX_VOLUME = 1.0;
 const loudnessGainCache = new Map();
 
 let loudnessAudioContext = null;
-let loudnessLimiter = null;
 let loudnessAudioSource = null;
 let loudnessFullAudioSource = null;
 let loudnessAudioGainNode = null;
@@ -833,19 +831,6 @@ async function ensureLoudnessAudioGraph(){
     loudnessAudioGainNode.gain.value = 0;
     loudnessFullAudioGainNode.gain.value = 0;
 
-    loudnessLimiter =
-      loudnessAudioContext.createDynamicsCompressor();
-
-    /*
-      ほぼリミッターとして使う設定。
-      0dBFS直前から強く圧縮し、増幅時のピークを抑える。
-    */
-    loudnessLimiter.threshold.value = -1.0;
-    loudnessLimiter.knee.value = 0;
-    loudnessLimiter.ratio.value = 20;
-    loudnessLimiter.attack.value = 0.003;
-    loudnessLimiter.release.value = 0.12;
-
     loudnessAudioSource =
       loudnessAudioContext.createMediaElementSource(
         audio
@@ -856,17 +841,17 @@ async function ensureLoudnessAudioGraph(){
         fullAudio
       );
 
+    /*
+      原因切り分け用: GainNode から destination へ直接接続する。
+      Limiter / DynamicsCompressorNode は一切通さない。
+    */
     loudnessAudioSource
       .connect(loudnessAudioGainNode)
-      .connect(loudnessLimiter);
+      .connect(loudnessAudioContext.destination);
 
     loudnessFullAudioSource
       .connect(loudnessFullAudioGainNode)
-      .connect(loudnessLimiter);
-
-    loudnessLimiter.connect(
-      loudnessAudioContext.destination
-    );
+      .connect(loudnessAudioContext.destination);
 
     /*
       Web Audio側でゲインを管理するので、
