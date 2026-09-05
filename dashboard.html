@@ -1141,7 +1141,7 @@ input[type="file"]{
             class="upload-quota-count"
             id="uploadQuotaCount"
           >
-            0 / 3曲
+            0 / 5曲
           </div>
         </div>
 
@@ -1156,7 +1156,7 @@ input[type="file"]{
           class="upload-quota-help"
           id="uploadQuotaHelp"
         >
-          無料プランでは3曲まで公開できます。
+          無料プランでは5曲まで公開できます。
         </div>
       </div>
 
@@ -1164,7 +1164,7 @@ input[type="file"]{
         class="upload-lock-message"
         id="uploadLockMessage"
       >
-        🔒 <strong>FREEプランの公開上限（3曲）に達しています。</strong><br>
+        🔒 <strong>FREEプランの公開上限（5曲）に達しています。</strong><br>
         新しい曲を公開するには、既存の曲を非公開または削除するか、
         PROにアップグレードしてください。
       </div>
@@ -1484,7 +1484,7 @@ input[type="file"]{
         <div>機能</div><div>FREE</div><div>PRO</div>
       </div>
       <div class="plan-compare-row">
-        <div class="plan-compare-label">公開できる曲</div><div class="plan-compare-free">3曲まで</div><div class="plan-compare-pro">30曲まで</div>
+        <div class="plan-compare-label">公開できる曲</div><div class="plan-compare-free">5曲まで</div><div class="plan-compare-pro">50曲まで</div>
       </div>
       <div class="plan-compare-row">
         <div class="plan-compare-label">Artist Analytics</div><div class="plan-compare-free">🔒 非公開</div><div class="plan-compare-pro"><span class="plan-compare-check">✓</span> 曲別詳細</div>
@@ -1875,8 +1875,8 @@ async function loadCurrentArtistCountry(){
 const selectedGenres = [];
 const selectedMoods = [];
 
-const FREE_TRACK_LIMIT = 3;
-const PRO_TRACK_LIMIT = 30;
+const FREE_TRACK_LIMIT = 5;
+const PRO_TRACK_LIMIT = 50;
 let currentTrackCount = 0;
 let currentPlan = "free";
 let currentProUntil = null;
