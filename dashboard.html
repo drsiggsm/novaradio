@@ -539,6 +539,55 @@ input[type="file"]{
 .upload-lock-message.show{
   display:block;
 }
+
+.upload-pro-cta{
+  display:none;
+  margin:0 0 22px;
+  padding:18px 20px;
+  border:1px solid rgba(123,37,255,.48);
+  border-radius:18px;
+  background:linear-gradient(135deg,rgba(74,24,126,.28),rgba(17,77,126,.25));
+}
+.upload-pro-cta.show{
+  display:block;
+}
+.upload-pro-cta-title{
+  font-size:16px;
+  font-weight:900;
+}
+.upload-pro-cta-text{
+  margin-top:7px;
+  color:#b9bfd8;
+  font-size:13px;
+  line-height:1.65;
+}
+.upload-pro-cta-button{
+  width:100%;
+  margin-top:13px;
+  padding:14px 16px;
+  border:0;
+  border-radius:14px;
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  box-shadow:0 8px 28px #6425ff33;
+}
+
+.profile-artist-input{
+  cursor:not-allowed;
+  color:#d7daf0;
+  background:#11152c;
+  opacity:.92;
+}
+.profile-artist-note{
+  margin-top:8px;
+  color:#8f95b5;
+  font-size:12px;
+  line-height:1.55;
+}
+
 .main-button:disabled{
   cursor:not-allowed;
   opacity:.48;
@@ -1169,6 +1218,25 @@ input[type="file"]{
         PROにアップグレードしてください。
       </div>
 
+      <div
+        class="upload-pro-cta"
+        id="uploadProCta"
+      >
+        <div class="upload-pro-cta-title">
+          🚀 PROなら最大50曲まで公開できます
+        </div>
+        <div class="upload-pro-cta-text">
+          月額550円で公開枠が50曲に増え、Artist Analyticsも利用できます。
+        </div>
+        <button
+          class="upload-pro-cta-button"
+          id="uploadPlanCompareButton"
+          type="button"
+        >
+          PROにアップグレード
+        </button>
+      </div>
+
       <div class="field">
         <label>曲名 *</label>
         <input
@@ -1182,9 +1250,15 @@ input[type="file"]{
         <label>アーティスト名 *</label>
         <input
           id="artistName"
+          class="profile-artist-input"
           type="text"
-          placeholder="アーティスト名"
+          placeholder="プロフィールのアーティスト名"
+          readonly
+          aria-readonly="true"
         >
+        <div class="profile-artist-note">
+          プロフィールに登録されているアーティスト名を使用します。変更する場合は「アカウント設定」から編集してください。
+        </div>
       </div>
 
       <div class="field">
@@ -1574,8 +1648,14 @@ input[type="file"]{
       <label>アーティスト名</label>
       <input
         id="editArtist"
+        class="profile-artist-input"
         type="text"
+        readonly
+        aria-readonly="true"
       >
+      <div class="profile-artist-note">
+        プロフィールのアーティスト名が自動で使用されます。
+      </div>
     </div>
 
     <div class="field">
@@ -1833,39 +1913,63 @@ if(analyticsCardToggle && analyticsToggle){
 }
 
 /*
-  Country / Region:
-  公開曲は曲ごとではなく、投稿者の profiles.country に所属する。
-  未設定の場合はNovaRadioへの公開アップロードを止める。
+  Country / Region + Artist Name:
+  公開曲の国とアーティスト名は profiles を正として扱う。
+  曲ごとに別のアーティスト名へ変更できないよう、
+  dashboardでは profiles.artist_name を自動使用する。
 */
 let currentArtistCountry = null;
+let currentArtistName = null;
 
 async function loadCurrentArtistCountry(){
 
   if(!currentSession){
     currentArtistCountry = null;
+    currentArtistName = null;
     return null;
   }
 
   const {data,error} =
     await sb
     .from("profiles")
-    .select("country")
+    .select("country,artist_name")
     .eq("user_id",currentSession.user.id)
     .limit(1);
 
   if(error){
-    console.error("Country load error:",error);
+    console.error("Profile load error:",error);
     currentArtistCountry = null;
+    currentArtistName = null;
     return null;
   }
 
-  const value =
+  const row =
     data && data.length
-      ? String(data[0]?.country || "").trim()
-      : "";
+      ? data[0]
+      : null;
+
+  const countryValue =
+    String(row?.country || "").trim();
+
+  const artistValue =
+    String(row?.artist_name || "").trim();
 
   currentArtistCountry =
-    value || null;
+    countryValue || null;
+
+  currentArtistName =
+    artistValue || null;
+
+  displayName.textContent =
+    currentArtistName || "未設定";
+
+  const artistInput =
+    document.getElementById("artistName");
+
+  if(artistInput){
+    artistInput.value =
+      currentArtistName || "";
+  }
 
   return currentArtistCountry;
 }
@@ -1938,6 +2042,12 @@ const uploadQuotaHelp =
 
 const uploadLockMessage =
   document.getElementById("uploadLockMessage");
+
+const uploadProCta =
+  document.getElementById("uploadProCta");
+
+const uploadPlanCompareButton =
+  document.getElementById("uploadPlanCompareButton");
 
 const songList =
   document.getElementById("songList");
@@ -2068,20 +2178,16 @@ async function init(){
   currentSession =
     session;
 
-  const name =
-    session.user.user_metadata?.artist_name ||
-    "";
-
   userEmail.textContent =
     session.user.email || "";
 
   displayName.textContent =
-    name || "未設定";
+    "読み込み中…";
 
   document
   .getElementById("artistName")
   .value =
-    name;
+    "";
 
   loading.style.display =
     "none";
@@ -4311,6 +4417,13 @@ function updateUploadQuotaUI(){
     isLocked
   );
 
+  if(uploadProCta){
+    uploadProCta.classList.toggle(
+      "show",
+      !pro
+    );
+  }
+
   /*
     見出しもプランに合わせて変更
   */
@@ -4387,6 +4500,13 @@ uploadButton.addEventListener(
       );
     }
 
+    if(!currentArtistName){
+      return showStatus(
+        "🎤 曲を公開するには、先にプロフィールでアーティスト名を設定してください。",
+        true
+      );
+    }
+
     const title =
       document
       .getElementById("songTitle")
@@ -4394,10 +4514,7 @@ uploadButton.addEventListener(
       .trim();
 
     const artist =
-      document
-      .getElementById("artistName")
-      .value
-      .trim();
+      currentArtistName;
 
     const bpmValue =
       document
@@ -4435,7 +4552,7 @@ uploadButton.addEventListener(
     if(!artist){
 
       return showStatus(
-        "アーティスト名を入力してください。",
+        "プロフィールのアーティスト名を確認できません。アカウント設定から名前を設定してください。",
         true
       );
 
@@ -5298,7 +5415,7 @@ function openEditModal(
   document
   .getElementById("editArtist")
   .value =
-    song.artist || "";
+    currentArtistName || song.artist || "";
 
   /*
     保存済みのGenre / Moodを
@@ -5412,11 +5529,10 @@ document
       .value
       .trim();
 
+    await loadCurrentArtistCountry();
+
     const artist =
-      document
-      .getElementById("editArtist")
-      .value
-      .trim();
+      currentArtistName || "";
 
     const genre =
       editSelectedGenres.join(",");
@@ -5447,7 +5563,7 @@ document
     ){
 
       alert(
-        "曲名・アーティスト名・ジャンルは必須です。"
+        "曲名・プロフィールのアーティスト名・ジャンルは必須です。"
       );
 
       return;
@@ -6036,6 +6152,10 @@ function closePlanCompare(){
 
 if(openPlanCompareButton){
   openPlanCompareButton.addEventListener("click",openPlanCompare);
+}
+
+if(uploadPlanCompareButton){
+  uploadPlanCompareButton.addEventListener("click",openPlanCompare);
 }
 
 if(closePlanCompareButton){
