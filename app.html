@@ -3278,6 +3278,34 @@ function preloadLikelyNextTrack(){
 
 
 /* =========================
+   ハイライト中の「この曲だけフル」を終了して
+   次/前の曲を30秒ハイライトへ戻す
+========================= */
+
+function exitTemporaryFullTrackForNavigation(){
+
+  if(
+    !state.highlight ||
+    !state.fullTrack
+  ){
+    return;
+  }
+
+  try{
+    fullAudio.pause();
+    fullAudio.removeAttribute("src");
+    fullAudio.load();
+  }catch(e){}
+
+  state.fullTrack = false;
+  clearHighlightSkipTimer();
+  highlightStartTime = 0;
+  isReturningFromFullTrack = false;
+  notifyFrameState();
+}
+
+
+/* =========================
    次の曲
 ========================= */
 
@@ -3292,27 +3320,12 @@ function playNext(
   }
 
   /*
-    ハイライト中の「この曲だけフル」を手動スキップした時は、
-    次曲へ進む前に一時フル状態だけ解除する。
-    highlight自体はtrueのままなので、次曲はhighlight_startから30秒再生。
-    通常のフル再生には影響しない。
+    「この曲だけフル」を手動スキップした場合でも、
+    highlight自体はtrueのまま維持する。
+    そのため次曲は必ず30秒ハイライトへ戻る。
   */
-  if(
-    state.highlight &&
-    state.fullTrack &&
-    !fromEnded
-  ){
-    try{
-      fullAudio.pause();
-      fullAudio.removeAttribute("src");
-      fullAudio.load();
-    }catch(e){}
-
-    state.fullTrack = false;
-    clearHighlightSkipTimer();
-    highlightStartTime = 0;
-    isReturningFromFullTrack = false;
-    notifyFrameState();
+  if(!fromEnded){
+    exitTemporaryFullTrackForNavigation();
   }
 
   if(
@@ -3428,15 +3441,26 @@ function playPrev(){
     return;
   }
 
+  const activeAudio =
+    state.fullTrack
+      ? fullAudio
+      : audio;
+
   if(
-    audio.currentTime > 3
+    activeAudio.currentTime > 3
   ){
 
-    audio.currentTime =
+    activeAudio.currentTime =
       0;
 
     return;
   }
+
+  /*
+    3秒以内で「前の曲」へ移動する時は、
+    この曲だけフル状態を解除してハイライトモードを維持する。
+  */
+  exitTemporaryFullTrackForNavigation();
 
   if(
     state.index < 0
@@ -3585,11 +3609,16 @@ function previewSeek(
   event
 ){
 
+  const activeAudio =
+    state.fullTrack
+      ? fullAudio
+      : audio;
+
   if(
     !Number.isFinite(
-      audio.duration
+      activeAudio.duration
     ) ||
-    audio.duration <= 0
+    activeAudio.duration <= 0
   ){
     return;
   }
@@ -3609,25 +3638,29 @@ function previewSeek(
   timeText.textContent =
     formatTime(
       seekRatio *
-      audio.duration
+      activeAudio.duration
     ) +
     " / " +
     formatTime(
-      audio.duration
+      activeAudio.duration
     );
 
 }
-
 
 progress.addEventListener(
   "pointerdown",
   event=>{
 
+    const activeAudio =
+      state.fullTrack
+        ? fullAudio
+        : audio;
+
     if(
       !Number.isFinite(
-        audio.duration
+        activeAudio.duration
       ) ||
-      audio.duration <= 0
+      activeAudio.duration <= 0
     ){
       return;
     }
@@ -3689,16 +3722,21 @@ progress.addEventListener(
     isSeeking =
       false;
 
+    const activeAudio =
+      state.fullTrack
+        ? fullAudio
+        : audio;
+
     if(
       Number.isFinite(
-        audio.duration
+        activeAudio.duration
       ) &&
-      audio.duration > 0
+      activeAudio.duration > 0
     ){
 
-      audio.currentTime =
+      activeAudio.currentTime =
         seekRatio *
-        audio.duration;
+        activeAudio.duration;
 
       resetAnalyticsClock();
 
@@ -5017,9 +5055,29 @@ window.addEventListener(
       }
 
       /*
-        ハイライト用audioは巻き戻さない。
-        フル専用audioを0:00から通常ロードして再生する。
+        ハイライトモード自体は維持したまま、
+        この曲だけ fullTrack=true にする。
+
+        「ここからフルで聴く」を自然につなぐため、
+        現在のハイライト再生位置を本編の開始位置として引き継ぐ。
+        次/前スキップや曲終了時には fullTrack だけ解除され、
+        次曲は再び30秒ハイライトへ戻る。
       */
+      const fullResumeTime =
+        Number.isFinite(
+          audio.currentTime
+        )
+          ? Math.max(
+              0,
+              audio.currentTime
+            )
+          : Math.max(
+              0,
+              Number(
+                state.song.highlight_start
+              ) || 0
+            );
+
       state.highlight = true;
       state.fullTrack = true;
 
@@ -5038,14 +5096,65 @@ window.addEventListener(
 
         fullAudio.volume = audio.volume;
 
-        fullAudio.play().catch(
-          error=>{
-            console.warn("Full audio play error:",error);
-            showPlayerStatus(
-              "フル再生を準備しています。▶で再開できます。"
+        const startFullFromCurrentPosition =
+          ()=>{
+
+            if(
+              !state.fullTrack ||
+              !state.song
+            ){
+              return;
+            }
+
+            try{
+              const maxStart =
+                Number.isFinite(
+                  fullAudio.duration
+                )
+                  ? Math.max(
+                      0,
+                      fullAudio.duration - 0.1
+                    )
+                  : fullResumeTime;
+
+              fullAudio.currentTime =
+                Math.min(
+                  fullResumeTime,
+                  maxStart
+                );
+            }
+            catch(error){
+              console.warn(
+                "Full resume seek error:",
+                error
+              );
+            }
+
+            fullAudio.play().catch(
+              error=>{
+                console.warn(
+                  "Full audio play error:",
+                  error
+                );
+                showPlayerStatus(
+                  "フル再生を準備しています。▶で再開できます。"
+                );
+              }
             );
-          }
-        );
+          };
+
+        if(
+          fullAudio.readyState >= 1
+        ){
+          startFullFromCurrentPosition();
+        }
+        else{
+          fullAudio.addEventListener(
+            "loadedmetadata",
+            startFullFromCurrentPosition,
+            {once:true}
+          );
+        }
       }
       catch(error){
         console.warn("Full player error:",error);
