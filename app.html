@@ -3208,13 +3208,7 @@ function playCurrentSongFull(){
     return;
   }
 
-  const fullResumeTime =
-    Number.isFinite(audio.currentTime)
-      ? Math.max(0,audio.currentTime)
-      : Math.max(
-          0,
-          Number(state.song.highlight_start) || 0
-        );
+  const fullResumeTime = 0;
 
   state.highlight = true;
   state.fullTrack = true;
