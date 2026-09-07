@@ -2875,6 +2875,115 @@ async function startPlayback(
 }
 
 
+
+/* =========================
+   30秒ハイライト専用音源
+========================= */
+
+const highlightAudioUrlCache =
+  new Map();
+
+async function resolveHighlightAudioUrl(
+  song
+){
+
+  if(!song){
+    return null;
+  }
+
+  const direct =
+    String(
+      song.highlight_audio_url ||
+      ""
+    ).trim();
+
+  if(direct){
+    return direct;
+  }
+
+  const songId =
+    Number(
+      song.id
+    );
+
+  if(
+    !Number.isFinite(
+      songId
+    )
+  ){
+    return null;
+  }
+
+  if(
+    highlightAudioUrlCache.has(
+      songId
+    )
+  ){
+    return highlightAudioUrlCache.get(
+      songId
+    );
+  }
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await sb
+    .from("songs")
+    .select(
+      "highlight_audio_url"
+    )
+    .eq(
+      "id",
+      songId
+    )
+    .maybeSingle();
+
+    if(error){
+      throw error;
+    }
+
+    const value =
+      String(
+        data?.highlight_audio_url ||
+        ""
+      ).trim() ||
+      null;
+
+    highlightAudioUrlCache.set(
+      songId,
+      value
+    );
+
+    if(value){
+      song.highlight_audio_url =
+        value;
+    }
+
+    return value;
+
+  }
+  catch(error){
+
+    console.warn(
+      "Highlight audio URL load error:",
+      error
+    );
+
+    highlightAudioUrlCache.set(
+      songId,
+      null
+    );
+
+    return null;
+
+  }
+
+}
+
+
 async function playSong(
   song,
   queue=null,
@@ -2931,9 +3040,35 @@ async function playSong(
     song
   );
 
+  /*
+    ハイライトモードでは専用30秒MP3を優先する。
+    まだ専用音源がない既存曲は、従来どおりフル音源 +
+    highlight_start へフォールバックする。
+  */
+  const dedicatedHighlightUrl =
+    (
+      state.highlight &&
+      !state.fullTrack
+    )
+      ? await resolveHighlightAudioUrl(
+          song
+        )
+      : null;
+
+  const playbackUrl =
+    dedicatedHighlightUrl ||
+    song.audio_url;
+
+  const usingDedicatedHighlight =
+    !!dedicatedHighlightUrl &&
+    state.highlight &&
+    !state.fullTrack;
+
   const sourceChanged =
     previousSrc !==
-    String(song.audio_url);
+    String(
+      playbackUrl
+    );
 
 
   /*
@@ -2965,7 +3100,7 @@ async function playSong(
       srcを再セットして0秒/ハイライト開始位置から確実に再生する。
     */
     audio.src =
-      song.audio_url;
+      playbackUrl;
 
     /*
       ここは軽量化より正確さを優先。
@@ -2988,11 +3123,15 @@ async function playSong(
       state.highlight &&
       !state.fullTrack
     )
-      ? Math.max(
-          0,
-          Number(
-            song.highlight_start
-          ) || 0
+      ? (
+          usingDedicatedHighlight
+            ? 0
+            : Math.max(
+                0,
+                Number(
+                  song.highlight_start
+                ) || 0
+              )
         )
       : 0;
 
