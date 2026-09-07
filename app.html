@@ -2009,17 +2009,30 @@ async function ensureNotificationStatus(){
 }
 
 
-async function fetchNewReleaseNotifications(){
+async function fetchNewReleaseNotifications(
+  onlyUnread=false
+){
 
   if(!currentSession){
     return [];
   }
 
-  const since =
-    await ensureNotificationStatus();
+  /*
+    通知パネル用は既読も含めて最新50件を残す。
+    バッジ用だけ last_checked_at より新しい曲に絞る。
+  */
+  let since =
+    null;
 
-  if(!since){
-    return [];
+  if(onlyUnread){
+
+    since =
+      await ensureNotificationStatus();
+
+    if(!since){
+      return [];
+    }
+
   }
 
   const {
@@ -2051,28 +2064,40 @@ async function fetchNewReleaseNotifications(){
     return [];
   }
 
+  let songsQuery =
+    sb
+    .from("songs")
+    .select(
+      "id,user_id,title,audio_url,highlight_audio_url,cover_url,genre,mood,highlight_start,loudness_gain_db,created_at"
+    )
+    .in(
+      "user_id",
+      artistIds
+    )
+    .order(
+      "created_at",
+      {ascending:false}
+    )
+    .limit(50);
+
+  if(
+    onlyUnread &&
+    since
+  ){
+
+    songsQuery =
+      songsQuery.gt(
+        "created_at",
+        since
+      );
+
+  }
+
   const {
     data:songs,
     error:songsError
   } =
-  await sb
-  .from("songs")
-  .select(
-    "id,user_id,title,audio_url,cover_url,genre,mood,highlight_start,loudness_gain_db,created_at"
-  )
-  .in(
-    "user_id",
-    artistIds
-  )
-  .gt(
-    "created_at",
-    since
-  )
-  .order(
-    "created_at",
-    {ascending:false}
-  )
-  .limit(50);
+  await songsQuery;
 
   if(songsError){
     throw songsError;
@@ -2130,7 +2155,6 @@ async function fetchNewReleaseNotifications(){
 
 }
 
-
 async function refreshNotificationBadge(){
 
   if(!currentSession){
@@ -2148,11 +2172,13 @@ async function refreshNotificationBadge(){
 
   try{
 
-    notificationSongs =
-      await fetchNewReleaseNotifications();
+    const unreadNotificationSongs =
+      await fetchNewReleaseNotifications(
+        true
+      );
 
     renderNotificationBadge(
-      notificationSongs.length
+      unreadNotificationSongs.length
     );
 
   }
@@ -2200,7 +2226,7 @@ function renderNotifications(){
 
     notificationList.innerHTML =
       `<div class="notification-empty">
-        新しい通知はありません。<br>
+        通知はありません。<br>
         フォロー中のアーティストが新曲を公開すると、ここに表示されます。
       </div>`;
 
@@ -2341,8 +2367,14 @@ async function openNotifications(){
 
   try{
 
+    /*
+      パネルでは既読・未読に関係なく最新50件を表示。
+      開いた後は未読バッジだけ0にする。
+    */
     notificationSongs =
-      await fetchNewReleaseNotifications();
+      await fetchNewReleaseNotifications(
+        false
+      );
 
     renderNotifications();
 
