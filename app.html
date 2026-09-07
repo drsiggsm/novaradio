@@ -3208,8 +3208,6 @@ function playCurrentSongFull(){
     return;
   }
 
-  const fullResumeTime = 0;
-
   state.highlight = true;
   state.fullTrack = true;
 
@@ -3221,68 +3219,106 @@ function playCurrentSongFull(){
 
   try{
 
+    /*
+      ハイライト側のAudioを完全に止める。
+      Safariで同じMP3のハイライト位置が残るのを防ぐ。
+    */
     audio.pause();
 
+    try{
+      audio.currentTime = 0;
+    }catch(e){}
+
     fullAudio.pause();
-    fullAudio.src = state.song.audio_url;
+
+    /*
+      同じURLでも一度srcを外して、
+      フル再生用Audioを0:00から作り直す。
+    */
+    fullAudio.removeAttribute("src");
     fullAudio.load();
+
+    fullAudio.src = state.song.audio_url;
     fullAudio.volume = audio.volume;
+    fullAudio.load();
 
-    const startFullFromCurrentPosition =
-      ()=>{
+    const startFromZero = ()=>{
 
-        if(
-          !state.fullTrack ||
-          !state.song
-        ){
-          return;
-        }
+      if(
+        !state.fullTrack ||
+        !state.song
+      ){
+        return;
+      }
 
-        try{
-
-          const maxStart =
-            Number.isFinite(fullAudio.duration)
-              ? Math.max(
-                  0,
-                  fullAudio.duration - 0.1
-                )
-              : fullResumeTime;
-
-          fullAudio.currentTime =
-            Math.min(
-              fullResumeTime,
-              maxStart
-            );
-
-        }
-        catch(error){
-          console.warn(
-            "Full resume seek error:",
-            error
-          );
-        }
-
-        fullAudio.play().catch(
-          error=>{
-            console.warn(
-              "Full audio play error:",
-              error
-            );
-            showPlayerStatus(
-              "フル再生を準備しています。▶で再開できます。"
-            );
-          }
+      try{
+        fullAudio.currentTime = 0;
+      }
+      catch(error){
+        console.warn(
+          "Full start seek error:",
+          error
         );
+      }
 
-      };
+      /*
+        Safari対策：
+        play直前にも必ず0:00を指定する。
+      */
+      requestAnimationFrame(
+        ()=>{
 
-    if(fullAudio.readyState >= 1){
-      startFullFromCurrentPosition();
+          if(
+            !state.fullTrack ||
+            !state.song
+          ){
+            return;
+          }
+
+          try{
+            fullAudio.currentTime = 0;
+          }catch(e){}
+
+          fullAudio.play()
+          .then(
+            ()=>{
+              /*
+                再生開始直後にも0付近を保証。
+                以前のハイライト位置を引き継がせない。
+              */
+              if(
+                fullAudio.currentTime > 1
+              ){
+                try{
+                  fullAudio.currentTime = 0;
+                }catch(e){}
+              }
+            }
+          )
+          .catch(
+            error=>{
+              console.warn(
+                "Full audio play error:",
+                error
+              );
+              showPlayerStatus(
+                "フル再生を準備しています。▶で再開できます。"
+              );
+            }
+          );
+
+        }
+      );
+
+    };
+
+    if(fullAudio.readyState >= 2){
+      startFromZero();
     }
     else{
       fullAudio.addEventListener(
-        "loadedmetadata",
-        startFullFromCurrentPosition,
+        "canplay",
+        startFromZero,
         {once:true}
       );
     }
