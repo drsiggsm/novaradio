@@ -3,6 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+/*
+  app.html が Home / My Page 用 iframe の中で開かれた場合、
+  NovaRadio全体が入れ子になってヘッダーやプレイヤーが
+  二重・三重表示されるのを防ぐ。
+
+  ログアウト → 別アカウントでログインした時などに、
+  index.html → app.html の遷移が iframe 内で起きても、
+  必ずトップ画面へ戻す。
+*/
+if(window.self !== window.top){
+  window.top.location.replace(window.location.href);
+}
+</script>
 <title>NovaRadio App</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
