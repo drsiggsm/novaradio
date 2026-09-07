@@ -146,6 +146,103 @@ header{
   font-size:21px;
 }
 
+/* =========================
+   Artist Studio 導線
+========================= */
+
+.artist-studio-card{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 100% 0,#3b2a8255,transparent 46%),
+    #101228e8;
+}
+
+.artist-studio-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:24px;
+  box-shadow:inset 0 0 0 1px #7b25ff22;
+}
+
+.artist-studio-head{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+}
+
+.artist-studio-icon{
+  width:52px;
+  height:52px;
+  flex:0 0 52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:16px;
+  background:linear-gradient(135deg,#7b25ff,#159df5);
+  font-size:24px;
+  box-shadow:0 10px 26px #6425ff2e;
+}
+
+.artist-studio-copy{
+  min-width:0;
+  flex:1;
+}
+
+.artist-studio-title{
+  font-size:21px;
+  font-weight:900;
+}
+
+.artist-studio-description{
+  margin-top:6px;
+  color:#aeb0c8;
+  font-size:13px;
+  line-height:1.65;
+}
+
+.artist-studio-features{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:15px;
+}
+
+.artist-studio-feature{
+  padding:7px 10px;
+  border:1px solid #343b67;
+  border-radius:999px;
+  background:#080b1d;
+  color:#c5c8dc;
+  font-size:11px;
+  font-weight:800;
+}
+
+.artist-studio-button{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  margin-top:18px;
+  padding:15px 17px;
+  border:0;
+  border-radius:15px;
+  background:linear-gradient(90deg,#7b25ff,#159df5);
+  color:#fff;
+  text-decoration:none;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 10px 28px #6425ff25;
+}
+
+.artist-studio-button:hover{
+  filter:brightness(1.06);
+}
+
 .empty{
   padding:22px;
   text-align:center;
@@ -1004,6 +1101,48 @@ if(window.parent && window.parent !== window){
       class="playlist-song-list"
     >
     </div>
+
+  </section>
+
+
+  <!-- Artist Studio -->
+
+  <section class="card artist-studio-card">
+
+    <div class="artist-studio-head">
+
+      <div class="artist-studio-icon">
+        🎙️
+      </div>
+
+      <div class="artist-studio-copy">
+
+        <div class="artist-studio-title">
+          Artist Studio
+        </div>
+
+        <div class="artist-studio-description">
+          アーティスト活動の管理はこちら。曲のアップロード、公開曲の編集、
+          再生データ・Analytics、PROプランの管理ができます。
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="artist-studio-features">
+      <span class="artist-studio-feature">🎵 曲をアップロード</span>
+      <span class="artist-studio-feature">✏️ 公開曲を管理</span>
+      <span class="artist-studio-feature">📊 Analytics</span>
+    </div>
+
+    <a
+      class="artist-studio-button"
+      href="dashboard.html"
+    >
+      <span>Artist Studioを開く</span>
+      <span>→</span>
+    </a>
 
   </section>
 
