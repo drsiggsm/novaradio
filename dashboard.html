@@ -1437,7 +1437,7 @@ input[type="file"]{
           accept=".wav,.mp3,audio/wav,audio/mpeg"
         >
         <div class="file-info">
-          WAV / MP3 ・ WAVはアップロード時に再生用MP3（256kbps）へ自動変換
+          WAV / MP3 ・ フル再生用MP3に加えて、30秒ハイライト専用の軽量MP3（128kbps）を自動生成
         </div>
       </div>
 
@@ -2145,6 +2145,9 @@ let highlightPreviewTimer =
   null;
 
 let editHighlightPreviewTimer =
+  null;
+
+let currentEditingSong =
   null;
 
 async function init(){
@@ -4134,6 +4137,453 @@ async function convertWavToMp3(
 }
 
 
+
+/* =========================
+   30秒ハイライト専用MP3
+========================= */
+
+async function decodeAudioFile(
+  file
+){
+
+  const AudioContextClass =
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+  if(!AudioContextClass){
+
+    throw new Error(
+      "このブラウザでは30秒ハイライト音源を作成できません。"
+    );
+
+  }
+
+  const audioContext =
+    new AudioContextClass();
+
+  try{
+
+    const arrayBuffer =
+      await file.arrayBuffer();
+
+    return await audioContext.decodeAudioData(
+      arrayBuffer.slice(0)
+    );
+
+  }
+  finally{
+
+    try{
+      await audioContext.close();
+    }
+    catch(error){}
+
+  }
+
+}
+
+
+async function createHighlightMp3(
+  file,
+  startSeconds=0,
+  bitrate=128
+){
+
+  if(
+    !window.lamejs ||
+    !window.lamejs.Mp3Encoder
+  ){
+
+    throw new Error(
+      "30秒ハイライト用MP3の変換ライブラリを読み込めませんでした。"
+    );
+
+  }
+
+  progress.textContent =
+    "30秒ハイライト専用音源を作成しています… ⚡";
+
+  let sourceBuffer =
+    await decodeAudioFile(
+      file
+    );
+
+  /*
+    MP3エンコードを安定させるため、
+    44.1 / 48kHz以外は44.1kHzへ変換する。
+  */
+  if(
+    ![
+      44100,
+      48000
+    ].includes(
+      sourceBuffer.sampleRate
+    )
+  ){
+
+    sourceBuffer =
+      await resampleAudioBuffer(
+        sourceBuffer,
+        44100
+      );
+
+  }
+
+  const sampleRate =
+    sourceBuffer.sampleRate;
+
+  const channels =
+    Math.min(
+      2,
+      Math.max(
+        1,
+        sourceBuffer.numberOfChannels
+      )
+    );
+
+  const safeStart =
+    Math.max(
+      0,
+      Math.min(
+        Number(startSeconds) || 0,
+        Math.max(
+          0,
+          sourceBuffer.duration - 0.05
+        )
+      )
+    );
+
+  const endSeconds =
+    Math.min(
+      sourceBuffer.duration,
+      safeStart + 30
+    );
+
+  const startSample =
+    Math.max(
+      0,
+      Math.floor(
+        safeStart *
+        sampleRate
+      )
+    );
+
+  const endSample =
+    Math.min(
+      sourceBuffer.length,
+      Math.ceil(
+        endSeconds *
+        sampleRate
+      )
+    );
+
+  if(
+    endSample <=
+    startSample
+  ){
+
+    throw new Error(
+      "30秒ハイライトの開始位置を確認してください。"
+    );
+
+  }
+
+  const encoder =
+    new lamejs.Mp3Encoder(
+      channels,
+      sampleRate,
+      bitrate
+    );
+
+  const sourceLeft =
+    sourceBuffer.getChannelData(0);
+
+  const sourceRight =
+    channels === 2
+      ? sourceBuffer.getChannelData(1)
+      : null;
+
+  const left =
+    float32ToInt16(
+      sourceLeft.subarray(
+        startSample,
+        endSample
+      )
+    );
+
+  const right =
+    channels === 2
+      ? float32ToInt16(
+          sourceRight.subarray(
+            startSample,
+            endSample
+          )
+        )
+      : null;
+
+  const blockSize =
+    1152;
+
+  const chunks =
+    [];
+
+  for(
+    let offset = 0;
+    offset < left.length;
+    offset += blockSize
+  ){
+
+    const leftChunk =
+      left.subarray(
+        offset,
+        Math.min(
+          offset + blockSize,
+          left.length
+        )
+      );
+
+    let encoded;
+
+    if(
+      channels === 2
+    ){
+
+      const rightChunk =
+        right.subarray(
+          offset,
+          Math.min(
+            offset + blockSize,
+            right.length
+          )
+        );
+
+      encoded =
+        encoder.encodeBuffer(
+          leftChunk,
+          rightChunk
+        );
+
+    }
+    else{
+
+      encoded =
+        encoder.encodeBuffer(
+          leftChunk
+        );
+
+    }
+
+    if(
+      encoded &&
+      encoded.length
+    ){
+
+      chunks.push(
+        new Int8Array(
+          encoded
+        )
+      );
+
+    }
+
+    if(
+      offset %
+      (
+        blockSize *
+        180
+      ) === 0
+    ){
+
+      await new Promise(
+        resolve=>
+          setTimeout(
+            resolve,
+            0
+          )
+      );
+
+    }
+
+  }
+
+  const flushed =
+    encoder.flush();
+
+  if(
+    flushed &&
+    flushed.length
+  ){
+
+    chunks.push(
+      new Int8Array(
+        flushed
+      )
+    );
+
+  }
+
+  if(!chunks.length){
+
+    throw new Error(
+      "30秒ハイライト用MP3の作成に失敗しました。"
+    );
+
+  }
+
+  const blob =
+    new Blob(
+      chunks,
+      {
+        type:"audio/mpeg"
+      }
+    );
+
+  const baseName =
+    file.name
+    .replace(
+      /\.[^.]+$/,
+      ""
+    );
+
+  return new File(
+    [
+      blob
+    ],
+    `${baseName}_highlight.mp3`,
+    {
+      type:"audio/mpeg",
+      lastModified:
+        Date.now()
+    }
+  );
+
+}
+
+
+async function uploadHighlightFile(
+  highlightFile
+){
+
+  const safeHighlightName =
+    `${currentSession.user.id}_${Date.now()}_${crypto.randomUUID()}_highlight.mp3`;
+
+  const {
+    data,
+    error
+  } =
+  await sb
+  .storage
+  .from("highlights")
+  .upload(
+    safeHighlightName,
+    highlightFile,
+    {
+      cacheControl:"31536000",
+      upsert:false,
+      contentType:"audio/mpeg"
+    }
+  );
+
+  if(error){
+
+    throw new Error(
+      "30秒ハイライト音源のアップロード失敗：" +
+      error.message
+    );
+
+  }
+
+  const {
+    data:publicUrlData
+  } =
+  sb
+  .storage
+  .from("highlights")
+  .getPublicUrl(
+    data.path
+  );
+
+  return {
+    path:data.path,
+    url:publicUrlData.publicUrl
+  };
+
+}
+
+
+function storagePathFromPublicUrl(
+  url,
+  bucket
+){
+
+  if(!url){
+    return null;
+  }
+
+  const marker =
+    `/storage/v1/object/public/${bucket}/`;
+
+  const index =
+    String(url).indexOf(
+      marker
+    );
+
+  if(index < 0){
+    return null;
+  }
+
+  return decodeURIComponent(
+    String(url)
+    .slice(
+      index +
+      marker.length
+    )
+  );
+
+}
+
+
+async function fileFromRemoteAudio(
+  url,
+  fallbackName="song.mp3"
+){
+
+  const response =
+    await fetch(
+      url,
+      {
+        cache:"no-store"
+      }
+    );
+
+  if(!response.ok){
+
+    throw new Error(
+      "フル音源を読み込めないため、30秒ハイライトを更新できませんでした。"
+    );
+
+  }
+
+  const blob =
+    await response.blob();
+
+  return new File(
+    [
+      blob
+    ],
+    fallbackName,
+    {
+      type:
+        blob.type ||
+        "audio/mpeg",
+      lastModified:
+        Date.now()
+    }
+  );
+
+}
+
+
 function formatFileSizeMB(
   bytes
 ){
@@ -4648,6 +5098,9 @@ uploadButton.addEventListener(
     let uploadedCoverPath =
       null;
 
+    let uploadedHighlightPath =
+      null;
+
     try{
 
       const extension =
@@ -4793,6 +5246,31 @@ uploadButton.addEventListener(
       const audioUrl =
         publicUrlData.publicUrl;
 
+      /*
+        30秒ハイライトはフル曲とは別の軽量MP3を作る。
+        128kbps / 最大30秒なので、ハイライト巡回時のEgressを大幅に削減できる。
+      */
+      const highlightFile =
+        await createHighlightMp3(
+          playbackFile,
+          highlightStartValue,
+          128
+        );
+
+      progress.textContent =
+        `30秒ハイライト音源をアップロードしています… ⚡ (${formatFileSizeMB(highlightFile.size)}MB)`;
+
+      const uploadedHighlight =
+        await uploadHighlightFile(
+          highlightFile
+        );
+
+      uploadedHighlightPath =
+        uploadedHighlight.path;
+
+      const highlightAudioUrl =
+        uploadedHighlight.url;
+
       let coverUrl = null;
 
       if(cover){
@@ -4878,6 +5356,9 @@ uploadButton.addEventListener(
         audio_url:
           audioUrl,
 
+        highlight_audio_url:
+          highlightAudioUrl,
+
         cover_url:
           coverUrl,
 
@@ -4935,6 +5416,9 @@ uploadButton.addEventListener(
       uploadedCoverPath =
         null;
 
+      uploadedHighlightPath =
+        null;
+
       showStatus(
         "アップロード完了！🔥 再生用の軽量音源でNovaRadioに登録されました。",
         false
@@ -4977,6 +5461,19 @@ uploadButton.addEventListener(
           .remove(
             [
               uploadedCoverPath
+            ]
+          );
+
+        }
+
+        if(uploadedHighlightPath){
+
+          await sb
+          .storage
+          .from("highlights")
+          .remove(
+            [
+              uploadedHighlightPath
             ]
           );
 
@@ -5402,6 +5899,9 @@ function openEditModal(
   song
 ){
 
+  currentEditingSong =
+    song;
+
   document
   .getElementById("editSongId")
   .value =
@@ -5499,6 +5999,9 @@ document
       "show"
     );
 
+    currentEditingSong =
+      null;
+
   }
 );
 
@@ -5570,6 +6073,91 @@ document
 
     }
 
+    let newHighlightAudioUrl =
+      currentEditingSong?.highlight_audio_url ||
+      null;
+
+    let newHighlightPath =
+      null;
+
+    const previousHighlightStart =
+      Number(
+        currentEditingSong?.highlight_start
+      ) || 0;
+
+    const shouldRegenerateHighlight =
+      !newHighlightAudioUrl ||
+      Math.abs(
+        previousHighlightStart -
+        highlightStartValue
+      ) > 0.05;
+
+    if(
+      shouldRegenerateHighlight &&
+      currentEditingSong?.audio_url
+    ){
+
+      const saveButton =
+        document.getElementById(
+          "saveEdit"
+        );
+
+      saveButton.disabled =
+        true;
+
+      saveButton.textContent =
+        "30秒音源を更新中…";
+
+      try{
+
+        const fullFile =
+          await fileFromRemoteAudio(
+            currentEditingSong.audio_url,
+            `${id}.mp3`
+          );
+
+        const highlightFile =
+          await createHighlightMp3(
+            fullFile,
+            highlightStartValue,
+            128
+          );
+
+        const uploadedHighlight =
+          await uploadHighlightFile(
+            highlightFile
+          );
+
+        newHighlightAudioUrl =
+          uploadedHighlight.url;
+
+        newHighlightPath =
+          uploadedHighlight.path;
+
+      }
+      catch(highlightError){
+
+        console.error(
+          highlightError
+        );
+
+        alert(
+          "30秒ハイライト音源の更新に失敗しました：" +
+          highlightError.message
+        );
+
+        saveButton.disabled =
+          false;
+
+        saveButton.textContent =
+          "保存";
+
+        return;
+
+      }
+
+    }
+
     const {
       error
     } =
@@ -5595,7 +6183,10 @@ document
         key || null,
 
       highlight_start:
-        highlightStartValue
+        highlightStartValue,
+
+      highlight_audio_url:
+        newHighlightAudioUrl
 
     })
     .eq(
@@ -5609,14 +6200,107 @@ document
 
     if(error){
 
+      if(newHighlightPath){
+
+        try{
+
+          await sb
+          .storage
+          .from("highlights")
+          .remove(
+            [
+              newHighlightPath
+            ]
+          );
+
+        }
+        catch(cleanupError){
+
+          console.warn(
+            "Highlight cleanup error:",
+            cleanupError
+          );
+
+        }
+
+      }
+
       alert(
         "編集に失敗しました：" +
         error.message
       );
 
+      const saveButton =
+        document.getElementById(
+          "saveEdit"
+        );
+
+      saveButton.disabled =
+        false;
+
+      saveButton.textContent =
+        "保存";
+
       return;
 
     }
+
+    /*
+      新しい30秒音源の保存に成功したら、
+      古いhighlightsファイルだけ削除する。
+    */
+    if(
+      newHighlightPath &&
+      currentEditingSong?.highlight_audio_url
+    ){
+
+      const oldHighlightPath =
+        storagePathFromPublicUrl(
+          currentEditingSong.highlight_audio_url,
+          "highlights"
+        );
+
+      if(
+        oldHighlightPath &&
+        oldHighlightPath !==
+        newHighlightPath
+      ){
+
+        try{
+
+          await sb
+          .storage
+          .from("highlights")
+          .remove(
+            [
+              oldHighlightPath
+            ]
+          );
+
+        }
+        catch(cleanupError){
+
+          console.warn(
+            "Old highlight cleanup error:",
+            cleanupError
+          );
+
+        }
+
+      }
+
+    }
+
+    const saveButton =
+      document.getElementById(
+        "saveEdit"
+      );
+
+    saveButton.disabled =
+      false;
+
+    saveButton.textContent =
+      "保存";
 
     stopHighlightPreview(
       editHighlightAudio,
@@ -5628,6 +6312,9 @@ document
     editModal.classList.remove(
       "show"
     );
+
+    currentEditingSong =
+      null;
 
     await loadMySongs();
 
