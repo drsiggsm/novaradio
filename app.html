@@ -2926,6 +2926,66 @@ async function startPlayback(
    30秒ハイライト専用音源
 ========================= */
 
+/* =========================
+   Cloudflare R2 再生テスト
+   ※ 現時点では1曲だけをR2へ向ける安全な確認用
+========================= */
+
+const R2_TEST_AUDIO_URL =
+  "https://pub-f729f197decc4432acbc18188b3342b2.r2.dev/world_0814.wav";
+
+function isR2TestSong(
+  song
+){
+
+  if(!song){
+    return false;
+  }
+
+  const title =
+    String(
+      song.title || ""
+    )
+    .trim()
+    .toLowerCase();
+
+  const artist =
+    String(
+      song.artist || ""
+    )
+    .trim()
+    .toLowerCase();
+
+  return (
+    artist === "dr.sig" &&
+    title === "world feat.boy melo world"
+  );
+
+}
+
+
+function resolveFullPlaybackUrl(
+  song
+){
+
+  if(
+    isR2TestSong(
+      song
+    )
+  ){
+
+    return R2_TEST_AUDIO_URL;
+
+  }
+
+  return (
+    song?.audio_url ||
+    ""
+  );
+
+}
+
+
 const highlightAudioUrlCache =
   new Map();
 
@@ -3103,7 +3163,9 @@ async function playSong(
 
   const playbackUrl =
     dedicatedHighlightUrl ||
-    song.audio_url;
+    resolveFullPlaybackUrl(
+      song
+    );
 
   const usingDedicatedHighlight =
     !!dedicatedHighlightUrl &&
@@ -3423,7 +3485,10 @@ function playCurrentSongFull(){
     fullAudio.removeAttribute("src");
     fullAudio.load();
 
-    fullAudio.src = state.song.audio_url;
+    fullAudio.src =
+      resolveFullPlaybackUrl(
+        state.song
+      );
     fullAudio.volume = audio.volume;
     fullAudio.load();
 
