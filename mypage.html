@@ -133,6 +133,40 @@ header{
   border-color:#7b25ff;
 }
 
+
+.profile-actions{
+  display:flex;
+  justify-content:center;
+  margin-top:20px;
+}
+
+.profile-settings-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-width:min(360px,100%);
+  padding:13px 18px;
+  border:1px solid #454d83;
+  border-radius:14px;
+  background:#171a31;
+  color:#fff;
+  text-decoration:none;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.profile-settings-button:hover{
+  border-color:#7b25ff;
+  transform:translateY(-1px);
+}
+
+.logout-section{
+  text-align:center;
+}
+
 .card{
   background:#101228e8;
   border:1px solid #30355e;
@@ -961,6 +995,16 @@ if(window.parent && window.parent !== window){
       style="display:none"
     ></div>
 
+    <div class="profile-actions">
+      <button
+        class="profile-settings-button"
+        type="button"
+        id="accountSettings"
+      >
+        ⚙️ プロフィール・アカウント設定
+      </button>
+    </div>
+
   </section>
 
 
@@ -1147,21 +1191,9 @@ if(window.parent && window.parent !== window){
   </section>
 
 
-  <!-- アカウント -->
+  <!-- ログアウト -->
 
-  <section class="card">
-
-    <h2>
-      ⚙️ アカウント
-    </h2>
-
-    <button
-      class="action"
-      type="button"
-      id="accountSettings"
-    >
-      アカウント設定
-    </button>
+  <section class="card logout-section">
 
     <button
       class="action logout"
