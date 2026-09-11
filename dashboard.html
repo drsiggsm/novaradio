@@ -4460,6 +4460,119 @@ async function createHighlightMp3(
 }
 
 
+const R2_PUBLIC_BASE_URL =
+  "https://pub-f729f197decc4432acbc18188b3342b2.r2.dev";
+
+
+function r2PublicUrlFromKey(
+  key
+){
+
+  const encodedPath =
+    String(key || "")
+    .split("/")
+    .map(
+      segment =>
+        encodeURIComponent(
+          segment
+        )
+    )
+    .join("/");
+
+  return (
+    `${R2_PUBLIC_BASE_URL}/${encodedPath}`
+  );
+
+}
+
+
+async function uploadFileToR2(
+  file,
+  folder,
+  fileName
+){
+
+  const response =
+    await fetch(
+      "/api/r2-upload",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+        body:
+          JSON.stringify({
+            fileName:
+              fileName ||
+              file.name ||
+              "audio.mp3",
+            contentType:
+              file.type ||
+              "audio/mpeg",
+            folder
+          })
+      }
+    );
+
+  let result = null;
+
+  try{
+    result =
+      await response.json();
+  }
+  catch(_error){
+    result = null;
+  }
+
+  if(
+    !response.ok ||
+    !result?.ok ||
+    !result?.uploadUrl ||
+    !result?.key
+  ){
+
+    throw new Error(
+      result?.error ||
+      "R2アップロードURLの作成に失敗しました。"
+    );
+
+  }
+
+  const uploadResponse =
+    await fetch(
+      result.uploadUrl,
+      {
+        method:"PUT",
+        headers:{
+          "Content-Type":
+            file.type ||
+            "audio/mpeg"
+        },
+        body:file
+      }
+    );
+
+  if(!uploadResponse.ok){
+
+    throw new Error(
+      `R2へのファイル送信に失敗しました（HTTP ${uploadResponse.status}）。`
+    );
+
+  }
+
+  return {
+    path:
+      result.key,
+    url:
+      r2PublicUrlFromKey(
+        result.key
+      )
+  };
+
+}
+
+
 async function uploadHighlightFile(
   highlightFile
 ){
@@ -4467,46 +4580,11 @@ async function uploadHighlightFile(
   const safeHighlightName =
     `${currentSession.user.id}_${Date.now()}_${crypto.randomUUID()}_highlight.mp3`;
 
-  const {
-    data,
-    error
-  } =
-  await sb
-  .storage
-  .from("highlights")
-  .upload(
-    safeHighlightName,
+  return await uploadFileToR2(
     highlightFile,
-    {
-      cacheControl:"31536000",
-      upsert:false,
-      contentType:"audio/mpeg"
-    }
+    "highlights",
+    safeHighlightName
   );
-
-  if(error){
-
-    throw new Error(
-      "30秒ハイライト音源のアップロード失敗：" +
-      error.message
-    );
-
-  }
-
-  const {
-    data:publicUrlData
-  } =
-  sb
-  .storage
-  .from("highlights")
-  .getPublicUrl(
-    data.path
-  );
-
-  return {
-    path:data.path,
-    url:publicUrlData.publicUrl
-  };
 
 }
 
@@ -5092,13 +5170,7 @@ uploadButton.addEventListener(
 
     hideStatus();
 
-    let uploadedSongPath =
-      null;
-
     let uploadedCoverPath =
-      null;
-
-    let uploadedHighlightPath =
       null;
 
     try{
@@ -5168,10 +5240,8 @@ uploadButton.addEventListener(
       }
 
       /*
-        WAVはブラウザ内で256kbps MP3へ変換してから
-        Supabaseへアップロードする。
-        元WAVはStorageへ送らないので、
-        Storage容量と再生時のEgressを大幅に節約できる。
+        WAVはブラウザ内で256kbps MP3へ変換してからR2へ送る。
+        元WAVはR2へ送らないので、容量と配信量を抑えられる。
       */
       let playbackFile =
         file;
@@ -5187,68 +5257,32 @@ uploadButton.addEventListener(
           );
 
         progress.textContent =
-          `変換完了 ${formatFileSizeMB(file.size)}MB → ${formatFileSizeMB(playbackFile.size)}MB。アップロード中… 🚀`;
+          `変換完了 ${formatFileSizeMB(file.size)}MB → ${formatFileSizeMB(playbackFile.size)}MB。R2へアップロード中… 🚀`;
 
       }
       else{
 
         progress.textContent =
-          "軽量な再生用MP3をアップロードしています… 🚀";
+          "再生用MP3をR2へアップロードしています… 🚀";
 
       }
 
       const safeFileName =
         `${currentSession.user.id}_${Date.now()}_${crypto.randomUUID()}.mp3`;
 
-      const {
-        data:uploadData,
-        error:uploadError
-      } =
-      await sb
-      .storage
-      .from("songs")
-      .upload(
-        safeFileName,
-        playbackFile,
-        {
-          /*
-            ファイル名は毎回UUID付きで変更されるため
-            1年間ブラウザ/CDNキャッシュして安全。
-          */
-          cacheControl:"31536000",
-          upsert:false,
-          contentType:"audio/mpeg"
-        }
-      );
-
-      if(uploadError){
-
-        throw new Error(
-          "音源アップロード失敗：" +
-          uploadError.message
+      const uploadedSong =
+        await uploadFileToR2(
+          playbackFile,
+          "songs",
+          safeFileName
         );
 
-      }
-
-      uploadedSongPath =
-        uploadData.path;
-
-      const {
-        data:publicUrlData
-      } =
-      sb
-      .storage
-      .from("songs")
-      .getPublicUrl(
-        uploadData.path
-      );
-
       const audioUrl =
-        publicUrlData.publicUrl;
+        uploadedSong.url;
 
       /*
         30秒ハイライトはフル曲とは別の軽量MP3を作る。
-        128kbps / 最大30秒なので、ハイライト巡回時のEgressを大幅に削減できる。
+        128kbps / 最大30秒なので、ハイライト巡回時の通信量を抑えられる。
       */
       const highlightFile =
         await createHighlightMp3(
@@ -5258,19 +5292,19 @@ uploadButton.addEventListener(
         );
 
       progress.textContent =
-        `30秒ハイライト音源をアップロードしています… ⚡ (${formatFileSizeMB(highlightFile.size)}MB)`;
+        `30秒ハイライト音源をR2へアップロードしています… ⚡ (${formatFileSizeMB(highlightFile.size)}MB)`;
 
       const uploadedHighlight =
         await uploadHighlightFile(
           highlightFile
         );
 
-      uploadedHighlightPath =
-        uploadedHighlight.path;
-
       const highlightAudioUrl =
         uploadedHighlight.url;
 
+      /*
+        ジャケット画像は当面これまで通りSupabase Storageへ保存する。
+      */
       let coverUrl = null;
 
       if(cover){
@@ -5394,7 +5428,7 @@ uploadButton.addEventListener(
         ){
 
           throw new Error(
-            "FREEプランでは3曲まで公開できます。既存曲を削除してからアップロードしてください。"
+            "FREEプランの公開上限に達しています。既存曲を削除してからアップロードしてください。"
           );
 
         }
@@ -5408,19 +5442,14 @@ uploadButton.addEventListener(
 
       /*
         DB登録まで成功したので、
-        catchでStorageを消さないようフラグを解除。
+        Supabase側のジャケットだけcleanup対象から外す。
+        R2の音源はこの時点で正式採用。
       */
-      uploadedSongPath =
-        null;
-
       uploadedCoverPath =
         null;
 
-      uploadedHighlightPath =
-        null;
-
       showStatus(
-        "アップロード完了！🔥 再生用の軽量音源でNovaRadioに登録されました。",
+        "アップロード完了！🔥 フル音源と30秒ハイライトをCloudflare R2に保存してNovaRadioへ登録しました。",
         false
       );
 
@@ -5435,23 +5464,11 @@ uploadButton.addEventListener(
       console.error(error);
 
       /*
-        DB側の上限チェックなどで登録に失敗した場合、
-        先にStorageへ上げたファイルを残さない。
+        ジャケットはSupabase Storageなので、
+        DB登録前に失敗した場合だけ削除する。
+        R2音源の自動cleanupは削除API実装後に追加する。
       */
       try{
-
-        if(uploadedSongPath){
-
-          await sb
-          .storage
-          .from("songs")
-          .remove(
-            [
-              uploadedSongPath
-            ]
-          );
-
-        }
 
         if(uploadedCoverPath){
 
@@ -5461,19 +5478,6 @@ uploadButton.addEventListener(
           .remove(
             [
               uploadedCoverPath
-            ]
-          );
-
-        }
-
-        if(uploadedHighlightPath){
-
-          await sb
-          .storage
-          .from("highlights")
-          .remove(
-            [
-              uploadedHighlightPath
             ]
           );
 
@@ -5510,6 +5514,7 @@ uploadButton.addEventListener(
 
   }
 );
+
 
 async function loadMySongs(){
 
