@@ -4578,6 +4578,19 @@ async function uploadFileToR2(
   fileName
 ){
 
+  const {
+    data:{
+      session:currentSession
+    }
+  } =
+    await supabase.auth.getSession();
+
+  if(!currentSession?.access_token){
+    throw new Error(
+      "ログイン情報を確認できません。もう一度ログインしてください。"
+    );
+  }
+
   const response =
     await fetch(
       "/api/r2-upload",
@@ -4585,7 +4598,9 @@ async function uploadFileToR2(
         method:"POST",
         headers:{
           "Content-Type":
-            "application/json"
+            "application/json",
+          "Authorization":
+            `Bearer ${currentSession.access_token}`
         },
         body:
           JSON.stringify({
