@@ -6633,7 +6633,7 @@ async function deleteSong(song){
     }
 
     await loadMySongs();
-    await loadAnalytics();
+    await loadArtistAnalytics();
 
     if(cleanupFailures.length){
       alert(
