@@ -9,16 +9,8 @@ const {
 
 
 const SUPABASE_URL =
-  "https://melsoikvhwzvzswlimsi.supabase.co";
+  process.env.SUPABASE_URL;
 
-/*
-  ブラウザでも使用している
-  Supabaseの公開キーをVercel環境変数から取得する。
-
-  Vercelには
-  SUPABASE_PUBLISHABLE_KEY
-  を設定してください。
-*/
 const SUPABASE_PUBLISHABLE_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY;
 
@@ -95,10 +87,13 @@ async function getAuthenticatedUser(
   }
 
 
-  if (!SUPABASE_PUBLISHABLE_KEY) {
+  if (
+    !SUPABASE_URL ||
+    !SUPABASE_PUBLISHABLE_KEY
+  ) {
 
     throw new Error(
-      "SUPABASE_PUBLISHABLE_KEY is not configured"
+      "Supabase environment variables are not configured"
     );
 
   }
@@ -231,9 +226,8 @@ async function handler(req, res) {
 
 
     /*
-      不正なfolderが来た場合に
-      勝手にsongsへフォールバックさせず、
-      明示的に拒否する。
+      不正なfolderが来た場合は
+      Presigned URLを発行しない。
     */
 
     if (
@@ -282,14 +276,12 @@ async function handler(req, res) {
       USER OWNED R2 KEY
       =========================
 
-      以前：
-      songs/日時-file.mp3
-
-      今後：
       songs/USER_ID/日時-file.mp3
 
-      これでR2上でも
-      所有ユーザーを明確に分離する。
+      highlights/USER_ID/日時-file.mp3
+
+      R2上でもユーザーごとに
+      保存先を分離する。
     */
 
     const key =
