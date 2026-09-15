@@ -60,6 +60,28 @@ function sanitizeFileName(fileName) {
 }
 
 
+function getFileExtension(fileName) {
+
+  const name =
+    String(fileName || "")
+      .toLowerCase();
+
+  const lastDot =
+    name.lastIndexOf(".");
+
+  if (
+    lastDot === -1 ||
+    lastDot === name.length - 1
+  ) {
+
+    return "";
+
+  }
+
+  return name.slice(lastDot);
+}
+
+
 async function getAuthenticatedUser(
   authorization
 ) {
@@ -246,26 +268,93 @@ async function handler(req, res) {
       String(
         contentType ||
         "application/octet-stream"
+      )
+        .toLowerCase()
+        .trim();
+
+
+    /*
+      =========================
+      AUDIO TYPE CHECK
+      =========================
+
+      MIMEタイプだけではなく、
+      ファイル拡張子との組み合わせも確認する。
+
+      例：
+
+      song.mp3 + audio/mpeg
+      → OK
+
+      song.wav + audio/wav
+      → OK
+
+      attack.html + audio/mpeg
+      → NG
+
+      attack.exe + audio/mpeg
+      → NG
+    */
+
+    const allowedAudioTypes = {
+      ".mp3": [
+        "audio/mpeg",
+        "audio/mp3"
+      ],
+
+      ".wav": [
+        "audio/wav",
+        "audio/x-wav"
+      ]
+    };
+
+
+    const extension =
+      getFileExtension(
+        safeFileName
       );
 
 
-    const allowedContentTypes = [
-      "audio/mpeg",
-      "audio/mp3",
-      "audio/wav",
-      "audio/x-wav"
-    ];
-
+    /*
+      .mp3 / .wav 以外の
+      ファイルは拒否する。
+    */
 
     if (
-      !allowedContentTypes.includes(
+      !Object.prototype.hasOwnProperty.call(
+        allowedAudioTypes,
+        extension
+      )
+    ) {
+
+      return res.status(400).json({
+        ok: false,
+        error: "Unsupported file extension"
+      });
+
+    }
+
+
+    /*
+      拡張子とContent-Typeが
+      正しい組み合わせか確認する。
+
+      .mp3なのにaudio/wav、
+      .wavなのにaudio/mpeg、
+      といった偽装も拒否する。
+    */
+
+    if (
+      !allowedAudioTypes[
+        extension
+      ].includes(
         safeContentType
       )
     ) {
 
       return res.status(400).json({
         ok: false,
-        error: "Unsupported content type"
+        error: "File extension and content type do not match"
       });
 
     }
@@ -282,6 +371,10 @@ async function handler(req, res) {
 
       R2上でもユーザーごとに
       保存先を分離する。
+
+      クライアントからuserIdを受け取らず、
+      Supabase Access Tokenから確認した
+      user.idだけを使用する。
     */
 
     const key =
