@@ -8,9 +8,27 @@ const {
 } = require("@aws-sdk/s3-request-presigner");
 
 
+const SUPABASE_URL =
+  "https://melsoikvhwzvzswlimsi.supabase.co";
+
+/*
+  ブラウザでも使用している
+  Supabaseの公開キーをVercel環境変数から取得する。
+
+  Vercelには
+  SUPABASE_PUBLISHABLE_KEY
+  を設定してください。
+*/
+const SUPABASE_PUBLISHABLE_KEY =
+  process.env.SUPABASE_PUBLISHABLE_KEY;
+
+
 const s3 = new S3Client({
   region: "auto",
-  endpoint: process.env.R2_ENDPOINT,
+
+  endpoint:
+    process.env.R2_ENDPOINT,
+
   forcePathStyle: true,
 
   /*
@@ -18,8 +36,11 @@ const s3 = new S3Client({
     AWS SDKが自動追加するCRC32チェックサムを
     必須の場合だけにする。
   */
-  requestChecksumCalculation: "WHEN_REQUIRED",
-  responseChecksumValidation: "WHEN_REQUIRED",
+  requestChecksumCalculation:
+    "WHEN_REQUIRED",
+
+  responseChecksumValidation:
+    "WHEN_REQUIRED",
 
   credentials: {
     accessKeyId:
@@ -47,6 +68,81 @@ function sanitizeFileName(fileName) {
 }
 
 
+async function getAuthenticatedUser(
+  authorization
+) {
+
+  if (
+    !authorization ||
+    !authorization.startsWith("Bearer ")
+  ) {
+
+    return null;
+
+  }
+
+
+  const accessToken =
+    authorization
+      .slice("Bearer ".length)
+      .trim();
+
+
+  if (!accessToken) {
+
+    return null;
+
+  }
+
+
+  if (!SUPABASE_PUBLISHABLE_KEY) {
+
+    throw new Error(
+      "SUPABASE_PUBLISHABLE_KEY is not configured"
+    );
+
+  }
+
+
+  const response =
+    await fetch(
+      `${SUPABASE_URL}/auth/v1/user`,
+      {
+        method: "GET",
+
+        headers: {
+          "apikey":
+            SUPABASE_PUBLISHABLE_KEY,
+
+          "Authorization":
+            `Bearer ${accessToken}`
+        }
+      }
+    );
+
+
+  if (!response.ok) {
+
+    return null;
+
+  }
+
+
+  const user =
+    await response.json();
+
+
+  if (!user?.id) {
+
+    return null;
+
+  }
+
+
+  return user;
+}
+
+
 module.exports =
 async function handler(req, res) {
 
@@ -59,7 +155,37 @@ async function handler(req, res) {
 
   }
 
+
   try {
+
+    /*
+      =========================
+      LOGIN CHECK
+      =========================
+
+      dashboard.htmlから送られてきた
+      Supabase Access Tokenを使って、
+      本当にログイン中のユーザーか確認する。
+
+      未ログイン・偽造トークンの場合は
+      Presigned URLを発行しない。
+    */
+
+    const user =
+      await getAuthenticatedUser(
+        req.headers.authorization
+      );
+
+
+    if (!user) {
+
+      return res.status(401).json({
+        ok: false,
+        error: "Unauthorized"
+      });
+
+    }
+
 
     const {
       fileName,
@@ -97,16 +223,29 @@ async function handler(req, res) {
       フル音源と30秒ハイライトのみ
       Cloudflare R2へ保存する。
     */
+
     const allowedFolders = [
       "songs",
       "highlights"
     ];
 
 
-    const safeFolder =
-      allowedFolders.includes(folder)
-        ? folder
-        : "songs";
+    /*
+      不正なfolderが来た場合に
+      勝手にsongsへフォールバックさせず、
+      明示的に拒否する。
+    */
+
+    if (
+      !allowedFolders.includes(folder)
+    ) {
+
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid folder"
+      });
+
+    }
 
 
     const safeContentType =
@@ -138,8 +277,23 @@ async function handler(req, res) {
     }
 
 
+    /*
+      =========================
+      USER OWNED R2 KEY
+      =========================
+
+      以前：
+      songs/日時-file.mp3
+
+      今後：
+      songs/USER_ID/日時-file.mp3
+
+      これでR2上でも
+      所有ユーザーを明確に分離する。
+    */
+
     const key =
-      `${safeFolder}/${Date.now()}-${safeFileName}`;
+      `${folder}/${user.id}/${Date.now()}-${safeFileName}`;
 
 
     const command =
@@ -158,10 +312,11 @@ async function handler(req, res) {
     /*
       Presigned URLは5分間だけ有効。
 
+      音源本体はVercelを経由せず、
       ブラウザからCloudflare R2へ
-      直接PUTすることで、
-      大きい音源をVercel本体には通さない。
+      直接PUTする。
     */
+
     const uploadUrl =
       await getSignedUrl(
         s3,
@@ -174,8 +329,11 @@ async function handler(req, res) {
 
     return res.status(200).json({
       ok: true,
+
       key,
+
       uploadUrl,
+
       expiresIn: 300
     });
 
