@@ -4534,7 +4534,7 @@ async function uploadFileToR2(
 
     throw new Error(
       result?.error ||
-      "R2アップロードURLの作成に失敗しました。"
+      "アップロードの準備に失敗しました。"
     );
 
   }
@@ -4556,7 +4556,7 @@ async function uploadFileToR2(
   if(!uploadResponse.ok){
 
     throw new Error(
-      `R2へのファイル送信に失敗しました（HTTP ${uploadResponse.status}）。`
+      `音源のアップロードに失敗しました（HTTP ${uploadResponse.status}）。`
     );
 
   }
@@ -5257,13 +5257,13 @@ uploadButton.addEventListener(
           );
 
         progress.textContent =
-          `変換完了 ${formatFileSizeMB(file.size)}MB → ${formatFileSizeMB(playbackFile.size)}MB。R2へアップロード中… 🚀`;
+          `変換完了 ${formatFileSizeMB(file.size)}MB → ${formatFileSizeMB(playbackFile.size)}MB。NovaRadioへアップロード中… 🚀`;
 
       }
       else{
 
         progress.textContent =
-          "再生用MP3をR2へアップロードしています… 🚀";
+          "音源をNovaRadioへアップロードしています… 🚀";
 
       }
 
@@ -5292,7 +5292,7 @@ uploadButton.addEventListener(
         );
 
       progress.textContent =
-        `30秒ハイライト音源をR2へアップロードしています… ⚡ (${formatFileSizeMB(highlightFile.size)}MB)`;
+        `30秒ハイライト音源をアップロードしています… ⚡ (${formatFileSizeMB(highlightFile.size)}MB)`;
 
       const uploadedHighlight =
         await uploadHighlightFile(
@@ -5449,7 +5449,7 @@ uploadButton.addEventListener(
         null;
 
       showStatus(
-        "アップロード完了！🔥 フル音源と30秒ハイライトをCloudflare R2に保存してNovaRadioへ登録しました。",
+        "アップロード完了！🔥 NovaRadioに曲を登録しました。",
         false
       );
 
