@@ -188,6 +188,76 @@ body{
   margin:18px 0 0;
 }
 
+/* 公開情報 */
+
+.public-info{
+  margin-top:22px;
+  padding:25px;
+  border:1px solid #30355e;
+  border-radius:22px;
+  background:#0c1025cc;
+  text-align:center;
+}
+
+.public-info-title{
+  font-size:20px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.public-info-text{
+  color:#aeb0c8;
+  font-size:14px;
+  line-height:1.7;
+  margin-bottom:17px;
+}
+
+.pro-link{
+  display:block;
+  width:100%;
+  padding:15px 18px;
+  border-radius:15px;
+  border:1px solid #4b5791;
+  background:#111630;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+}
+
+.pro-link:hover{
+  background:#171d3d;
+}
+
+.footer{
+  margin-top:28px;
+  padding-top:22px;
+  border-top:1px solid #282d50;
+  text-align:center;
+}
+
+.footer-links{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px 20px;
+}
+
+.footer-links a{
+  color:#aeb5d5;
+  text-decoration:none;
+  font-size:13px;
+}
+
+.footer-links a:hover{
+  color:#fff;
+}
+
+.copyright{
+  margin-top:14px;
+  color:#686f91;
+  font-size:12px;
+}
+
 @media(max-width:600px){
   .brand{font-size:38px}
   .card{padding:22px}
@@ -337,6 +407,52 @@ body{
 </p>
 
 </section>
+
+<!-- Stripe / JCB審査から確認できる公開情報 -->
+
+<section class="public-info">
+
+  <div class="public-info-title">
+    NovaRadio PRO
+  </div>
+
+  <div class="public-info-text">
+    アーティスト向け有料プラン<br>
+    <strong style="color:#fff;">月額 ¥550（税込）</strong>
+  </div>
+
+  <a
+    href="pro.html"
+    class="pro-link"
+  >
+    PROの機能・料金を見る
+  </a>
+
+</section>
+
+<footer class="footer">
+
+  <div class="footer-links">
+
+    <a href="index.html">
+      NovaRadio
+    </a>
+
+    <a href="pro.html">
+      NovaRadio PRO・料金
+    </a>
+
+    <a href="tokusho.html">
+      特定商取引法に基づく表記
+    </a>
+
+  </div>
+
+  <div class="copyright">
+    © NovaRadio
+  </div>
+
+</footer>
 
 </main>
 
