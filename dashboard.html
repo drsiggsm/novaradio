@@ -4481,6 +4481,97 @@ function r2PublicUrlFromKey(
 }
 
 
+function r2KeyFromPublicUrl(
+  url
+){
+
+  if(!url){
+    return null;
+  }
+
+  const base =
+    `${R2_PUBLIC_BASE_URL}/`;
+
+  if(
+    !String(url).startsWith(base)
+  ){
+    return null;
+  }
+
+  return String(url)
+    .slice(base.length)
+    .split("/")
+    .map(segment => decodeURIComponent(segment))
+    .join("/");
+
+}
+
+
+async function deleteFilesFromR2(
+  keys
+){
+
+  const cleanKeys =
+    Array.from(
+      new Set(
+        (keys || [])
+        .filter(Boolean)
+      )
+    );
+
+  if(!cleanKeys.length){
+    return;
+  }
+
+  if(
+    !currentSession?.access_token
+  ){
+    throw new Error(
+      "ログイン情報を確認できません。"
+    );
+  }
+
+  const response =
+    await fetch(
+      "/api/r2-delete",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":
+            "application/json",
+          "Authorization":
+            `Bearer ${currentSession.access_token}`
+        },
+        body:
+          JSON.stringify({
+            keys:cleanKeys
+          })
+      }
+    );
+
+  let result = null;
+
+  try{
+    result =
+      await response.json();
+  }
+  catch(_error){
+    result = null;
+  }
+
+  if(
+    !response.ok ||
+    !result?.ok
+  ){
+    throw new Error(
+      result?.error ||
+      "R2音源の削除に失敗しました。"
+    );
+  }
+
+}
+
+
 async function uploadFileToR2(
   file,
   folder,
@@ -5168,6 +5259,12 @@ uploadButton.addEventListener(
     let uploadedCoverPath =
       null;
 
+    let uploadedR2SongPath =
+      null;
+
+    let uploadedR2HighlightPath =
+      null;
+
     try{
 
       const extension =
@@ -5275,6 +5372,9 @@ uploadButton.addEventListener(
       const audioUrl =
         uploadedSong.url;
 
+      uploadedR2SongPath =
+        uploadedSong.path;
+
       /*
         30秒ハイライトはフル曲とは別の256kbps MP3を作る。
       */
@@ -5295,6 +5395,9 @@ uploadButton.addEventListener(
 
       const highlightAudioUrl =
         uploadedHighlight.url;
+
+      uploadedR2HighlightPath =
+        uploadedHighlight.path;
 
       /*
         ジャケット画像は当面これまで通りSupabase Storageへ保存する。
@@ -5442,6 +5545,12 @@ uploadButton.addEventListener(
       uploadedCoverPath =
         null;
 
+      uploadedR2SongPath =
+        null;
+
+      uploadedR2HighlightPath =
+        null;
+
       showStatus(
         "アップロード完了！🔥",
         false
@@ -5458,10 +5567,28 @@ uploadButton.addEventListener(
       console.error(error);
 
       /*
-        ジャケットはSupabase Storageなので、
-        DB登録前に失敗した場合だけ削除する。
-        R2音源の自動cleanupは削除API実装後に追加する。
+        DB登録前に失敗した場合は、
+        途中まで保存されたR2音源とSupabaseのジャケットをcleanupする。
       */
+      try{
+
+        await deleteFilesFromR2(
+          [
+            uploadedR2SongPath,
+            uploadedR2HighlightPath
+          ]
+        );
+
+      }
+      catch(cleanupError){
+
+        console.warn(
+          "R2 upload cleanup error:",
+          cleanupError
+        );
+
+      }
+
       try{
 
         if(uploadedCoverPath){
@@ -5481,7 +5608,7 @@ uploadButton.addEventListener(
       catch(cleanupError){
 
         console.warn(
-          "Upload cleanup error:",
+          "Cover cleanup error:",
           cleanupError
         );
 
@@ -6203,10 +6330,7 @@ document
 
         try{
 
-          await sb
-          .storage
-          .from("highlights")
-          .remove(
+          await deleteFilesFromR2(
             [
               newHighlightPath
             ]
@@ -6253,38 +6377,54 @@ document
       currentEditingSong?.highlight_audio_url
     ){
 
-      const oldHighlightPath =
+      const oldR2HighlightPath =
+        r2KeyFromPublicUrl(
+          currentEditingSong.highlight_audio_url
+        );
+
+      const oldSupabaseHighlightPath =
         storagePathFromPublicUrl(
           currentEditingSong.highlight_audio_url,
           "highlights"
         );
 
-      if(
-        oldHighlightPath &&
-        oldHighlightPath !==
-        newHighlightPath
-      ){
+      try{
 
-        try{
+        if(
+          oldR2HighlightPath &&
+          oldR2HighlightPath !==
+          newHighlightPath
+        ){
+
+          await deleteFilesFromR2(
+            [
+              oldR2HighlightPath
+            ]
+          );
+
+        }
+        else if(
+          oldSupabaseHighlightPath
+        ){
 
           await sb
           .storage
           .from("highlights")
           .remove(
             [
-              oldHighlightPath
+              oldSupabaseHighlightPath
             ]
           );
 
         }
-        catch(cleanupError){
 
-          console.warn(
-            "Old highlight cleanup error:",
-            cleanupError
-          );
+      }
+      catch(cleanupError){
 
-        }
+        console.warn(
+          "Old highlight cleanup error:",
+          cleanupError
+        );
 
       }
 
@@ -6343,6 +6483,10 @@ async function deleteSong(
     return;
   }
 
+  /*
+    まずDBの曲情報を削除する。
+    成功後にR2 / Supabase Storageの実ファイルをcleanupする。
+  */
   const {
     error
   } =
@@ -6369,8 +6513,172 @@ async function deleteSong(
 
   }
 
+  const cleanupErrors = [];
+
+  /*
+    新しい曲：Cloudflare R2
+  */
+  try{
+
+    const r2AudioPath =
+      r2KeyFromPublicUrl(
+        song.audio_url
+      );
+
+    const r2HighlightPath =
+      r2KeyFromPublicUrl(
+        song.highlight_audio_url
+      );
+
+    await deleteFilesFromR2(
+      [
+        r2AudioPath,
+        r2HighlightPath
+      ]
+    );
+
+  }
+  catch(cleanupError){
+
+    console.warn(
+      "R2 song cleanup error:",
+      cleanupError
+    );
+
+    cleanupErrors.push(
+      "R2音源"
+    );
+
+  }
+
+  /*
+    旧曲：Supabase Storageに残っている音源にも対応。
+  */
+  try{
+
+    const oldSongPath =
+      storagePathFromPublicUrl(
+        song.audio_url,
+        "songs"
+      );
+
+    if(oldSongPath){
+
+      const {
+        error:oldSongRemoveError
+      } =
+      await sb
+      .storage
+      .from("songs")
+      .remove(
+        [
+          oldSongPath
+        ]
+      );
+
+      if(oldSongRemoveError){
+        throw oldSongRemoveError;
+      }
+
+    }
+
+    const oldHighlightPath =
+      storagePathFromPublicUrl(
+        song.highlight_audio_url,
+        "highlights"
+      );
+
+    if(oldHighlightPath){
+
+      const {
+        error:oldHighlightRemoveError
+      } =
+      await sb
+      .storage
+      .from("highlights")
+      .remove(
+        [
+          oldHighlightPath
+        ]
+      );
+
+      if(oldHighlightRemoveError){
+        throw oldHighlightRemoveError;
+      }
+
+    }
+
+  }
+  catch(cleanupError){
+
+    console.warn(
+      "Legacy audio cleanup error:",
+      cleanupError
+    );
+
+    cleanupErrors.push(
+      "旧音源"
+    );
+
+  }
+
+  /*
+    ジャケットは今もSupabase Storage。
+  */
+  try{
+
+    const coverPath =
+      storagePathFromPublicUrl(
+        song.cover_url,
+        "covers"
+      );
+
+    if(coverPath){
+
+      const {
+        error:coverRemoveError
+      } =
+      await sb
+      .storage
+      .from("covers")
+      .remove(
+        [
+          coverPath
+        ]
+      );
+
+      if(coverRemoveError){
+        throw coverRemoveError;
+      }
+
+    }
+
+  }
+  catch(cleanupError){
+
+    console.warn(
+      "Cover cleanup error:",
+      cleanupError
+    );
+
+    cleanupErrors.push(
+      "ジャケット"
+    );
+
+  }
+
   await loadMySongs();
   await loadArtistAnalytics();
+
+  if(cleanupErrors.length){
+
+    alert(
+      "曲情報は削除できましたが、一部ファイルの後片付けに失敗しました。\\n" +
+      cleanupErrors.join(" / ") +
+      "\\nVercel Logsを確認してください。"
+    );
+
+  }
 
 }
 
