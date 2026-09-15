@@ -3874,8 +3874,7 @@ async function convertWavToMp3(
 
   }
 
-  progress.textContent =
-    "WAVを再生用MP3へ変換しています… 🎧";
+  progress.textContent = "アップロード中… 🎧";
 
   const AudioContextClass =
     window.AudioContext ||
@@ -4063,8 +4062,7 @@ async function convertWavToMp3(
           )
         );
 
-      progress.textContent =
-        `WAVをMP3へ変換中… ${percent}% 🎧`;
+      progress.textContent = "アップロード中… 🎧";
 
       await new Promise(
         resolve=>
