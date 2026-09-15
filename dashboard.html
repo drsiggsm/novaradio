@@ -6460,222 +6460,199 @@ document
   }
 );
 
-async function deleteSong(
-  song
-){
-
-  if(!currentSession){
-
-    alert(
-      "ログイン情報を確認できません。"
-    );
-
-    return;
-
-  }
+async function deleteSong(song){
 
   const ok =
     confirm(
-      `「${song.title}」を削除しますか？`
+      `「${song.title || "この曲"}」を削除しますか？\n\nこの操作は取り消せません。`
     );
 
   if(!ok){
     return;
   }
 
-  /*
-    まずDBの曲情報を削除する。
-    成功後にR2 / Supabase Storageの実ファイルをcleanupする。
-  */
-  const {
-    error
-  } =
-  await sb
-  .from("songs")
-  .delete()
-  .eq(
-    "id",
-    song.id
-  )
-  .eq(
-    "user_id",
-    currentSession.user.id
-  );
-
-  if(error){
-
-    alert(
-      "削除に失敗しました：" +
-      error.message
-    );
-
+  if(
+    !currentSession?.user?.id ||
+    !currentSession?.access_token
+  ){
+    alert("ログイン情報を確認できません。もう一度ログインしてください。");
     return;
-
   }
 
-  const cleanupErrors = [];
-
-  /*
-    新しい曲：Cloudflare R2
-  */
   try{
 
-    const r2AudioPath =
+    /*
+      R2削除APIはsongsテーブルで所有確認するため、
+      DBレコードより先にR2音源を削除する。
+    */
+    const r2Keys = [];
+
+    const audioR2Key =
       r2KeyFromPublicUrl(
         song.audio_url
       );
 
-    const r2HighlightPath =
+    const highlightR2Key =
       r2KeyFromPublicUrl(
         song.highlight_audio_url
       );
 
-    await deleteFilesFromR2(
-      [
-        r2AudioPath,
-        r2HighlightPath
-      ]
-    );
-
-  }
-  catch(cleanupError){
-
-    console.warn(
-      "R2 song cleanup error:",
-      cleanupError
-    );
-
-    cleanupErrors.push(
-      "R2音源"
-    );
-
-  }
-
-  /*
-    旧曲：Supabase Storageに残っている音源にも対応。
-  */
-  try{
-
-    const oldSongPath =
-      storagePathFromPublicUrl(
-        song.audio_url,
-        "songs"
-      );
-
-    if(oldSongPath){
-
-      const {
-        error:oldSongRemoveError
-      } =
-      await sb
-      .storage
-      .from("songs")
-      .remove(
-        [
-          oldSongPath
-        ]
-      );
-
-      if(oldSongRemoveError){
-        throw oldSongRemoveError;
-      }
-
+    if(audioR2Key){
+      r2Keys.push(audioR2Key);
     }
 
-    const oldHighlightPath =
-      storagePathFromPublicUrl(
-        song.highlight_audio_url,
-        "highlights"
-      );
+    if(highlightR2Key){
+      r2Keys.push(highlightR2Key);
+    }
 
-    if(oldHighlightPath){
+    if(r2Keys.length){
+      await deleteFilesFromR2(r2Keys);
+    }
 
-      const {
-        error:oldHighlightRemoveError
-      } =
+    /*
+      R2削除成功後にDBレコードを削除。
+    */
+    const {
+      error: deleteDbError
+    } =
       await sb
-      .storage
-      .from("highlights")
-      .remove(
-        [
-          oldHighlightPath
-        ]
-      );
+        .from("songs")
+        .delete()
+        .eq("id", song.id)
+        .eq(
+          "user_id",
+          currentSession.user.id
+        );
 
-      if(oldHighlightRemoveError){
-        throw oldHighlightRemoveError;
+    if(deleteDbError){
+      throw deleteDbError;
+    }
+
+    /*
+      旧Supabase Storageデータとcoverの後片付け。
+    */
+    const cleanupFailures = [];
+
+    try{
+      if(song.audio_url && !audioR2Key){
+        const legacySongPath =
+          storagePathFromPublicUrl(
+            song.audio_url,
+            "songs"
+          );
+
+        if(legacySongPath){
+          const { error } =
+            await sb.storage
+              .from("songs")
+              .remove([legacySongPath]);
+
+          if(error){
+            cleanupFailures.push(
+              "旧Supabase音源"
+            );
+          }
+        }
       }
+    }
+    catch(error){
+      console.warn(
+        "Legacy song cleanup failed:",
+        error
+      );
+      cleanupFailures.push(
+        "旧Supabase音源"
+      );
+    }
 
+    try{
+      if(
+        song.highlight_audio_url &&
+        !highlightR2Key
+      ){
+        const legacyHighlightPath =
+          storagePathFromPublicUrl(
+            song.highlight_audio_url,
+            "highlights"
+          );
+
+        if(legacyHighlightPath){
+          const { error } =
+            await sb.storage
+              .from("highlights")
+              .remove([legacyHighlightPath]);
+
+          if(error){
+            cleanupFailures.push(
+              "旧Supabaseハイライト"
+            );
+          }
+        }
+      }
+    }
+    catch(error){
+      console.warn(
+        "Legacy highlight cleanup failed:",
+        error
+      );
+      cleanupFailures.push(
+        "旧Supabaseハイライト"
+      );
+    }
+
+    try{
+      if(song.cover_url){
+        const coverPath =
+          storagePathFromPublicUrl(
+            song.cover_url,
+            "covers"
+          );
+
+        if(coverPath){
+          const { error } =
+            await sb.storage
+              .from("covers")
+              .remove([coverPath]);
+
+          if(error){
+            cleanupFailures.push(
+              "ジャケット画像"
+            );
+          }
+        }
+      }
+    }
+    catch(error){
+      console.warn(
+        "Cover cleanup failed:",
+        error
+      );
+      cleanupFailures.push(
+        "ジャケット画像"
+      );
+    }
+
+    await loadMySongs();
+    await loadAnalytics();
+
+    if(cleanupFailures.length){
+      alert(
+        "曲とR2音源は削除できましたが、一部の旧ファイルの後片付けに失敗しました。\n\n" +
+        cleanupFailures.join("\n")
+      );
     }
 
   }
-  catch(cleanupError){
+  catch(error){
 
-    console.warn(
-      "Legacy audio cleanup error:",
-      cleanupError
+    console.error(
+      "Delete song failed:",
+      error
     );
-
-    cleanupErrors.push(
-      "旧音源"
-    );
-
-  }
-
-  /*
-    ジャケットは今もSupabase Storage。
-  */
-  try{
-
-    const coverPath =
-      storagePathFromPublicUrl(
-        song.cover_url,
-        "covers"
-      );
-
-    if(coverPath){
-
-      const {
-        error:coverRemoveError
-      } =
-      await sb
-      .storage
-      .from("covers")
-      .remove(
-        [
-          coverPath
-        ]
-      );
-
-      if(coverRemoveError){
-        throw coverRemoveError;
-      }
-
-    }
-
-  }
-  catch(cleanupError){
-
-    console.warn(
-      "Cover cleanup error:",
-      cleanupError
-    );
-
-    cleanupErrors.push(
-      "ジャケット"
-    );
-
-  }
-
-  await loadMySongs();
-  await loadArtistAnalytics();
-
-  if(cleanupErrors.length){
 
     alert(
-      "曲情報は削除できましたが、一部ファイルの後片付けに失敗しました。\\n" +
-      cleanupErrors.join(" / ") +
-      "\\nVercel Logsを確認してください。"
+      error?.message ||
+      "曲の削除に失敗しました。"
     );
 
   }
