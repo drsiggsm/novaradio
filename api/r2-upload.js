@@ -7,22 +7,38 @@ const {
   getSignedUrl
 } = require("@aws-sdk/s3-request-presigner");
 
+
 const s3 = new S3Client({
   region: "auto",
   endpoint: process.env.R2_ENDPOINT,
   forcePathStyle: true,
+
+  /*
+    Cloudflare R2へのPresigned PUTでは、
+    AWS SDKが自動追加するCRC32チェックサムを
+    必須の場合だけにする。
+  */
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
+
   credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    accessKeyId:
+      process.env.R2_ACCESS_KEY_ID,
+
+    secretAccessKey:
+      process.env.R2_SECRET_ACCESS_KEY,
   },
 });
 
+
 function sanitizeFileName(fileName) {
-  const name = String(fileName || "")
-    .split("/")
-    .pop()
-    .split("\\")
-    .pop();
+
+  const name =
+    String(fileName || "")
+      .split("/")
+      .pop()
+      .split("\\")
+      .pop();
 
   return name.replace(
     /[^a-zA-Z0-9._-]/g,
@@ -30,57 +46,75 @@ function sanitizeFileName(fileName) {
   );
 }
 
-module.exports = async function handler(req, res) {
+
+module.exports =
+async function handler(req, res) {
+
   if (req.method !== "POST") {
+
     return res.status(405).json({
       ok: false,
       error: "Method not allowed"
     });
+
   }
 
   try {
+
     const {
       fileName,
       contentType,
       folder
     } = req.body || {};
 
+
     if (!fileName) {
+
       return res.status(400).json({
         ok: false,
         error: "fileName is required"
       });
+
     }
+
 
     const safeFileName =
       sanitizeFileName(fileName);
 
+
     if (!safeFileName) {
+
       return res.status(400).json({
         ok: false,
         error: "Invalid fileName"
       });
+
     }
+
 
     /*
       NovaRadioでは現状、
-      フル音源と30秒ハイライトのみR2へ保存する。
+      フル音源と30秒ハイライトのみ
+      Cloudflare R2へ保存する。
     */
     const allowedFolders = [
       "songs",
       "highlights"
     ];
 
+
     const safeFolder =
       allowedFolders.includes(folder)
         ? folder
         : "songs";
+
 
     const safeContentType =
       String(
         contentType ||
         "application/octet-stream"
       );
+
 
     const allowedContentTypes = [
       "audio/mpeg",
@@ -89,34 +123,44 @@ module.exports = async function handler(req, res) {
       "audio/x-wav"
     ];
 
+
     if (
       !allowedContentTypes.includes(
         safeContentType
       )
     ) {
+
       return res.status(400).json({
         ok: false,
         error: "Unsupported content type"
       });
+
     }
+
 
     const key =
       `${safeFolder}/${Date.now()}-${safeFileName}`;
+
 
     const command =
       new PutObjectCommand({
         Bucket:
           process.env.R2_BUCKET_NAME,
+
         Key:
           key,
+
         ContentType:
           safeContentType
       });
 
+
     /*
-      URLは5分間だけ有効。
-      ブラウザはこのURLへ直接PUTするため、
-      大きい音源をVercel本体へ通さずに済む。
+      Presigned URLは5分間だけ有効。
+
+      ブラウザからCloudflare R2へ
+      直接PUTすることで、
+      大きい音源をVercel本体には通さない。
     */
     const uploadUrl =
       await getSignedUrl(
@@ -127,24 +171,31 @@ module.exports = async function handler(req, res) {
         }
       );
 
+
     return res.status(200).json({
       ok: true,
       key,
       uploadUrl,
       expiresIn: 300
     });
+
   }
   catch (error) {
+
     console.error(
       "R2 presign error:",
       error
     );
 
+
     return res.status(500).json({
       ok: false,
+
       error:
         error?.message ||
         "R2 presigned URL creation failed"
     });
+
   }
+
 };
