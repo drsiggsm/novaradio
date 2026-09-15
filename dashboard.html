@@ -1436,9 +1436,6 @@ input[type="file"]{
           type="file"
           accept=".wav,.mp3,audio/wav,audio/mpeg"
         >
-        <div class="file-info">
-          WAV / MP3 ・ フル再生用MP3に加えて、30秒ハイライト専用の軽量MP3（128kbps）を自動生成
-        </div>
       </div>
 
       <div
@@ -5222,7 +5219,7 @@ uploadButton.addEventListener(
           );
 
         progress.textContent =
-          `音量解析完了（補正 ${loudnessGainDb >= 0 ? "+" : ""}${loudnessGainDb.toFixed(1)} dB）… 🎚️`;
+          "アップロード中… 🎧";
 
       }
       catch(loudnessError){
@@ -5235,7 +5232,7 @@ uploadButton.addEventListener(
         loudnessGainDb = 0;
 
         progress.textContent =
-          "音量解析をスキップしてアップロードを続けます…";
+          "アップロード中… 🎧";
 
       }
 
@@ -5257,13 +5254,13 @@ uploadButton.addEventListener(
           );
 
         progress.textContent =
-          `変換完了 ${formatFileSizeMB(file.size)}MB → ${formatFileSizeMB(playbackFile.size)}MB。NovaRadioへアップロード中… 🚀`;
+          "アップロード中… 🎧";
 
       }
       else{
 
         progress.textContent =
-          "音源をNovaRadioへアップロードしています… 🚀";
+          "アップロード中… 🎧";
 
       }
 
@@ -5281,18 +5278,17 @@ uploadButton.addEventListener(
         uploadedSong.url;
 
       /*
-        30秒ハイライトはフル曲とは別の軽量MP3を作る。
-        128kbps / 最大30秒なので、ハイライト巡回時の通信量を抑えられる。
+        30秒ハイライトはフル曲とは別の256kbps MP3を作る。
       */
       const highlightFile =
         await createHighlightMp3(
           playbackFile,
           highlightStartValue,
-          128
+          256
         );
 
       progress.textContent =
-        `30秒ハイライト音源をアップロードしています… ⚡ (${formatFileSizeMB(highlightFile.size)}MB)`;
+        "アップロード中… 🎧";
 
       const uploadedHighlight =
         await uploadHighlightFile(
@@ -5449,7 +5445,7 @@ uploadButton.addEventListener(
         null;
 
       showStatus(
-        "アップロード完了！🔥 NovaRadioに曲を登録しました。",
+        "アップロード完了！🔥",
         false
       );
 
