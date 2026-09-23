@@ -386,6 +386,42 @@ button,input{font:inherit}
   justify-content:center;
 }
 
+/* プレイヤーから直接使えるクイック操作 */
+.player-quick-actions{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-top:7px;
+  min-width:0;
+}
+
+.player-action-btn{
+  height:30px;
+  padding:0 10px;
+  border:1px solid #343b67;
+  border-radius:10px;
+  background:#15182e;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+  cursor:pointer;
+}
+
+.player-action-btn:hover{
+  border-color:#7b25ff;
+}
+
+.player-action-btn.liked{
+  background:#442136;
+  border-color:#8b415b;
+}
+
+.player-action-btn:disabled{
+  opacity:.55;
+  cursor:default;
+}
+
 /* シークバー */
 .progress{
   position:absolute;
@@ -522,6 +558,58 @@ button,input{font:inherit}
   background:#080b1d;
 }
 
+.playlist-create{
+  margin-top:12px;
+  padding:14px;
+  border:1px solid #343b67;
+  border-radius:14px;
+  background:#0a0d20;
+}
+
+.playlist-create-title{
+  margin-bottom:9px;
+  font-size:13px;
+  font-weight:900;
+}
+
+.playlist-create-row{
+  display:flex;
+  gap:8px;
+}
+
+.playlist-create-input{
+  min-width:0;
+  flex:1;
+  height:42px;
+  padding:0 12px;
+  border:1px solid #343b67;
+  border-radius:11px;
+  outline:none;
+  background:#080b1d;
+  color:#fff;
+}
+
+.playlist-create-input:focus{
+  border-color:#7b25ff;
+}
+
+.playlist-create-btn{
+  height:42px;
+  padding:0 14px;
+  border:0;
+  border-radius:11px;
+  background:linear-gradient(135deg,#7b25ff,#159df5);
+  color:#fff;
+  font-weight:900;
+  white-space:nowrap;
+  cursor:pointer;
+}
+
+.playlist-create-btn:disabled{
+  opacity:.55;
+  cursor:default;
+}
+
 .modal-close{
   width:100%;
   margin-top:12px;
@@ -617,6 +705,25 @@ button,input{font:inherit}
     height:34px;
     padding:0 10px;
     font-size:11px;
+  }
+
+  .player-quick-actions{
+    gap:6px;
+    margin-top:5px;
+  }
+
+  .player-action-btn{
+    height:28px;
+    padding:0 9px;
+    font-size:10px;
+  }
+
+  .playlist-create-row{
+    flex-direction:column;
+  }
+
+  .playlist-create-btn{
+    width:100%;
   }
 
   .more-menu{
@@ -738,6 +845,26 @@ button,input{font:inherit}
           id="timeText"
         >
           0:00 / 0:00
+        </div>
+
+        <div class="player-quick-actions">
+          <button
+            class="player-action-btn"
+            id="quickLike"
+            type="button"
+            title="この曲をいいね"
+          >
+            🤍 いいね
+          </button>
+
+          <button
+            class="player-action-btn"
+            id="quickPlaylist"
+            type="button"
+            title="プレイリストに追加"
+          >
+            ＋ プレイリスト
+          </button>
         </div>
 
       </div>
@@ -890,6 +1017,31 @@ button,input{font:inherit}
       class="playlist-list"
       id="playlistChoices"
     ></div>
+
+    <div class="playlist-create">
+      <div class="playlist-create-title">
+        新しいプレイリストを作る
+      </div>
+
+      <div class="playlist-create-row">
+        <input
+          class="playlist-create-input"
+          id="playlistCreateInput"
+          type="text"
+          maxlength="60"
+          placeholder="プレイリスト名"
+          autocomplete="off"
+        >
+
+        <button
+          class="playlist-create-btn"
+          id="playlistCreateButton"
+          type="button"
+        >
+          ＋ 作成
+        </button>
+      </div>
+    </div>
 
     <button
       class="modal-close"
@@ -1131,6 +1283,12 @@ const menuLike =
 const menuPlaylist =
   document.getElementById("menuPlaylist");
 
+const quickLike =
+  document.getElementById("quickLike");
+
+const quickPlaylist =
+  document.getElementById("quickPlaylist");
+
 const playlistModal =
   document.getElementById("playlistModal");
 
@@ -1142,6 +1300,12 @@ const playlistChoices =
 
 const playlistModalClose =
   document.getElementById("playlistModalClose");
+
+const playlistCreateInput =
+  document.getElementById("playlistCreateInput");
+
+const playlistCreateButton =
+  document.getElementById("playlistCreateButton");
 
 const playerStatus =
   document.getElementById("playerStatus");
@@ -4661,11 +4825,18 @@ async function updateLikeMenu(){
     "liked"
   );
 
+  quickLike.classList.remove(
+    "liked"
+  );
+
   if(
     !state.song
   ){
 
     menuLike.textContent =
+      "🤍 いいね";
+
+    quickLike.textContent =
       "🤍 いいね";
 
     return;
@@ -4676,6 +4847,9 @@ async function updateLikeMenu(){
   ){
 
     menuLike.textContent =
+      "🤍 いいね";
+
+    quickLike.textContent =
       "🤍 いいね";
 
     return;
@@ -4709,10 +4883,20 @@ async function updateLikeMenu(){
       "liked"
     );
 
+    quickLike.textContent =
+      "❤️ いいね済み";
+
+    quickLike.classList.add(
+      "liked"
+    );
+
   }
   else{
 
     menuLike.textContent =
+      "🤍 いいね";
+
+    quickLike.textContent =
       "🤍 いいね";
 
   }
@@ -4745,6 +4929,9 @@ async function toggleCurrentLike(){
   }
 
   menuLike.disabled =
+    true;
+
+  quickLike.disabled =
     true;
 
   try{
@@ -4833,6 +5020,9 @@ async function toggleCurrentLike(){
     menuLike.disabled =
       false;
 
+    quickLike.disabled =
+      false;
+
   }
 
 }
@@ -4919,7 +5109,7 @@ async function openPlaylistModal(){
     playlistChoices.innerHTML =
       `<div class="modal-empty">
         まだプレイリストがありません。<br><br>
-        My Pageでプレイリストを作成できます。
+        下から新しいプレイリストを作成できます。
       </div>`;
 
     return;
@@ -4963,6 +5153,115 @@ async function openPlaylistModal(){
 
     }
   );
+
+}
+
+
+async function createPlaylistFromPlayer(){
+
+  if(!currentSession){
+    showPlayerStatus(
+      "プレイリストを作るにはログインしてください。"
+    );
+    return;
+  }
+
+  const name =
+    playlistCreateInput.value.trim();
+
+  if(!name){
+    showPlayerStatus(
+      "プレイリスト名を入力してください。"
+    );
+    playlistCreateInput.focus();
+    return;
+  }
+
+  playlistCreateButton.disabled =
+    true;
+
+  playlistCreateInput.disabled =
+    true;
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await sb
+    .from("playlists")
+    .insert({
+      user_id:
+        currentSession.user.id,
+      name
+    })
+    .select("*")
+    .single();
+
+    if(error){
+      throw error;
+    }
+
+    playlistCreateInput.value =
+      "";
+
+    showPlayerStatus(
+      "「" +
+      name +
+      "」を作成しました！"
+    );
+
+    /*
+      作成直後、そのプレイリストへ
+      今再生している曲をそのまま追加する。
+    */
+    if(
+      state.song &&
+      data
+    ){
+
+      const temporaryButton =
+        document.createElement(
+          "button"
+        );
+
+      await addCurrentSongToPlaylist(
+        data,
+        temporaryButton
+      );
+
+      return;
+    }
+
+    await openPlaylistModal();
+
+  }
+  catch(error){
+
+    console.error(
+      "Playlist create error:",
+      error
+    );
+
+    showPlayerStatus(
+      "プレイリストの作成に失敗しました：" +
+      (
+        error.message ||
+        error
+      )
+    );
+
+  }
+  finally{
+
+    playlistCreateButton.disabled =
+      false;
+
+    playlistCreateInput.disabled =
+      false;
+
+  }
 
 }
 
@@ -5149,6 +5448,37 @@ menuLike.addEventListener(
 menuPlaylist.addEventListener(
   "click",
   openPlaylistModal
+);
+
+
+quickLike.addEventListener(
+  "click",
+  async ()=>{
+    await toggleCurrentLike();
+  }
+);
+
+
+quickPlaylist.addEventListener(
+  "click",
+  openPlaylistModal
+);
+
+
+playlistCreateButton.addEventListener(
+  "click",
+  createPlaylistFromPlayer
+);
+
+
+playlistCreateInput.addEventListener(
+  "keydown",
+  event=>{
+    if(event.key === "Enter"){
+      event.preventDefault();
+      createPlaylistFromPlayer();
+    }
+  }
 );
 
 
