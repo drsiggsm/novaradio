@@ -188,6 +188,28 @@ body{
   margin:18px 0 0;
 }
 
+/* パスワードを忘れた方 */
+
+.forgot-wrap{
+  margin-top:14px;
+  text-align:center;
+}
+
+.forgot-button{
+  border:0;
+  background:transparent;
+  color:#aeb5ff;
+  font-size:14px;
+  cursor:pointer;
+  padding:6px 10px;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+
+.forgot-button:hover{
+  color:#fff;
+}
+
 /* 公開情報 */
 
 .public-info{
@@ -394,6 +416,16 @@ body{
   ログイン
 </button>
 
+<div class="forgot-wrap">
+  <button
+    type="button"
+    class="forgot-button"
+    id="forgotPassword"
+  >
+    パスワードを忘れた方
+  </button>
+</div>
+
 </div>
 
 <div
@@ -476,6 +508,12 @@ const APP_URL =
     location.href
   ).href;
 
+const RESET_PASSWORD_URL =
+  new URL(
+    "reset-password.html",
+    location.href
+  ).href;
+
 const rt = document.getElementById("rt");
 const lt = document.getElementById("lt");
 const rp = document.getElementById("rp");
@@ -492,6 +530,7 @@ const le = document.getElementById("le");
 const lpw = document.getElementById("lpw");
 const login = document.getElementById("login");
 const listenGuest = document.getElementById("listenGuest");
+const forgotPassword = document.getElementById("forgotPassword");
 
 function msg(
   text,
@@ -771,6 +810,73 @@ login.addEventListener(
 
       login.textContent =
         "ログイン";
+
+    }
+
+  }
+);
+
+/* パスワード再設定メール */
+forgotPassword.addEventListener(
+  "click",
+  async ()=>{
+
+    const e =
+      le.value.trim();
+
+    if(!e){
+
+      return msg(
+        "パスワードを再設定するメールアドレスを入力してください。",
+        true
+      );
+
+    }
+
+    forgotPassword.disabled =
+      true;
+
+    forgotPassword.textContent =
+      "送信中…";
+
+    try{
+
+      const {
+        error
+      } =
+      await sb.auth.resetPasswordForEmail(
+        e,
+        {
+          redirectTo:
+            RESET_PASSWORD_URL
+        }
+      );
+
+      if(error){
+        throw error;
+      }
+
+      msg(
+        "パスワード再設定メールを送信しました。受信箱（迷惑メールも含む）を確認してください。"
+      );
+
+    }
+    catch(x){
+
+      msg(
+        "再設定メールの送信に失敗しました：" +
+        (x.message || x),
+        true
+      );
+
+    }
+    finally{
+
+      forgotPassword.disabled =
+        false;
+
+      forgotPassword.textContent =
+        "パスワードを忘れた方";
 
     }
 
