@@ -359,6 +359,7 @@ button,input{font:inherit}
 }
 
 .ctrl.more{
+  display:none;
   border-radius:12px;
   width:42px;
   font-size:21px;
@@ -415,6 +416,11 @@ button,input{font:inherit}
 .player-action-btn.liked{
   background:#442136;
   border-color:#8b415b;
+}
+
+.player-action-btn.followed{
+  background:#1d3550;
+  border-color:#3478a8;
 }
 
 .player-action-btn:disabled{
@@ -648,7 +654,7 @@ button,input{font:inherit}
   .app-shell{
     /* iPhone Safariの下部ツールバーを除いた「見えている高さ」に合わせる */
     height:100dvh;
-    grid-template-rows:58px minmax(0,1fr) calc(126px + env(safe-area-inset-bottom));
+    grid-template-rows:58px minmax(0,1fr) calc(176px + env(safe-area-inset-bottom));
   }
 
   .brand{
@@ -672,8 +678,10 @@ button,input{font:inherit}
 
   .player{
     grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto;
+    align-content:center;
     gap:8px;
-    padding:16px 10px calc(8px + env(safe-area-inset-bottom));
+    padding:14px 10px calc(28px + env(safe-area-inset-bottom));
   }
 
   .cover{
@@ -683,7 +691,9 @@ button,input{font:inherit}
   }
 
   .controls{
-    justify-content:flex-end;
+    justify-content:center;
+    flex-wrap:nowrap;
+    padding-bottom:2px;
   }
 
   .ctrl{
@@ -696,9 +706,12 @@ button,input{font:inherit}
     height:40px;
   }
 
-  .ctrl.mode,
-  .ctrl.more{
+  .ctrl.mode{
     width:36px;
+  }
+
+  .ctrl.more{
+    display:none !important;
   }
 
   .full-current-btn{
@@ -855,6 +868,15 @@ button,input{font:inherit}
             title="この曲をいいね"
           >
             🤍 いいね
+          </button>
+
+          <button
+            class="player-action-btn"
+            id="quickFollow"
+            type="button"
+            title="このアーティストをフォロー"
+          >
+            👤 フォロー
           </button>
 
           <button
@@ -1286,6 +1308,9 @@ const menuPlaylist =
 const quickLike =
   document.getElementById("quickLike");
 
+const quickFollow =
+  document.getElementById("quickFollow");
+
 const quickPlaylist =
   document.getElementById("quickPlaylist");
 
@@ -1357,6 +1382,15 @@ const playerLikeCache =
   new Map();
 
 const playerLikeRequestCache =
+  new Map();
+
+const playerFollowCache =
+  new Map();
+
+const playerFollowRequestCache =
+  new Map();
+
+const songArtistUserCache =
   new Map();
 
 /*
@@ -2917,6 +2951,9 @@ function renderSong(song){
   }
 
   updateLikeMenu()
+  .catch(()=>{});
+
+  updateFollowMenu()
   .catch(()=>{});
 
   updateFullCurrentButton();
@@ -5029,6 +5066,442 @@ async function toggleCurrentLike(){
 
 
 /* =========================
+   アーティストフォロー
+========================= */
+
+async function resolveCurrentArtistUserId(song){
+
+  if(!song){
+    return null;
+  }
+
+  const direct =
+    song.user_id ||
+    song.artist_user_id ||
+    null;
+
+  if(direct){
+    return String(direct);
+  }
+
+  const songId =
+    Number(song.id);
+
+  if(!Number.isFinite(songId)){
+    return null;
+  }
+
+  const cacheKey =
+    String(songId);
+
+  if(songArtistUserCache.has(cacheKey)){
+    return songArtistUserCache.get(cacheKey);
+  }
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await sb
+    .from("songs")
+    .select("user_id")
+    .eq("id",songId)
+    .maybeSingle();
+
+    if(error){
+      throw error;
+    }
+
+    const artistUserId =
+      data?.user_id
+        ? String(data.user_id)
+        : null;
+
+    songArtistUserCache.set(
+      cacheKey,
+      artistUserId
+    );
+
+    if(
+      artistUserId &&
+      state.song &&
+      Number(state.song.id) === songId
+    ){
+      state.song.user_id =
+        artistUserId;
+    }
+
+    return artistUserId;
+
+  }
+  catch(error){
+
+    console.warn(
+      "Artist user resolve error:",
+      error
+    );
+
+    return null;
+  }
+
+}
+
+
+async function isArtistFollowed(
+  artistUserId,
+  force=false
+){
+
+  if(
+    !currentSession ||
+    !artistUserId
+  ){
+    return false;
+  }
+
+  const cacheKey =
+    String(artistUserId);
+
+  if(
+    !force &&
+    playerFollowCache.has(cacheKey)
+  ){
+    return playerFollowCache.get(cacheKey);
+  }
+
+  if(
+    !force &&
+    playerFollowRequestCache.has(cacheKey)
+  ){
+    return playerFollowRequestCache.get(cacheKey);
+  }
+
+  const request =
+    (async ()=>{
+
+      const {
+        data,
+        error
+      } =
+      await sb
+      .from("artist_follows")
+      .select("artist_user_id")
+      .eq(
+        "follower_user_id",
+        currentSession.user.id
+      )
+      .eq(
+        "artist_user_id",
+        artistUserId
+      )
+      .limit(1);
+
+      if(error){
+        throw error;
+      }
+
+      const followed =
+        !!(
+          data &&
+          data.length
+        );
+
+      playerFollowCache.set(
+        cacheKey,
+        followed
+      );
+
+      return followed;
+
+    })();
+
+  playerFollowRequestCache.set(
+    cacheKey,
+    request
+  );
+
+  try{
+    return await request;
+  }
+  finally{
+    playerFollowRequestCache.delete(
+      cacheKey
+    );
+  }
+
+}
+
+
+async function updateFollowMenu(){
+
+  quickFollow.classList.remove(
+    "followed"
+  );
+
+  quickFollow.disabled =
+    false;
+
+  if(!state.song){
+
+    quickFollow.style.display =
+      "none";
+
+    return;
+  }
+
+  const songId =
+    Number(state.song.id);
+
+  const artistUserId =
+    await resolveCurrentArtistUserId(
+      state.song
+    );
+
+  if(
+    Number(state.song?.id) !== songId
+  ){
+    return;
+  }
+
+  if(!artistUserId){
+
+    quickFollow.style.display =
+      "none";
+
+    return;
+  }
+
+  if(
+    currentSession &&
+    String(currentSession.user.id) ===
+      String(artistUserId)
+  ){
+
+    quickFollow.style.display =
+      "none";
+
+    return;
+  }
+
+  quickFollow.style.display =
+    "inline-flex";
+
+  quickFollow.style.alignItems =
+    "center";
+
+  quickFollow.style.justifyContent =
+    "center";
+
+  if(!currentSession){
+
+    quickFollow.textContent =
+      "👤 フォロー";
+
+    return;
+  }
+
+  try{
+
+    const followed =
+      await isArtistFollowed(
+        artistUserId
+      );
+
+    if(
+      Number(state.song?.id) !== songId
+    ){
+      return;
+    }
+
+    if(followed){
+
+      quickFollow.textContent =
+        "👤 フォロー中";
+
+      quickFollow.classList.add(
+        "followed"
+      );
+
+    }
+    else{
+
+      quickFollow.textContent =
+        "👤 フォロー";
+
+    }
+
+  }
+  catch(error){
+
+    console.warn(
+      "Follow state error:",
+      error
+    );
+
+    quickFollow.textContent =
+      "👤 フォロー";
+
+  }
+
+}
+
+
+async function toggleCurrentFollow(){
+
+  if(!state.song){
+
+    showPlayerStatus(
+      "まず曲を再生してください。"
+    );
+
+    return;
+  }
+
+  if(!currentSession){
+
+    showPlayerStatus(
+      "フォローするにはログインしてください。"
+    );
+
+    return;
+  }
+
+  const targetSongId =
+    Number(state.song.id);
+
+  const artistUserId =
+    await resolveCurrentArtistUserId(
+      state.song
+    );
+
+  if(!artistUserId){
+
+    showPlayerStatus(
+      "アーティスト情報を取得できませんでした。"
+    );
+
+    return;
+  }
+
+  if(
+    String(currentSession.user.id) ===
+    String(artistUserId)
+  ){
+
+    quickFollow.style.display =
+      "none";
+
+    return;
+  }
+
+  quickFollow.disabled =
+    true;
+
+  try{
+
+    const followed =
+      await isArtistFollowed(
+        artistUserId
+      );
+
+    if(followed){
+
+      const {
+        error
+      } =
+      await sb
+      .from("artist_follows")
+      .delete()
+      .eq(
+        "follower_user_id",
+        currentSession.user.id
+      )
+      .eq(
+        "artist_user_id",
+        artistUserId
+      );
+
+      if(error){
+        throw error;
+      }
+
+      playerFollowCache.set(
+        String(artistUserId),
+        false
+      );
+
+      showPlayerStatus(
+        "フォローを解除しました。"
+      );
+
+    }
+    else{
+
+      const {
+        error
+      } =
+      await sb
+      .from("artist_follows")
+      .insert({
+        follower_user_id:
+          currentSession.user.id,
+        artist_user_id:
+          artistUserId
+      });
+
+      if(error){
+        throw error;
+      }
+
+      playerFollowCache.set(
+        String(artistUserId),
+        true
+      );
+
+      showPlayerStatus(
+        "👤 アーティストをフォローしました！"
+      );
+
+    }
+
+    if(
+      Number(state.song?.id) ===
+      targetSongId
+    ){
+      await updateFollowMenu();
+      await refreshNotificationBadge();
+    }
+
+  }
+  catch(error){
+
+    console.error(
+      "Follow update error:",
+      error
+    );
+
+    showPlayerStatus(
+      "フォローの更新に失敗しました：" +
+      (
+        error.message ||
+        error
+      )
+    );
+
+  }
+  finally{
+
+    quickFollow.disabled =
+      false;
+
+  }
+
+}
+
+
+/* =========================
    プレイリスト追加
 ========================= */
 
@@ -5455,6 +5928,14 @@ quickLike.addEventListener(
   "click",
   async ()=>{
     await toggleCurrentLike();
+  }
+);
+
+
+quickFollow.addEventListener(
+  "click",
+  async ()=>{
+    await toggleCurrentFollow();
   }
 );
 
